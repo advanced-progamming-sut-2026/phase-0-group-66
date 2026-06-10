@@ -1,5 +1,16 @@
-Mohammad Parsa Hosseini - 404071005
+# Plants vs Zombies 2 - Java Project
 
-Ilia Hedayati - 404171314
+## 📖 Overview
 
-Mohammad Reza Mokhtarzadeh - 404106333
+This is a University Project For Sharif University of Technology
+---
+
+## 👥 Team Members
+
+| Name                       | Student ID |
+| -------------------------- | ---------- |
+| Mohammad Parsa Hosseini    | 404071005  |
+| Ilia Hedayati              | 404171314  |
+| Mohammad Reza Mokhtarzadeh | 404106333  |
+
+---
