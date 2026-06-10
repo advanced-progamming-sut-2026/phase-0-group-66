@@ -1,9 +1,16 @@
-# group-66
-Group Members:
+# Plants vs Zombies 2 - Java Project
 
-Mohammad Parsa Hosseini - 404071005
+## 📖 Overview
 
-Ilia Hedayati - 404171314
+This is a University Project For Sharif University of Technology
+---
 
-Mohammad Reza Mokhtarzadeh - 404106333
+## 👥 Team Members-Group66
 
+| Name                       | Student ID |
+| -------------------------- | ---------- |
+| Mohammad Parsa Hosseini    | 404071005  |
+| Ilia Hedayati              | 404171314  |
+| Mohammad Reza Mokhtarzadeh | 404106333  |
+
+---
