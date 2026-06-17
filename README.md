@@ -4,11 +4,8 @@
 
 This is a University Project For Sharif University of Technology
 ---
-
-## 👥 Team Members
 =======
 ## 👥 Team Members-Group66
->>>>>>> 114439bc265b9e0e51218aa78c6d789d86a7c582
 
 | Name                       | Student ID |
 | -------------------------- | ---------- |
