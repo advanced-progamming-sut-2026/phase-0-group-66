@@ -5,7 +5,6 @@
 This is a University Project For Sharif University of Technology
 ---
 
-<<<<<<< HEAD
 ## 👥 Team Members
 =======
 ## 👥 Team Members-Group66
