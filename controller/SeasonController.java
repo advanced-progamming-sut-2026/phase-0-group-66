@@ -8,7 +8,6 @@ public class SeasonController {
         this.board = board;
         this.currentLevel = currentLevel;
     }
-
     public void processEnvironmentalEffects(int currentTick) {
         SeasonType season = currentLevel.getSeason();
 
@@ -31,13 +30,10 @@ public class SeasonController {
                 break;
         }
     }
-
     private void applyFreezingWind() {
     }
-
     private void updateWaterTides(int tick) {
     }
-
     private void spawnRandomTombs() {
     }
 }
