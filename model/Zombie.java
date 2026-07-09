@@ -18,4 +18,6 @@ public abstract class Zombie {
 
     public void dropReward() {
     }
+    public void specialAbility() {
+    }
 }

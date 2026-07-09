@@ -1,12 +1,8 @@
 public class MiniGameController {
-    private MiniGame miniGame;
 
-    public void showMiniGames() {
+    public void showMiniGamesStatus() {
     }
 
-    public void startMiniGame(String miniGameName) {
-    }
-
-    public void finishMiniGame(int score) {
+    public void startMiniGame(String miniGameName, int level) {
     }
 }

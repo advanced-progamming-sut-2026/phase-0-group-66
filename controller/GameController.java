@@ -1,23 +1,26 @@
 public class GameController {
-    private Game game;
-    private PlantFactory plantFactory;
-    private ZombieFactory zombieFactory;
 
-    public void startLevel(String levelId) {
+    public void startLevel(String chapterName) {
     }
 
-    public void selectPlant(String plantName) {
+    public void selectPlant(String plantType) {
     }
 
-    public void plantPlant(String plantName, int row, int col) {
+    public void boostPlant(String plantType) {
     }
 
-    public void pluckPlant(int row, int col) {
+    public void plantPlant(String plantType, int col, int row) {
     }
 
-    public void collectSun(int row, int col) {
+    public void pluckPlant(int col, int row) {
+    }
+
+    public void collectSun(int col, int row) {
     }
 
     public void advanceTime(int ticks) {
+    }
+
+    public void printMap() {
     }
 }

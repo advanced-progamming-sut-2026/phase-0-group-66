@@ -1,5 +1,4 @@
 public class CollectionController {
-    private CollectionBook collectionBook;
 
     public void showOwnedPlants() {
     }
@@ -8,6 +7,12 @@ public class CollectionController {
     }
 
     public void showZombies() {
+    }
+
+    public void showPlantDetails(String plantName) {
+    }
+
+    public void showZombieDetails(String zombieName) {
     }
 
     public void purchasePlant(String plantName) {

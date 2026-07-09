@@ -1,10 +1,9 @@
 public class AuthController {
-    private User currentUser;
 
-    public void register(String username, String password, String email) {
+    public void register(String username, String password, String passwordConfirm, String nickname, String email, String gender) {
     }
 
-    public void login(String username, String password) {
+    public void login(String username, String password, boolean stayLoggedIn) {
     }
 
     public void logout() {

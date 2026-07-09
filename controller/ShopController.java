@@ -1,12 +1,8 @@
 public class ShopController {
-    private Shop shop;
-
     public void showItems() {
     }
-
-    public void buyItem(String itemName) {
+    public void showDailyOffers() {
     }
-
-    public void refreshOffers() {
+    public void buyItem(String itemId, int count, String plantType) {
     }
 }

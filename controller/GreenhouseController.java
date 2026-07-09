@@ -1,12 +1,14 @@
 public class GreenhouseController {
-    private Greenhouse greenhouse;
 
     public void showPlants() {
     }
 
-    public void harvest() {
+    public void plantPot(int x, int y) {
     }
 
-    public void unlockPlant(String plantName) {
+    public void harvest(int x, int y) {
+    }
+
+    public void speedUpGrowth(int x, int y) {
     }
 }

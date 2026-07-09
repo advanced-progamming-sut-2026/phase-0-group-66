@@ -3,11 +3,12 @@ public class AppController {
     private MenuController menuController;
 
     public void startApplication() {
+        loadInitialData();
     }
-
     public void saveAndExit() {
+        System.out.println("Saving data and exiting...");
+        System.exit(0);
     }
-
     public void loadInitialData() {
     }
 }
