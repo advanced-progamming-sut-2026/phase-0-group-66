@@ -1,5 +1,5 @@
 public class LawnMower {
-    private int row;
+    private double row;
     private boolean activated;
 
     public void trigger() {
