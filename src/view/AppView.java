@@ -1,3 +1,5 @@
+package view;
+
 public class AppView {
     public void showMessage(String message) {
     }

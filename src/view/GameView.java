@@ -1,3 +1,7 @@
+package view;
+
+import model.Board;
+
 public class GameView {
     public void showMap(Board board) {
     }

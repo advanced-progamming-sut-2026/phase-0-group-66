@@ -1,3 +1,5 @@
+package view;
+
 public class LeaderboardView {
     public void showLeaderboard() {
     }
