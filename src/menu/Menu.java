@@ -1,9 +1,14 @@
-public abstract class Menu {
-    protected String name;
-    protected Menu parentMenu;
-    protected MenuManager menuManager;
+package menu;
 
-    public Menu(String name, MenuManager menuManager) {
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public abstract class Menu {
+    private final String name;
+    protected Menu parentMenu;
+    protected final MenuManager menuManager;
+
+    protected Menu(String name, MenuManager menuManager) {
         this.name = name;
         this.menuManager = menuManager;
     }
@@ -17,15 +22,16 @@ public abstract class Menu {
     }
 
     public void handleCommand(String command) {
-        if (command.equals("menu show current")) {
-            System.out.println(this.name);
-        } else if (command.equals("menu exit")) {
+        String normalizedCommand = command == null ? "" : command.trim();
+        if (normalizedCommand.equals("menu show current")) {
+            System.out.println(name);
+        } else if (normalizedCommand.equals("menu exit")) {
             exit();
-        } else if (command.startsWith("menu enter ")) {
-            String targetMenu = command.substring(11).trim();
+        } else if (normalizedCommand.startsWith("menu enter ")) {
+            String targetMenu = normalizedCommand.substring("menu enter ".length()).trim();
             handleMenuEnter(targetMenu);
         } else {
-            processSpecificCommand(command);
+            processSpecificCommand(normalizedCommand);
         }
     }
 
@@ -42,7 +48,7 @@ public abstract class Menu {
             menuManager.setCurrentMenu(parentMenu);
         } else {
             System.out.println("Exiting application...");
-            System.exit(0);
+            menuManager.stop();
         }
     }
 
@@ -50,11 +56,11 @@ public abstract class Menu {
     }
 
     public abstract void showCommands();
+
     protected abstract void processSpecificCommand(String command);
 
     protected Matcher getMatcher(String input, String regex) {
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(input);
+        Matcher matcher = Pattern.compile(regex).matcher(input);
         return matcher.matches() ? matcher : null;
     }
 }

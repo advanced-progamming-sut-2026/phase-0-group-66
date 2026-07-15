@@ -1,3 +1,5 @@
+package menu;
+
 public class NewsMenu extends Menu {
     public NewsMenu(MenuManager menuManager) {
         super("News Menu", menuManager);

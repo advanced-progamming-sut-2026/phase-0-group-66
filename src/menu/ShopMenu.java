@@ -1,3 +1,5 @@
+package menu;
+
 import java.util.regex.Matcher;
 
 public class ShopMenu extends Menu {
@@ -10,7 +12,8 @@ public class ShopMenu extends Menu {
 
     @Override
     protected void processSpecificCommand(String command) {
-        Matcher buyMatcher = getMatcher(command, "shop buy -i (?<itemId>\\d+) -n (?<count>\\d+)( -t (?<plantType>\\S+))?");
+        Matcher buyMatcher = getMatcher(command,
+            "shop buy -i (?<itemId>\\d+) -n (?<count>\\d+)( -t (?<plantType>\\S+))?");
 
         if (command.equals("shop list")) {
         } else if (command.equals("shop daily")) {

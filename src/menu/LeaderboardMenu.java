@@ -1,3 +1,5 @@
+package menu;
+
 import java.util.regex.Matcher;
 
 public class LeaderboardMenu extends Menu {
