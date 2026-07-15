@@ -1,3 +1,5 @@
+package controller;
+
 public class QuestController {
 
     public void showQuestsPage(String pageName) {

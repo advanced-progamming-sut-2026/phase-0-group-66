@@ -1,3 +1,5 @@
+package controller;
+
 public class GreenhouseController {
 
     public void showPlants() {

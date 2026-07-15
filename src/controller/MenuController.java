@@ -1,5 +1,9 @@
+package controller;
+
+import menu.MenuManager;
+
 public class MenuController {
-    private MenuManager menuManager;
+    private final MenuManager menuManager;
 
     public MenuController(MenuManager menuManager) {
         this.menuManager = menuManager;

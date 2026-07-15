@@ -1,14 +1,20 @@
-public class AppController {
-    private AuthController authController;
-    private MenuController menuController;
+package controller;
 
-    public void startApplication() {
-        loadInitialData();
+public class AppController {
+    private final AuthController authController;
+
+    public AppController(AuthController authController) {
+        this.authController = authController;
     }
+
+    public boolean startApplication() {
+        return authController.restoreSession();
+    }
+
     public void saveAndExit() {
-        System.out.println("Saving data and exiting...");
-        System.exit(0);
-    }
-    public void loadInitialData() {
+        ActionResult result = authController.saveCurrentState();
+        if (!result.isSuccessful()) {
+            System.err.println(result.getMessage());
+        }
     }
 }

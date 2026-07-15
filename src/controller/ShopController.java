@@ -1,3 +1,5 @@
+package controller;
+
 public class ShopController {
     public void showItems() {
     }
