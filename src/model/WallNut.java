@@ -1,3 +1,5 @@
+package model;
+
 public class WallNut extends Plant {
     private int defenseBonus;
 
