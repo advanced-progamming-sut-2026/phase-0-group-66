@@ -1,3 +1,5 @@
+package model;
+
 public class Peashooter extends Plant {
     private String projectileType;
 

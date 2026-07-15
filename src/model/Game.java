@@ -1,3 +1,5 @@
+package model;
+
 public class Game {
     private String gameState;
     private Chapter currentChapter;

@@ -1,13 +1,24 @@
+package model;
+
 public class Sun {
     private int amount;
-    private int row;
-    private int col;
+    private GridPosition position;
     private int remainingTime;
+    private boolean collected;
 
     public int collect() {
-        return 0;
+        if (collected) {
+            return 0;
+        }
+        collected = true;
+        return amount;
     }
 
     public void expire() {
+        remainingTime = 0;
+    }
+
+    public GridPosition getPosition() {
+        return position;
     }
 }

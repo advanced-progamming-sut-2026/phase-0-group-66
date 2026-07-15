@@ -1,3 +1,5 @@
+package model;
+
 public class MiniGame {
     private String name;
     private String ruleDescription;
