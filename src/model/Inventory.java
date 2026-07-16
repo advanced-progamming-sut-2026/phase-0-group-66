@@ -74,6 +74,28 @@ public class Inventory implements Serializable {
         selectedPlants.clear();
     }
 
+
+    public int getSeedPacketCount(String plantName) {
+        return seedPackets.getOrDefault(plantName, 0);
+    }
+
+    public boolean consumeSeedPackets(String plantName, int count) {
+        if (plantName == null || plantName.isBlank() || count < 0) {
+            throw new IllegalArgumentException("Invalid seed packet data.");
+        }
+        int available = seedPackets.getOrDefault(plantName, 0);
+        if (available < count) {
+            return false;
+        }
+        int remaining = available - count;
+        if (remaining == 0) {
+            seedPackets.remove(plantName);
+        } else {
+            seedPackets.put(plantName, remaining);
+        }
+        return true;
+    }
+
     public void addSeedPacket(String plantName, int count) {
         if (plantName == null || plantName.isBlank() || count < 0) {
             throw new IllegalArgumentException("Invalid seed packet data.");
