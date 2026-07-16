@@ -97,7 +97,7 @@ public final class InputValidator {
 
     public static String validateGender(String gender) {
         if (normalizeGender(gender) == null) {
-            return "Gender must be male/female.";
+            return "Gender must be male/female";
         }
         return null;
     }
