@@ -14,6 +14,7 @@ public abstract class Zombie {
     protected int waveCost;
     protected BoardPosition position;
     private final ArrayList<Armor> armors;
+    private int chilledTicks;
 
     protected Zombie(ZombieDefinition definition, List<Armor> armors) {
         if (definition == null) {
@@ -32,9 +33,32 @@ public abstract class Zombie {
     }
 
     public void move() {
+        moveOneTick();
+    }
+
+    public void moveOneTick() {
         if (position != null) {
-            position = position.moveHorizontal(-speed);
+            double actualSpeed = chilledTicks > 0 ? speed * 0.5 : speed;
+            position = position.moveHorizontal(-actualSpeed / Game.TICKS_PER_SECOND);
         }
+    }
+
+    public void tickEffects() {
+        if (chilledTicks > 0) {
+            chilledTicks--;
+        }
+    }
+
+    public void chill(int ticks) {
+        chilledTicks = Math.max(chilledTicks, Math.max(0, ticks));
+    }
+
+    public void clearChill() {
+        chilledTicks = 0;
+    }
+
+    public int getChilledTicks() {
+        return chilledTicks;
     }
 
     public void attackPlant(Plant target) {
@@ -58,6 +82,11 @@ public abstract class Zombie {
         health = Math.max(0, health - amount);
     }
 
+    public void kill() {
+        health = 0;
+        armors.clear();
+    }
+
     public void dropReward() {
     }
 
@@ -66,6 +95,19 @@ public abstract class Zombie {
 
     public boolean isDead() {
         return health <= 0;
+    }
+
+    public boolean isBoss() {
+        String alias = definition.getAlias().toLowerCase();
+        return alias.contains("zomboss") || alias.contains("boss");
+    }
+
+    public int getEffectiveHealth() {
+        int total = health;
+        for (Armor armor : armors) {
+            total += armor.getHealth();
+        }
+        return total;
     }
 
     public ZombieDefinition getDefinition() {

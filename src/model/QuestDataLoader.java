@@ -16,7 +16,7 @@ public final class QuestDataLoader {
                 definitions.add(parseDefinition(requireMap(entries.get(index), "quest entry")));
             } catch (IllegalArgumentException exception) {
                 throw new IOException("Invalid quest data at item " + (index + 1)
-                        + ": " + exception.getMessage(), exception);
+                    + ": " + exception.getMessage(), exception);
             }
         }
         return List.copyOf(definitions);
@@ -24,12 +24,12 @@ public final class QuestDataLoader {
 
     private QuestDefinition parseDefinition(Map<String, Object> entry) {
         return new QuestDefinition(
-                requireString(entry.get("title"), "title"),
-                requireString(entry.get("category"), "category"),
-                requireString(entry.get("completionCondition"), "completionCondition"),
-                requireString(entry.get("rewardDescription"), "rewardDescription"),
-                requireString(entry.get("priority"), "priority"),
-                optionalString(entry.get("variables"))
+            requireString(entry.get("title"), "title"),
+            requireString(entry.get("category"), "category"),
+            requireString(entry.get("completionCondition"), "completionCondition"),
+            requireString(entry.get("rewardDescription"), "rewardDescription"),
+            requireString(entry.get("priority"), "priority"),
+            optionalString(entry.get("variables"))
         );
     }
 

@@ -16,8 +16,12 @@ public class LawnMower {
         return activated;
     }
 
-    public void trigger() {
+    public boolean trigger() {
+        if (activated) {
+            return false;
+        }
         activated = true;
+        return true;
     }
 
     public void clearLane() {

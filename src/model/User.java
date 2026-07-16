@@ -38,6 +38,7 @@ public class User implements Serializable {
         this.collectionBook = new CollectionBook();
         this.news = new ArrayList<>();
         this.securityQuestion = securityQuestion;
+        unlockStarterContent();
         setPassword(password);
         setSecurityAnswer(securityAnswer);
     }
@@ -119,6 +120,18 @@ public class User implements Serializable {
         if (item != null) {
             news.add(item);
         }
+    }
+
+    public void ensureStarterContent() {
+        unlockStarterContent();
+    }
+
+    private void unlockStarterContent() {
+        collectionBook.unlockPlant("Sunflower");
+        collectionBook.unlockPlant("Peashooter");
+        collectionBook.unlockPlant("Wall-nut");
+        progress.unlockChapterName("Ancient Egypt");
+        progress.unlockLevelId("ancient-egypt-1");
     }
 
     private void setPassword(String password) {
