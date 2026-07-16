@@ -5,11 +5,22 @@ public class Sunflower extends Plant {
 
     public Sunflower(PlantDefinition definition) {
         super(definition);
-        productionAmount = definition.getName().equalsIgnoreCase("Twin Sunflower") ? 100 : 50;
+        String normalized = definition.getNormalizedName();
+        if (normalized.equals("twinsunflower")) {
+            productionAmount = 100;
+        } else if (normalized.equals("primalsunflower")) {
+            productionAmount = 75;
+        } else {
+            productionAmount = 50;
+        }
     }
 
     public Sun produceSun() {
-        return new Sun();
+        GridPosition plantPosition = getPosition();
+        if (plantPosition == null) {
+            throw new IllegalStateException("Sunflower is not planted.");
+        }
+        return new Sun(productionAmount, plantPosition);
     }
 
     public int getProductionAmount() {
