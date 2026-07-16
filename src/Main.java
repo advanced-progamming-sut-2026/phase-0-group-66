@@ -1,6 +1,8 @@
 import controller.AppController;
+import controller.CollectionController;
 import controller.AuthController;
 import controller.ProfileController;
+import controller.QuestController;
 import controller.SettingsController;
 import menu.CollectionMenu;
 import menu.GameMenu;
@@ -17,9 +19,12 @@ import menu.QuestMenu;
 import menu.RegisterMenu;
 import menu.SettingsMenu;
 import menu.ShopMenu;
+import model.GameData;
 import model.UserRepository;
+import view.CollectionView;
 import view.LoginView;
 import view.ProfileView;
+import view.QuestView;
 import view.RegisterView;
 import view.SettingsView;
 
@@ -39,11 +44,12 @@ public class Main {
     }
 
     private static void runApplication() throws IOException {
+        GameData gameData = GameData.loadDefault();
         UserRepository repository = new UserRepository(Paths.get("data"));
         AuthController authController = new AuthController(repository);
         AppController appController = new AppController(authController);
         MenuManager manager = new MenuManager();
-        MenuSet menus = createMenus(manager, authController);
+        MenuSet menus = createMenus(manager, authController, gameData);
 
         configureParents(menus);
         registerMenus(manager, menus);
@@ -52,20 +58,26 @@ public class Main {
         runCommandLoop(manager, appController);
     }
 
-    private static MenuSet createMenus(MenuManager manager, AuthController authController) {
+    private static MenuSet createMenus(MenuManager manager, AuthController authController,
+                                       GameData gameData) {
         ProfileController profileController = new ProfileController(authController);
         SettingsController settingsController = new SettingsController(authController);
+        CollectionController collectionController = new CollectionController(
+                authController, gameData.getPlantFactory(), gameData.getZombieFactory(),
+                gameData.getArmorFactory());
+        QuestController questController = new QuestController(gameData.getQuestFactory());
         RegisterMenu registerMenu = new RegisterMenu(manager, authController, new RegisterView());
         LoginMenu loginMenu = new LoginMenu(manager, authController, new LoginView());
         MainMenu mainMenu = new MainMenu(manager, authController);
         GameMenu gameMenu = new GameMenu(manager);
-        CollectionMenu collectionMenu = new CollectionMenu(manager);
+        CollectionMenu collectionMenu = new CollectionMenu(manager, collectionController,
+                new CollectionView());
         GreenhouseMenu greenhouseMenu = new GreenhouseMenu(manager);
         ShopMenu shopMenu = new ShopMenu(manager);
         SettingsMenu settingsMenu = new SettingsMenu(manager, settingsController, new SettingsView());
         NewsMenu newsMenu = new NewsMenu(manager);
         ProfileMenu profileMenu = new ProfileMenu(manager, profileController, new ProfileView());
-        QuestMenu questMenu = new QuestMenu(manager);
+        QuestMenu questMenu = new QuestMenu(manager, questController, new QuestView());
         LeaderboardMenu leaderboardMenu = new LeaderboardMenu(manager);
         MiniGameMenu miniGameMenu = new MiniGameMenu(manager);
         return new MenuSet(registerMenu, loginMenu, mainMenu, gameMenu, collectionMenu,
