@@ -17,7 +17,7 @@ public final class PlantDataLoader {
                 definitions.add(parseDefinition(requireMap(entries.get(index), "plant entry")));
             } catch (IllegalArgumentException exception) {
                 throw new IOException("Invalid plant data at item " + (index + 1)
-                        + ": " + exception.getMessage(), exception);
+                    + ": " + exception.getMessage(), exception);
             }
         }
         validateUniqueNames(definitions, path);
@@ -36,10 +36,10 @@ public final class PlantDataLoader {
         String plantFoodEffect = optionalString(entry.get("plantFoodEffect"));
         List<String> upgrades = toStringList(entry.get("levelUpgrades"), "levelUpgrades");
         Double actionInterval = toOptionalDouble(entry.get("actionIntervalSeconds"),
-                "actionIntervalSeconds");
+            "actionIntervalSeconds");
         Double recharge = toOptionalDouble(entry.get("rechargeSeconds"), "rechargeSeconds");
         return new PlantDefinition(id, name, category, tags, cost, baseHealth, damage,
-                baseAbility, plantFoodEffect, upgrades, actionInterval, recharge);
+            baseAbility, plantFoodEffect, upgrades, actionInterval, recharge);
     }
 
     private void validateUniqueNames(List<PlantDefinition> definitions, Path path) throws IOException {
