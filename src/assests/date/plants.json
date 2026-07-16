@@ -1,0 +1,1348 @@
+[
+  {
+    "id": 1,
+    "name": "Sunflower",
+    "category": "Sun Producer",
+    "tags": [
+      "Day"
+    ],
+    "cost": 50,
+    "baseHealth": 300,
+    "damage": "0",
+    "baseAbility": "تولید ۵۰ خورشید هر ۲۴ ثانیه.",
+    "plantFoodEffect": "تولید فوری ۱۵۰ خورشید.",
+    "levelUpgrades": [
+      "Prod. Time -2s",
+      "HP +150",
+      "Double Sun Chance"
+    ],
+    "actionIntervalSeconds": 24.0,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 2,
+    "name": "Twin Sunflower",
+    "category": "Sun Producer",
+    "tags": [
+      "Day"
+    ],
+    "cost": 125,
+    "baseHealth": 300,
+    "damage": "0",
+    "baseAbility": "تولید ۱۰۰ خورشید در هر دور.",
+    "plantFoodEffect": "تولید فوری ۲۵۰ خورشید.",
+    "levelUpgrades": [
+      "Prod. Time -2s",
+      "HP +150",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 24.0,
+    "rechargeSeconds": 15.0
+  },
+  {
+    "id": 3,
+    "name": "Sun-shroom",
+    "category": "Sun Producer",
+    "tags": [
+      "Shroom",
+      "wramp-up",
+      "night"
+    ],
+    "cost": 25,
+    "baseHealth": 300,
+    "damage": "0",
+    "baseAbility": "رشد در ۳ مرحله و تولید خورشید بیشتر(۲۵/۵۰/۷۵). To Stg2: 24s | To Stg3: 72s",
+    "plantFoodEffect": "رشد آنی به سایز آخر و تولید ۲۲۵ خورشید.",
+    "levelUpgrades": [
+      "Grow Time -5s",
+      "HP +150",
+      "Double Sun Chance"
+    ],
+    "actionIntervalSeconds": 24.0,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 4,
+    "name": "Primal Sunflower",
+    "category": "Sun Producer",
+    "tags": [],
+    "cost": 75,
+    "baseHealth": 300,
+    "damage": "0",
+    "baseAbility": "تولید خورشید بزرگ ۷۵ تایی از ابتدا.",
+    "plantFoodEffect": "تولید فوری ۲۲۵ خورشید.",
+    "levelUpgrades": [
+      "Prod. Time -2s",
+      "HP +150",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 24.0,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 5,
+    "name": "Gold Bloom",
+    "category": "Sun Producer",
+    "tags": [],
+    "cost": 0,
+    "baseHealth": 0,
+    "damage": "0",
+    "baseAbility": "تولید فوری و یک‌باره مقدار زیادی خورشید و سپس ناپدید شدن.(۳۷۵ خورشید)",
+    "plantFoodEffect": "ندارد (مصرفی آنی)",
+    "levelUpgrades": [
+      "Cooldown -5s",
+      "Sun +50",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 0.0,
+    "rechargeSeconds": 75.0
+  },
+  {
+    "id": 6,
+    "name": "Peashooter",
+    "category": "Shooter",
+    "tags": [
+      "Pea"
+    ],
+    "cost": 100,
+    "baseHealth": 300,
+    "damage": "20",
+    "baseAbility": "شلیک تیر مستقیم.",
+    "plantFoodEffect": "شلیک رگباری سریع برای چند ثانیه.",
+    "levelUpgrades": [
+      "Dmg +10",
+      "HP +150",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 1.5,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 7,
+    "name": "Repeater",
+    "category": "Shooter",
+    "tags": [
+      "Pea"
+    ],
+    "cost": 200,
+    "baseHealth": 300,
+    "damage": "20x2",
+    "baseAbility": "شلیک ۲ تیر مستقیم متوالی.",
+    "plantFoodEffect": "شلیک رگباری سنگین + ۱ نخود غول‌پیکر (دمیج 20 برابر).",
+    "levelUpgrades": [
+      "Dmg +10",
+      "HP +200",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 1.5,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 8,
+    "name": "Threepeater",
+    "category": "Shooter",
+    "tags": [
+      "Pea"
+    ],
+    "cost": 300,
+    "baseHealth": 300,
+    "damage": "20",
+    "baseAbility": "شلیک همزمان تیر در ۳ لاین موازی.",
+    "plantFoodEffect": "شلیک رگباری بادبزنی در تمام لاین‌ها.",
+    "levelUpgrades": [
+      "Cost -25",
+      "Dmg +10",
+      "HP +200"
+    ],
+    "actionIntervalSeconds": 1.5,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 9,
+    "name": "Snow Pea",
+    "category": "Shooter",
+    "tags": [
+      "Ice",
+      "Pea"
+    ],
+    "cost": 150,
+    "baseHealth": 300,
+    "damage": "20",
+    "baseAbility": "شلیک تیر مستقیم کندکننده سرعت.",
+    "plantFoodEffect": "انجماد لاین و شلیک رگباری یخی.",
+    "levelUpgrades": [
+      "Dmg +10",
+      "Chill Time +2s",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 1.5,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 10,
+    "name": "Rotobaga",
+    "category": "Shooter",
+    "tags": [],
+    "cost": 150,
+    "baseHealth": 300,
+    "damage": "10x3",
+    "baseAbility": "شلیک در ۴ جهت اریب.",
+    "plantFoodEffect": "شلیک رگباری در هر ۴ جهت اریب.",
+    "levelUpgrades": [
+      "Dmg +10",
+      "HP +150",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 1.5,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 11,
+    "name": "Pea Pod",
+    "category": "Shooter",
+    "tags": [
+      "Pea",
+      "stack"
+    ],
+    "cost": 125,
+    "baseHealth": 300,
+    "damage": "20/40/60/80/100",
+    "baseAbility": "شلیک تیر مستقیم به ازای هر سر کاشته شده روی هم (تا ۵ سر).",
+    "plantFoodEffect": "شلیک یک نخود غول‌پیکر به ازای هر سر(دمیج 20 برابر).",
+    "levelUpgrades": [
+      "Dmg +10",
+      "HP +200",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 1.5,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 12,
+    "name": "Split Pea",
+    "category": "Shooter",
+    "tags": [
+      "Pea"
+    ],
+    "cost": 125,
+    "baseHealth": 300,
+    "damage": "20",
+    "baseAbility": "شلیک ۱ تیر به جلو و ۲ تیر به عقب.",
+    "plantFoodEffect": "شلیک رگباری همزمان از جلو و عقب.",
+    "levelUpgrades": [
+      "Dmg +10",
+      "HP +200",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 1.5,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 13,
+    "name": "Citron",
+    "category": "Shooter",
+    "tags": [
+      "charge"
+    ],
+    "cost": 350,
+    "baseHealth": 300,
+    "damage": "800",
+    "baseAbility": "شلیک تیر سنگین مستقیم (نیازمند زمان شارژ).",
+    "plantFoodEffect": "شلیک توپ پلاسمایی پاکسازی‌کننده کل لاین.",
+    "levelUpgrades": [
+      "Charge Time -1s",
+      "Dmg +150",
+      "Cost -50"
+    ],
+    "actionIntervalSeconds": 9.0,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 14,
+    "name": "Caulipower",
+    "category": "Homing",
+    "tags": [
+      "Magic",
+      "charge"
+    ],
+    "cost": 250,
+    "baseHealth": 300,
+    "damage": "Insta-kill",
+    "baseAbility": "شلیک تیر جادویی (جهت رندوم، عبور از موانع، هیپنوتیزم‌کننده).",
+    "plantFoodEffect": "هیپنوتیزم کردن چند زامبی تصادفی در باغچه.",
+    "levelUpgrades": [
+      "Cooldown -2s",
+      "HP +150",
+      "Cost -50"
+    ],
+    "actionIntervalSeconds": 12.0,
+    "rechargeSeconds": 15.0
+  },
+  {
+    "id": 15,
+    "name": "Electric Blueberry",
+    "category": "Homing",
+    "tags": [
+      "charge"
+    ],
+    "cost": 150,
+    "baseHealth": 300,
+    "damage": "5000",
+    "baseAbility": "شلیک رعدوبرق (جهت رندوم، نابودی کامل یک زامبی).",
+    "plantFoodEffect": "نابودی کامل ۳ زامبی تصادفی.",
+    "levelUpgrades": [
+      "Cooldown -2s",
+      "Target Priority Up",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 12.0,
+    "rechargeSeconds": 15.0
+  },
+  {
+    "id": 16,
+    "name": "Bowling Bulb",
+    "category": "Shooter",
+    "tags": [
+      "charge"
+    ],
+    "cost": 200,
+    "baseHealth": 300,
+    "damage": "40/120/180",
+    "baseAbility": "شلیک 3 نوع پیاز که بین لاین‌ها کمانه می‌کند (مثل wall nut bowling). تاخیر هر یک Cyan: 2s | Blue: 5s | Orange: 10s",
+    "plantFoodEffect": "شلیک ۳ پیاز انفجاری بزرگ که کمانه می‌کنند.",
+    "levelUpgrades": [
+      "Regen -1s",
+      "Dmg +15",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 2.0,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 17,
+    "name": "Cactus",
+    "category": "Strike-through",
+    "tags": [],
+    "cost": 175,
+    "baseHealth": 300,
+    "damage": "30",
+    "baseAbility": "شلیک خار مستقیم (عبور از ۳ زامبی).",
+    "plantFoodEffect": "تیغ‌های برقی با دمیج بالا و نفوذ نامحدود.",
+    "levelUpgrades": [
+      "Pierce +1",
+      "Dmg +10",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 1.5,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 18,
+    "name": "Fire Peashooter",
+    "category": "Shooter",
+    "tags": [
+      "Fire",
+      "Pea"
+    ],
+    "cost": 175,
+    "baseHealth": 300,
+    "damage": "40",
+    "baseAbility": "شلیک تیر مستقیم آتشی (دمیج ۲ برابر).",
+    "plantFoodEffect": "شلیک رگباری آتشین در کل لاین.",
+    "levelUpgrades": [
+      "Dmg +10",
+      "HP +200",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 1.5,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 19,
+    "name": "Starfruit",
+    "category": "Shooter",
+    "tags": [],
+    "cost": 150,
+    "baseHealth": 300,
+    "damage": "20",
+    "baseAbility": "شلیک در ۵ جهت ستاره‌ای شامل عقب.",
+    "plantFoodEffect": "شلیک رگباری ستاره در تمام جهات.",
+    "levelUpgrades": [
+      "Atk Speed +10%",
+      "Dmg +10",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 1.5,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 20,
+    "name": "Goo Peashooter",
+    "category": "Shooter",
+    "tags": [
+      "Poison"
+    ],
+    "cost": 125,
+    "baseHealth": 300,
+    "damage": "20",
+    "baseAbility": "شلیک تیر مستقیم (نادیده گرفتن زره + آسیب مستمر).",
+    "plantFoodEffect": "شلیک رگباری سمی که زامبی‌ها را درجا مسموم می‌کند.",
+    "levelUpgrades": [
+      "Dmg/Tick +5",
+      "HP +150",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 1.5,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 21,
+    "name": "Mega Gatling Pea",
+    "category": "Shooter",
+    "tags": [
+      "Pea"
+    ],
+    "cost": 400,
+    "baseHealth": 300,
+    "damage": "20x4",
+    "baseAbility": "شلیک ۴ تیر مستقیم متوالی با سرعت بسیار بالا.",
+    "plantFoodEffect": "شلیک رگباری عظیم و طولانی در لاین به همراه 4 تیر غول‌پیکر.",
+    "levelUpgrades": [
+      "Dmg +10",
+      "Plant Food Chance +5%",
+      "Cost -50"
+    ],
+    "actionIntervalSeconds": 1.5,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 22,
+    "name": "Sea-shroom",
+    "category": "Shooter",
+    "tags": [
+      "Shroom",
+      "Water"
+    ],
+    "cost": 0,
+    "baseHealth": 300,
+    "damage": "20",
+    "baseAbility": "شلیک تیر با برد کوتاه. دارای طول عمر محدود 60 ثانیه.",
+    "plantFoodEffect": "شلیک رگباری و ریست شدن طول عمر تمام Sea-shroomها.",
+    "levelUpgrades": [
+      "Range +1 Tile",
+      "Dmg +5",
+      "Lifespan +10s"
+    ],
+    "actionIntervalSeconds": 1.5,
+    "rechargeSeconds": 15.0
+  },
+  {
+    "id": 23,
+    "name": "Puff-shroom",
+    "category": "Shooter",
+    "tags": [
+      "Shroom"
+    ],
+    "cost": 0,
+    "baseHealth": 300,
+    "damage": "20",
+    "baseAbility": "شلیک تیر با برد کوتاه. دارای طول عمر محدود 60 ثانیه.",
+    "plantFoodEffect": "شلیک رگباری و ریست شدن طول عمر تمامی Puff-shroomها.",
+    "levelUpgrades": [
+      "Lifespan +10s",
+      "Dmg +10",
+      "Range +1 Tile"
+    ],
+    "actionIntervalSeconds": 1.5,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 24,
+    "name": "Fume-shroom",
+    "category": "Strike-through",
+    "tags": [
+      "Shroom"
+    ],
+    "cost": 125,
+    "baseHealth": 300,
+    "damage": "20",
+    "baseAbility": "شلیک دود با برد متوسط که از زامبی‌ها رد می‌شود.",
+    "plantFoodEffect": "پرتاب توده دود عظیم که زامبی‌ها را به عقب می‌راند.",
+    "levelUpgrades": [
+      "Range +1 Tile",
+      "Dmg +10",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 1.5,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 25,
+    "name": "Cabbage-pult",
+    "category": "Lobber",
+    "tags": [],
+    "cost": 100,
+    "baseHealth": 300,
+    "damage": "40",
+    "baseAbility": "شلیک هوایی از روی موانع.",
+    "plantFoodEffect": "پرتاب کلم به چند زامبی تصادفی.",
+    "levelUpgrades": [
+      "Dmg +10",
+      "Atk Speed +15%",
+      "HP +150"
+    ],
+    "actionIntervalSeconds": 2.9,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 26,
+    "name": "Kernel-pult",
+    "category": "Lobber",
+    "tags": [],
+    "cost": 100,
+    "baseHealth": 300,
+    "damage": "20/40",
+    "baseAbility": "شلیک دانه ذرت (آسیب کم) یا کره (توقف موقت زامبی).",
+    "plantFoodEffect": "پرتاب کره به سر تمامی زامبی‌های زمین.",
+    "levelUpgrades": [
+      "Butter +5%",
+      "Dmg +10",
+      "HP +150"
+    ],
+    "actionIntervalSeconds": 2.9,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 27,
+    "name": "Melon-pult",
+    "category": "Lobber",
+    "tags": [
+      "AoE"
+    ],
+    "cost": 325,
+    "baseHealth": 300,
+    "damage": "80",
+    "baseAbility": "شلیک هوایی سنگین با آسیب مساحتی.",
+    "plantFoodEffect": "پرتاب هندوانه غول‌پیکر به زامبی‌های تصادفی.",
+    "levelUpgrades": [
+      "Cost -25",
+      "AoE Dmg +15",
+      "Dmg +30"
+    ],
+    "actionIntervalSeconds": 2.9,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 28,
+    "name": "Winter Melon",
+    "category": "Lobber",
+    "tags": [
+      "Ice",
+      "AoE"
+    ],
+    "cost": 500,
+    "baseHealth": 300,
+    "damage": "80",
+    "baseAbility": "شلیک هوایی سنگین با آسیب مساحتی (کندکننده سرعت).",
+    "plantFoodEffect": "پرتاب هندوانه یخی به زامبی‌های تصادفی.",
+    "levelUpgrades": [
+      "Cost -50",
+      "AoE Dmg +15",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 2.9,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 29,
+    "name": "Pepper-pult",
+    "category": "Lobber",
+    "tags": [
+      "Fire",
+      "AoE"
+    ],
+    "cost": 200,
+    "baseHealth": 300,
+    "damage": "50",
+    "baseAbility": "شلیک هوایی با آسیب مساحتی (گرم‌کننده محیط اطراف).",
+    "plantFoodEffect": "پرتاب فلفل‌های بزرگ به ۳ زامبی تصادفی.",
+    "levelUpgrades": [
+      "Dmg +15",
+      "Warmth Radius +1",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 2.9,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 30,
+    "name": "Potato Mine",
+    "category": "Explosive",
+    "tags": [
+      "Trap",
+      "charge"
+    ],
+    "cost": 25,
+    "baseHealth": 300,
+    "damage": "1800",
+    "baseAbility": "مسلح شدن با تاخیر ۱۵ ثانیه؛ انفجار هنگام تماس.",
+    "plantFoodEffect": "مسلح شدن آنی و پرتاب ۲ مین کلون دیگر.",
+    "levelUpgrades": [
+      "Arm Time -3s",
+      "Cooldown -5s",
+      "Dmg +600"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 25.0
+  },
+  {
+    "id": 31,
+    "name": "Primal Potato Mine",
+    "category": "Explosive",
+    "tags": [
+      "Trap",
+      "charge"
+    ],
+    "cost": 50,
+    "baseHealth": 300,
+    "damage": "2400",
+    "baseAbility": "مسلح شدن سریع‌تر ۵ ثانیه ای و انفجار مساحتی ۳x۳.",
+    "plantFoodEffect": "مسلح شدن آنی و پرتاب ۲ مین به نقاط دیگر.",
+    "levelUpgrades": [
+      "Arm Time -1s",
+      "Cooldown -3s",
+      "Dmg +400"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 32,
+    "name": "Cherry Bomb",
+    "category": "Explosive",
+    "tags": [],
+    "cost": 150,
+    "baseHealth": 0,
+    "damage": "1800",
+    "baseAbility": "انفجار فوری مساحت ۳x۳.",
+    "plantFoodEffect": "ندارد (مصرفی آنی)",
+    "levelUpgrades": [
+      "Cooldown -5s",
+      "Dmg +600",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 35.0
+  },
+  {
+    "id": 33,
+    "name": "Squash",
+    "category": "Explosive",
+    "tags": [
+      "Trap"
+    ],
+    "cost": 50,
+    "baseHealth": 300,
+    "damage": "1800",
+    "baseAbility": "له کردن اولین زامبی مجاور.",
+    "plantFoodEffect": "له کردن ۲ زامبی تصادفی در سطح زمین.",
+    "levelUpgrades": [
+      "Cooldown -3s",
+      "Dmg +600",
+      "Can crush 2x"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 20.0
+  },
+  {
+    "id": 34,
+    "name": "Grapeshot",
+    "category": "Explosive",
+    "tags": [],
+    "cost": 150,
+    "baseHealth": 0,
+    "damage": "1800",
+    "baseAbility": "انفجار مساحتی ۳x۳ و پرتاب حبه‌های کمانه‌کننده که پس از ۵ ثانیه نابود می‌شوند.",
+    "plantFoodEffect": "ندارد (مصرفی آنی)",
+    "levelUpgrades": [
+      "Dmg +600",
+      "Bounces +1",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 35.0
+  },
+  {
+    "id": 35,
+    "name": "Jalapeno",
+    "category": "Explosive",
+    "tags": [
+      "Fire"
+    ],
+    "cost": 125,
+    "baseHealth": 0,
+    "damage": "1800",
+    "baseAbility": "آتش زدن کل زامبی‌های یک لاین به صورت آنی (ذوب یخ).",
+    "plantFoodEffect": "ندارد (مصرفی آنی)",
+    "levelUpgrades": [
+      "Cooldown -5s",
+      "Dmg +600",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 35.0
+  },
+  {
+    "id": 36,
+    "name": "Doom-shroom",
+    "category": "Explosive",
+    "tags": [
+      "Shroom"
+    ],
+    "cost": 125,
+    "baseHealth": 0,
+    "damage": "1800",
+    "baseAbility": "انفجار مهیب در کل باغچه و ایجاد یک گودال غیرقابل کشت.",
+    "plantFoodEffect": "ندارد (مصرفی آنی)",
+    "levelUpgrades": [
+      "Cooldown -5s",
+      "Dmg +800",
+      "Cost -50"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 15.0
+  },
+  {
+    "id": 37,
+    "name": "Tangle Kelp",
+    "category": "Explosive",
+    "tags": [
+      "Trap",
+      "Water"
+    ],
+    "cost": 25,
+    "baseHealth": 300,
+    "damage": "Insta-kill",
+    "baseAbility": "کشیدن اولین زامبی آبی به زیر آب و نابودی آن (مخصوص ساحل).",
+    "plantFoodEffect": "کشیدن چند زامبی تصادفی در آب به زیر آب.",
+    "levelUpgrades": [
+      "Cooldown -5s",
+      "Targets +1",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 15.0
+  },
+  {
+    "id": 38,
+    "name": "Iceberg Lettuce",
+    "category": "Explosive",
+    "tags": [
+      "Trap",
+      "Ice"
+    ],
+    "cost": 0,
+    "baseHealth": 300,
+    "damage": "0",
+    "baseAbility": "یخ زدن اولین زامبی که روی آن پا بگذارد.",
+    "plantFoodEffect": "یخ زدن تمامی زامبی‌های موجود در تصویر.",
+    "levelUpgrades": [
+      "Cooldown -2s",
+      "Freeze Time +2s",
+      "Cost -0"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 20.0
+  },
+  {
+    "id": 39,
+    "name": "Bonk Choy",
+    "category": "Melee",
+    "tags": [],
+    "cost": 150,
+    "baseHealth": 300,
+    "damage": "15",
+    "baseAbility": "ضربه فیزیکی به خانه‌های جلو و عقب.",
+    "plantFoodEffect": "مشت زدن رگباری به شعاع ۳x۳ اطراف خود.",
+    "levelUpgrades": [
+      "Dmg +5",
+      "Atk Speed +10%",
+      "HP +200"
+    ],
+    "actionIntervalSeconds": 0.25,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 40,
+    "name": "Phat Beet",
+    "category": "Melee",
+    "tags": [
+      "AoE"
+    ],
+    "cost": 150,
+    "baseHealth": 300,
+    "damage": "15",
+    "baseAbility": "ضربه صوتی به مساحت ۳x۳ اطراف.",
+    "plantFoodEffect": "ضربه صوتی بسیار قدرتمند به تمام زامبی‌های اطراف.",
+    "levelUpgrades": [
+      "Dmg +10",
+      "Atk Speed +10%",
+      "HP +200"
+    ],
+    "actionIntervalSeconds": 2.0,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 41,
+    "name": "Chomper",
+    "category": "Melee",
+    "tags": [],
+    "cost": 150,
+    "baseHealth": 300,
+    "damage": "Insta-kill",
+    "baseAbility": "بلعیدن آنی؛ نابودی یک زامبی درجا و سپس توقف برای هضم به مدت ۴۰ ثانیه.",
+    "plantFoodEffect": "بلعیدن همزمان ۳ زامبی از فاصله دور.",
+    "levelUpgrades": [
+      "Digest -2s",
+      "HP +200",
+      "Digest -3s"
+    ],
+    "actionIntervalSeconds": 40.0,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 42,
+    "name": "Wasabi Whip",
+    "category": "Melee",
+    "tags": [
+      "Fire"
+    ],
+    "cost": 150,
+    "baseHealth": 300,
+    "damage": "40",
+    "baseAbility": "ضربه شلاق به خانه‌های جلو و عقب (گرم‌کننده محیط).",
+    "plantFoodEffect": "چرخش شلاق در مساحت ۳x۳.",
+    "levelUpgrades": [
+      "Dmg +10",
+      "Range +1 Tile",
+      "HP +200"
+    ],
+    "actionIntervalSeconds": 2.0,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 43,
+    "name": "Kiwibeast",
+    "category": "Melee",
+    "tags": [
+      "AoE",
+      "wramp-up"
+    ],
+    "cost": 175,
+    "baseHealth": 300,
+    "damage": "15/30/45",
+    "baseAbility": "موج صوتی مساحتی؛ با گذر زمان بزرگتر شده و دمیج بیشتر می‌دهد. To Stg2: 24s | To Stg3: 72s",
+    "plantFoodEffect": "پرش و کوبیدن محکم به زمین با دمیج مساحتی.",
+    "levelUpgrades": [
+      "HP +200",
+      "Dmg +15",
+      "Max Size +1"
+    ],
+    "actionIntervalSeconds": 2.0,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 44,
+    "name": "Wall-nut",
+    "category": "Wall-nut",
+    "tags": [],
+    "cost": 50,
+    "baseHealth": 4000,
+    "damage": "0",
+    "baseAbility": "سد دفاعی مقاوم برای متوقف کردن زامبی‌ها.",
+    "plantFoodEffect": "دریافت زره دائمی به اندازه ۴۰۰۰ جان اضافه‌تر.",
+    "levelUpgrades": [
+      "HP +1000",
+      "Cooldown -5s",
+      "HP +1500"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 20.0
+  },
+  {
+    "id": 45,
+    "name": "Tall-nut",
+    "category": "Wall-nut",
+    "tags": [],
+    "cost": 125,
+    "baseHealth": 8000,
+    "damage": "0",
+    "baseAbility": "سد بلند؛ جلوگیری از پریدن زامبی‌ها از روی آن.",
+    "plantFoodEffect": "دریافت زره دائمی ۸۰۰۰ تایی.",
+    "levelUpgrades": [
+      "HP +2000",
+      "Cooldown -5s",
+      "HP +3000"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 20.0
+  },
+  {
+    "id": 46,
+    "name": "Endurian",
+    "category": "Wall-nut",
+    "tags": [],
+    "cost": 100,
+    "baseHealth": 3000,
+    "damage": "20",
+    "baseAbility": "سد دفاعی با قابلیت بازتاب دمیج به زامبی مهاجم.",
+    "plantFoodEffect": "دریافت زره فلزی و افزایش دمیج انعکاسی.",
+    "levelUpgrades": [
+      "Reflect Dmg +5",
+      "HP +1000",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 15.0
+  },
+  {
+    "id": 47,
+    "name": "Garlic",
+    "category": "Wall-nut",
+    "tags": [
+      "moveZombies"
+    ],
+    "cost": 50,
+    "baseHealth": 300,
+    "damage": "0",
+    "baseAbility": "با خورده شدن، زامبی را مجبور به حرکت به لاین مجاور می‌کند.",
+    "plantFoodEffect": "انتقال اجباری تمام زامبی‌های لاین به لاین‌های دیگر.",
+    "levelUpgrades": [
+      "HP +150",
+      "Cooldown -3s",
+      "HP +250"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 20.0
+  },
+  {
+    "id": 48,
+    "name": "Sweet Potato",
+    "category": "Wall-nut",
+    "tags": [
+      "moveZombies"
+    ],
+    "cost": 150,
+    "baseHealth": 3000,
+    "damage": "0",
+    "baseAbility": "جذب‌کننده؛ زامبی‌های لاین‌های مجاور را به لاین خود می‌کشد.",
+    "plantFoodEffect": "جذب تمام زامبی‌های اطراف و بازیابی کامل جان.",
+    "levelUpgrades": [
+      "HP +1000",
+      "Cooldown -5s",
+      "HP +1500"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 20.0
+  },
+  {
+    "id": 49,
+    "name": "Explode-o-nut",
+    "category": "Wall-nut",
+    "tags": [
+      "Explosive"
+    ],
+    "cost": 50,
+    "baseHealth": 4000,
+    "damage": "1800",
+    "baseAbility": "سد دفاعی که به محض از بین رفتن جانش، انفجار مساحتی ایجاد می‌کند.",
+    "plantFoodEffect": "دریافت زره فلزی (هنگام نابودی زره نیز منفجر می‌شود).",
+    "levelUpgrades": [
+      "HP +1000",
+      "Explode Dmg +200",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 20.0
+  },
+  {
+    "id": 50,
+    "name": "Pumpkin",
+    "category": "Wall-nut",
+    "tags": [
+      "stack"
+    ],
+    "cost": 150,
+    "baseHealth": 4000,
+    "damage": "0",
+    "baseAbility": "سد دفاعی پوششی؛ روی سایر گیاهان کاشته می‌شود تا از آن‌ها محافظت کند.",
+    "plantFoodEffect": "دریافت زره فلزی قدرتمند.",
+    "levelUpgrades": [
+      "HP +1000",
+      "Cooldown -5s",
+      "HP +1500"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 20.0
+  },
+  {
+    "id": 51,
+    "name": "Sun Bean",
+    "category": "Wall-nut",
+    "tags": [
+      "Sun"
+    ],
+    "cost": 50,
+    "baseHealth": 1000,
+    "damage": "0",
+    "baseAbility": "مثل دیوار دفاعی عمل می‌کند و با هر ضربه 5 خورشید تولید می‌کند.",
+    "plantFoodEffect": "دریافت زره فلزی قدرتمند.",
+    "levelUpgrades": [
+      "Sun Drop +5",
+      "HP +150",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 20.0
+  },
+  {
+    "id": 52,
+    "name": "Torchwood",
+    "category": "Modifier",
+    "tags": [
+      "Fire"
+    ],
+    "cost": 175,
+    "baseHealth": 300,
+    "damage": "0",
+    "baseAbility": "تغییر خواص تیر؛ تبدیل تیر عبوری به آتشی (دمیج دو برابر و ذوب یخ).",
+    "plantFoodEffect": "ایجاد شعله آبی (دمیج تیرها را ۳ برابر می‌کند).",
+    "levelUpgrades": [
+      "HP +300",
+      "AoE on Death",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 53,
+    "name": "Magnet-shroom",
+    "category": "Homing",
+    "tags": [
+      "Shroom",
+      "Magic"
+    ],
+    "cost": 100,
+    "baseHealth": 300,
+    "damage": "0",
+    "baseAbility": "خلع سلاح؛ جذب اشیای فلزی (سطل/کلاهخود) از سر زامبی‌ها.",
+    "plantFoodEffect": "جذب چندین فلز همزمان و هضم آنها",
+    "levelUpgrades": [
+      "Range +1 Tile",
+      "Cooldown -5s",
+      "HP +200"
+    ],
+    "actionIntervalSeconds": 10.0,
+    "rechargeSeconds": 15.0
+  },
+  {
+    "id": 54,
+    "name": "Hypno-shroom",
+    "category": "Modifier",
+    "tags": [
+      "Shroom",
+      "Magic"
+    ],
+    "cost": 125,
+    "baseHealth": 300,
+    "damage": "0",
+    "baseAbility": "با خورده شدن، زامبی مهاجم هیپنوتیزم شده و به نفع بازیکن می‌جنگد.",
+    "plantFoodEffect": "تبدیل زامبی خورنده به غول متفق (Gargantuar).",
+    "levelUpgrades": [
+      "Cost -25",
+      "Zombie HP Buff",
+      "Zombie Dmg Buff"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 20.0
+  },
+  {
+    "id": 55,
+    "name": "Cat-tail",
+    "category": "Homing",
+    "tags": [],
+    "cost": 175,
+    "baseHealth": 300,
+    "damage": "15",
+    "baseAbility": "تیر هدف‌دار به سمت نزدیک‌ترین زامبی شلیک می‌کند",
+    "plantFoodEffect": "شلیک رگباری تیر هدف‌دار",
+    "levelUpgrades": [
+      "Dmg +10",
+      "HP +200",
+      "Cost -25"
+    ],
+    "actionIntervalSeconds": 1.5,
+    "rechargeSeconds": 20.0
+  },
+  {
+    "id": 56,
+    "name": "Imitater",
+    "category": "Modifier",
+    "tags": [],
+    "cost": 0,
+    "baseHealth": 0,
+    "damage": "0",
+    "baseAbility": "کپی کردن یک گیاه دیگر (امکان استفاده از دو کارت یکسان).",
+    "plantFoodEffect": "ندارد (بر اساس گیاه کپی شده)",
+    "levelUpgrades": [
+      "Cooldown -2s",
+      "Cost -25",
+      "plant food on enterance"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 0.0
+  },
+  {
+    "id": 57,
+    "name": "Ice-shroom",
+    "category": "Explosive",
+    "tags": [
+      "Shroom",
+      "Ice"
+    ],
+    "cost": 75,
+    "baseHealth": 0,
+    "damage": "0",
+    "baseAbility": "یخ زدن و توقف موقت تمامی زامبی‌های موجود در کل نقشه.",
+    "plantFoodEffect": "ندارد (مصرفی آنی)",
+    "levelUpgrades": [
+      "Freeze Time +2s",
+      "Cooldown -5s",
+      "Dmg +50"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 50.0
+  },
+  {
+    "id": 58,
+    "name": "Lily Pad",
+    "category": "Modifier",
+    "tags": [
+      "Water",
+      "stack"
+    ],
+    "cost": 25,
+    "baseHealth": 300,
+    "damage": "0",
+    "baseAbility": "بستر کاشت سایر گیاهان روی آب (ضروری برای ساحل).",
+    "plantFoodEffect": "ایجاد چند کپی از خود روی خانه‌های خالی آب.",
+    "levelUpgrades": [
+      "Cost -25",
+      "HP +200",
+      "Cooldown -2s"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 59,
+    "name": "Hot Potato",
+    "category": "Explosive",
+    "tags": [
+      "Fire"
+    ],
+    "cost": 0,
+    "baseHealth": 0,
+    "damage": "0",
+    "baseAbility": "کاشت روی یخ برای آب کردن فوری آن (ضروری برای غار یخ‌زده).",
+    "plantFoodEffect": "ندارد (مصرفی آنی)",
+    "levelUpgrades": [
+      "Cooldown -2s",
+      "Melt Area 3x3",
+      "Explode on Finish"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 5.0
+  },
+  {
+    "id": 60,
+    "name": "Grave Buster",
+    "category": "Explosive",
+    "tags": [],
+    "cost": 0,
+    "baseHealth": 0,
+    "damage": "Insta-kill",
+    "baseAbility": "از بین بردن قبرها. (ضروری برای مراحل مصر باستان و قرون تاریک).",
+    "plantFoodEffect": "ندارد (مصرفی آنی)",
+    "levelUpgrades": [
+      "Eat Time -1s",
+      "Cooldown -2s",
+      "Explode on Finish"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 10.0
+  },
+  {
+    "id": 61,
+    "name": "Enlighten-mint",
+    "category": "Sun Producer",
+    "tags": [],
+    "cost": 0,
+    "baseHealth": 0,
+    "damage": "0",
+    "baseAbility": "اعمال موقت پلنت فود به تمامی گیاهان خانواده خود",
+    "plantFoodEffect": "ندارد (مصرفی آنی)",
+    "levelUpgrades": [
+      "Duration +1s",
+      "Cooldown -5s",
+      "reset family cooldowns"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 85.0
+  },
+  {
+    "id": 62,
+    "name": "Appease-mint",
+    "category": "Shooter",
+    "tags": [],
+    "cost": 0,
+    "baseHealth": 0,
+    "damage": "0",
+    "baseAbility": "اعمال موقت پلنت فود به تمامی گیاهان خانواده خود",
+    "plantFoodEffect": "ندارد (مصرفی آنی)",
+    "levelUpgrades": [
+      "Duration +1s",
+      "Cooldown -5s",
+      "reset family cooldowns"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 85.0
+  },
+  {
+    "id": 63,
+    "name": "Arma-mint",
+    "category": "Lobber",
+    "tags": [],
+    "cost": 0,
+    "baseHealth": 0,
+    "damage": "0",
+    "baseAbility": "اعمال موقت پلنت فود به تمامی گیاهان خانواده خود",
+    "plantFoodEffect": "ندارد (مصرفی آنی)",
+    "levelUpgrades": [
+      "Duration +1s",
+      "Cooldown -5s",
+      "reset family cooldowns"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 85.0
+  },
+  {
+    "id": 64,
+    "name": "Bombard-mint",
+    "category": "Explosive",
+    "tags": [],
+    "cost": 0,
+    "baseHealth": 0,
+    "damage": "0",
+    "baseAbility": "اعمال موقت پلنت فود به تمامی گیاهان خانواده خود",
+    "plantFoodEffect": "ندارد (مصرفی آنی)",
+    "levelUpgrades": [
+      "Duration +1s",
+      "Cooldown -5s",
+      "reset family cooldowns"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 85.0
+  },
+  {
+    "id": 65,
+    "name": "Enforce-mint",
+    "category": "Melee",
+    "tags": [],
+    "cost": 0,
+    "baseHealth": 0,
+    "damage": "0",
+    "baseAbility": "اعمال موقت پلنت فود به تمامی گیاهان خانواده خود",
+    "plantFoodEffect": "ندارد (مصرفی آنی)",
+    "levelUpgrades": [
+      "Duration +1s",
+      "Cooldown -5s",
+      "reset family cooldowns"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 85.0
+  },
+  {
+    "id": 66,
+    "name": "Reinforce-mint",
+    "category": "Wall-nut",
+    "tags": [],
+    "cost": 0,
+    "baseHealth": 0,
+    "damage": "0",
+    "baseAbility": "اعمال موقت پلنت فود به تمامی گیاهان خانواده خود",
+    "plantFoodEffect": "ندارد (مصرفی آنی)",
+    "levelUpgrades": [
+      "Duration +1s",
+      "Cooldown -5s",
+      "reset family cooldowns"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 85.0
+  },
+  {
+    "id": 67,
+    "name": "Enchant-mint",
+    "category": "Modifier",
+    "tags": [],
+    "cost": 0,
+    "baseHealth": 0,
+    "damage": "0",
+    "baseAbility": "اعمال موقت پلنت فود به تمامی گیاهان خانواده خود",
+    "plantFoodEffect": "ندارد (مصرفی آنی)",
+    "levelUpgrades": [
+      "Duration +1s",
+      "Cooldown -5s",
+      "reset family cooldowns"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 85.0
+  },
+  {
+    "id": 68,
+    "name": "Pierce-mint",
+    "category": "Strike-through",
+    "tags": [],
+    "cost": 0,
+    "baseHealth": 0,
+    "damage": "0",
+    "baseAbility": "اعمال موقت پلنت فود به تمامی گیاهان خانواده خود",
+    "plantFoodEffect": "ندارد (مصرفی آنی)",
+    "levelUpgrades": [
+      "Duration +1s",
+      "Cooldown -5s",
+      "reset family cooldowns"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 85.0
+  },
+  {
+    "id": 69,
+    "name": "catTail-mint",
+    "category": "Homing",
+    "tags": [],
+    "cost": 0,
+    "baseHealth": 0,
+    "damage": "0",
+    "baseAbility": "اعمال موقت پلنت فود به تمامی گیاهان خانواده خود",
+    "plantFoodEffect": "ندارد (مصرفی آنی)",
+    "levelUpgrades": [
+      "Duration +1s",
+      "Cooldown -5s",
+      "reset family cooldowns"
+    ],
+    "actionIntervalSeconds": null,
+    "rechargeSeconds": 85.0
+  }
+]

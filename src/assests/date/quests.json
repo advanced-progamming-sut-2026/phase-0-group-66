@@ -1,0 +1,182 @@
+[
+  {
+    "id": 1,
+    "title": "آفتاب گیر روزانه",
+    "category": "روزانه",
+    "completionCondition": "جمع آوری sun_amount واحد خورشید در طول یک روز",
+    "rewardDescription": "sun_amount / ۱۰۰ سکه",
+    "priority": "متوسط",
+    "variables": "3000-4000-5000"
+  },
+  {
+    "id": 2,
+    "title": "شکارچی chapter",
+    "category": "اصلی",
+    "completionCondition": "شکست دادن ۵۰ زامبی از فصل chapter",
+    "rewardDescription": "۱۰ پک دانه",
+    "priority": "بالا",
+    "variables": "هرکدام از فصل‌های بازی"
+  },
+  {
+    "id": 3,
+    "title": "plant باز حرفه‌ای",
+    "category": "روزانه",
+    "completionCondition": "ده تا زامبی را فقط با plant بکش",
+    "rewardDescription": "گیاه جدید شانسی",
+    "priority": "بالا",
+    "variables": "هر گیاهی که قابلیت کشتن دارد"
+  },
+  {
+    "id": 4,
+    "title": "only cactus",
+    "category": "روزانه",
+    "completionCondition": "ده تا زامبی را فقط با کاکتوس بکش",
+    "rewardDescription": "۲۰ الماس (Gem)",
+    "priority": "بالا",
+    "variables": ""
+  },
+  {
+    "id": 5,
+    "title": "گیاه خوار اقتصادی",
+    "category": "اصلی",
+    "completionCondition": "پیروزی در یک مرحله بدون از دست دادن بیش از n گیاه",
+    "rewardDescription": "۲۰ - n پک دانه",
+    "priority": "بالا",
+    "variables": "0-1-2-3-4-5"
+  },
+  {
+    "id": 6,
+    "title": "استاد دفاع",
+    "category": "چالش (Epic)",
+    "completionCondition": "اتمام یک مرحله دقیقا با صفر خورشید",
+    "rewardDescription": "۲۰۰ الماس (Gem)",
+    "priority": "بحرانی",
+    "variables": ""
+  },
+  {
+    "id": 7,
+    "title": "سرعت عمل",
+    "category": "اصلی",
+    "completionCondition": "کشتن ۱۰ زامبی در کمتر از ۳۰ ثانیه از شروع موج اول حمله زامبی ها",
+    "rewardDescription": "۵۰۰ سکه (Coin)",
+    "priority": "متوسط",
+    "variables": ""
+  },
+  {
+    "id": 8,
+    "title": "تخریب گر حرفه ای",
+    "category": "روزانه",
+    "completionCondition": "استفاده از ۳ گیاه انفجاری در یک مرحله",
+    "rewardDescription": "۱۰۰ سکه (Coin)",
+    "priority": "کم",
+    "variables": ""
+  },
+  {
+    "id": 9,
+    "title": "تقارن",
+    "category": "روزانه",
+    "completionCondition": "باغچه بازی در نهایت باید متقارن باشد",
+    "rewardDescription": "۵۰۰ سکه (Coin)",
+    "priority": "بالا",
+    "variables": ""
+  },
+  {
+    "id": 10,
+    "title": "کشتار خانوادگی",
+    "category": "روزانه",
+    "completionCondition": "تنها از گیاهان family_type برای کشتن زامبی ها استفاده شود",
+    "rewardDescription": "۱۰۰۰ سکه",
+    "priority": "متوسط",
+    "variables": "خانواده‌ی گیاهان"
+  },
+  {
+    "id": 11,
+    "title": "شکوفایی در محدودیت‌ها",
+    "category": "روزانه",
+    "completionCondition": "برای برد در مرحله از هیچ گیاهی از خانواده family_type استفاده نشود",
+    "rewardDescription": "۱۰۰ الماس (Gem)",
+    "priority": "بالا",
+    "variables": "خانواده‌ی گیاهان"
+  },
+  {
+    "id": 12,
+    "title": "شب یا صبح",
+    "category": "چالش (Epic)",
+    "completionCondition": "تبه پایان رساندن بازی روز با گیاهان شب (mushroom ها)",
+    "rewardDescription": "۲۰ الماس (Gem)",
+    "priority": "بالا",
+    "variables": ""
+  },
+  {
+    "id": 13,
+    "title": "برد پشت برد",
+    "category": "روزانه",
+    "completionCondition": "۵ مرحله را پشت سر هم با بیشترین سختی ببر",
+    "rewardDescription": "۵۰۰۰ سکه(Coin)",
+    "priority": "متوسط",
+    "variables": ""
+  },
+  {
+    "id": 14,
+    "title": "تقریبا پیروز",
+    "category": "روزانه",
+    "completionCondition": "۱۰ زامبی را در ستون اول ردیفی بکش که چمن‌زن ندارد",
+    "rewardDescription": "۳۰۰ سکه(Coin)",
+    "priority": "متوسط",
+    "variables": ""
+  },
+  {
+    "id": 15,
+    "title": "OCD نَمَنَ",
+    "category": "روزانه",
+    "completionCondition": "در حالتی مرحله را ببر که هیچ تقارنی در باغچه وجود ندارد (به جز ردیف وسط)",
+    "rewardDescription": "۸۰۰ سکه(Coin)",
+    "priority": "متوسط",
+    "variables": ""
+  },
+  {
+    "id": 16,
+    "title": "روز ابری",
+    "category": "روزانه",
+    "completionCondition": "یک مرحله را تنها با ۳ تا گیاه تولیدکننده خورشید بزن",
+    "rewardDescription": "۱۰ الماس (Gem)",
+    "priority": "بالا",
+    "variables": ""
+  },
+  {
+    "id": 17,
+    "title": "یه ستون کمتر",
+    "category": "روزانه",
+    "completionCondition": "یک مرحله را در صورتی ببرد که در ستون nام گیاهی نکاشته باشد",
+    "rewardDescription": "۱۰ الماس (Gem)",
+    "priority": "بالا",
+    "variables": "تعداد ستون‌ها"
+  },
+  {
+    "id": 18,
+    "title": "سطر بی دفاع",
+    "category": "روزانه",
+    "completionCondition": "یک مرحله را در صورتی ببرد که سطر nام را هیچ گیاهی نکاشته باشد",
+    "rewardDescription": "۲۰ الماس (Gem)",
+    "priority": "بالا",
+    "variables": "تعداد سطرها"
+  },
+  {
+    "id": 19,
+    "title": "صلیب بی دفاع",
+    "category": "روزانه",
+    "completionCondition": "یک مرحله را در صورتی ببرد که ستون و ردیف nام خالی باشد",
+    "rewardDescription": "۲۵ الماس (Gem)",
+    "priority": "بالا",
+    "variables": "مینیمم تعداد سطر و ستون"
+  },
+  {
+    "id": 20,
+    "title": "وقت چمن‌زنی",
+    "category": "چالش (Epic)",
+    "completionCondition": "حداقل n زامبی را با چمن‌زن بکش",
+    "rewardDescription": "n الماس",
+    "priority": "متوسط",
+    "variables": "10-20-30-40-50"
+  }
+]
