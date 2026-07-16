@@ -3,54 +3,60 @@ package model;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public final class QuestDataLoader {
     public List<QuestDefinition> load(Path path) throws IOException {
-        List<List<String>> rows = CsvTableReader.read(path);
-        if (rows.isEmpty()) {
-            throw new IOException("Quest data is empty: " + path);
-        }
-        Map<String, Integer> columns = indexHeaders(rows.get(0));
+        Object root = SimpleJsonParser.parse(path);
+        List<Object> entries = requireList(root, "quest root");
         ArrayList<QuestDefinition> definitions = new ArrayList<>();
-        for (int rowIndex = 1; rowIndex < rows.size(); rowIndex++) {
-            List<String> row = rows.get(rowIndex);
+        for (int index = 0; index < entries.size(); index++) {
             try {
-                definitions.add(parseRow(row, columns));
+                definitions.add(parseDefinition(requireMap(entries.get(index), "quest entry")));
             } catch (IllegalArgumentException exception) {
-                throw new IOException("Invalid quest data at row " + (rowIndex + 1)
-                    + ": " + exception.getMessage(), exception);
+                throw new IOException("Invalid quest data at item " + (index + 1)
+                        + ": " + exception.getMessage(), exception);
             }
         }
         return List.copyOf(definitions);
     }
 
-    private QuestDefinition parseRow(List<String> row, Map<String, Integer> columns) {
+    private QuestDefinition parseDefinition(Map<String, Object> entry) {
         return new QuestDefinition(
-            value(row, columns, "نام کوئست ها"),
-            value(row, columns, "دسته بندی"),
-            value(row, columns, "شرط تکمیلی"),
-            value(row, columns, "نوع پاداش"),
-            value(row, columns, "اولویت"),
-            value(row, columns, "متغیرها")
+                requireString(entry.get("title"), "title"),
+                requireString(entry.get("category"), "category"),
+                requireString(entry.get("completionCondition"), "completionCondition"),
+                requireString(entry.get("rewardDescription"), "rewardDescription"),
+                requireString(entry.get("priority"), "priority"),
+                optionalString(entry.get("variables"))
         );
     }
 
-    private Map<String, Integer> indexHeaders(List<String> headers) {
-        LinkedHashMap<String, Integer> columns = new LinkedHashMap<>();
-        for (int index = 0; index < headers.size(); index++) {
-            columns.put(headers.get(index).trim(), index);
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> requireMap(Object value, String fieldName) {
+        if (!(value instanceof Map<?, ?>)) {
+            throw new IllegalArgumentException(fieldName + " must be an object.");
         }
-        return columns;
+        return (Map<String, Object>) value;
     }
 
-    private String value(List<String> row, Map<String, Integer> columns, String header) {
-        Integer columnIndex = columns.get(header);
-        if (columnIndex == null) {
-            throw new IllegalArgumentException("Missing required column: " + header);
+    @SuppressWarnings("unchecked")
+    private List<Object> requireList(Object value, String fieldName) {
+        if (!(value instanceof List<?>)) {
+            throw new IllegalArgumentException(fieldName + " must be an array.");
         }
-        return columnIndex < row.size() ? row.get(columnIndex).trim() : "";
+        return (List<Object>) value;
+    }
+
+    private String requireString(Object value, String fieldName) {
+        if (!(value instanceof String text) || text.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " must be a non-empty string.");
+        }
+        return text.trim();
+    }
+
+    private String optionalString(Object value) {
+        return value instanceof String text ? text.trim() : "";
     }
 }

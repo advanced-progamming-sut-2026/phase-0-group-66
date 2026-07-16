@@ -19,10 +19,10 @@ public final class GameData {
     }
 
     public static GameData loadDefault() throws IOException {
-        Path plantsPath = DataFileLocator.locate("plants.csv");
+        Path plantsPath = DataFileLocator.locate("plants.json");
         Path armorPath = DataFileLocator.locate("armor-types.json");
         Path zombiesPath = DataFileLocator.locate("zombies.json");
-        Path questsPath = DataFileLocator.locate("quests.csv");
+        Path questsPath = DataFileLocator.locate("quests.json");
 
         List<PlantDefinition> plants = new PlantDataLoader().load(plantsPath);
         List<ArmorDefinition> armors = new ArmorDataLoader().load(armorPath);
@@ -31,10 +31,10 @@ public final class GameData {
 
         ArmorFactory armorFactory = new ArmorFactory(armors);
         return new GameData(
-            new PlantFactory(plants),
-            armorFactory,
-            new ZombieFactory(zombies, armorFactory),
-            new QuestFactory(quests)
+                new PlantFactory(plants),
+                armorFactory,
+                new ZombieFactory(zombies, armorFactory),
+                new QuestFactory(quests)
         );
     }
 
@@ -56,8 +56,8 @@ public final class GameData {
 
     public String summary() {
         return "Loaded " + plantFactory.getAllDefinitions().size() + " plants, "
-            + zombieFactory.getAllDefinitions().size() + " zombies, "
-            + armorFactory.getDefinitions().size() + " armor types and "
-            + questFactory.getAllDefinitions().size() + " quests.";
+                + zombieFactory.getAllDefinitions().size() + " zombies, "
+                + armorFactory.getDefinitions().size() + " armor types and "
+                + questFactory.getAllDefinitions().size() + " quests.";
     }
 }
