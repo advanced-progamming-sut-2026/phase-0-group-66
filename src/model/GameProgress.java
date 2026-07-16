@@ -55,6 +55,27 @@ public class GameProgress implements Serializable {
         return Collections.unmodifiableSet(unlockedLevels);
     }
 
+
+    public void unlockChapterName(String chapterName) {
+        if (chapterName != null && !chapterName.isBlank()) {
+            unlockedChapters.add(chapterName.trim());
+        }
+    }
+
+    public void unlockLevelId(String levelId) {
+        if (levelId != null && !levelId.isBlank()) {
+            unlockedLevels.add(levelId.trim());
+        }
+    }
+
+    public boolean isChapterUnlocked(String chapterName) {
+        return chapterName != null && unlockedChapters.contains(chapterName);
+    }
+
+    public boolean isLevelUnlocked(String levelId) {
+        return levelId != null && unlockedLevels.contains(levelId);
+    }
+
     public void recordGamePlayed() {
         gamesPlayed++;
     }

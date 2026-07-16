@@ -31,10 +31,10 @@ public final class GameData {
 
         ArmorFactory armorFactory = new ArmorFactory(armors);
         return new GameData(
-                new PlantFactory(plants),
-                armorFactory,
-                new ZombieFactory(zombies, armorFactory),
-                new QuestFactory(quests)
+            new PlantFactory(plants),
+            armorFactory,
+            new ZombieFactory(zombies, armorFactory),
+            new QuestFactory(quests)
         );
     }
 
@@ -56,8 +56,8 @@ public final class GameData {
 
     public String summary() {
         return "Loaded " + plantFactory.getAllDefinitions().size() + " plants, "
-                + zombieFactory.getAllDefinitions().size() + " zombies, "
-                + armorFactory.getDefinitions().size() + " armor types and "
-                + questFactory.getAllDefinitions().size() + " quests.";
+            + zombieFactory.getAllDefinitions().size() + " zombies, "
+            + armorFactory.getDefinitions().size() + " armor types and "
+            + questFactory.getAllDefinitions().size() + " quests.";
     }
 }
