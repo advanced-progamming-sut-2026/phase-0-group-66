@@ -1,5 +1,6 @@
 import controller.AppController;
 import controller.CollectionController;
+import controller.GameController;
 import controller.AuthController;
 import controller.ProfileController;
 import controller.QuestController;
@@ -22,6 +23,7 @@ import menu.ShopMenu;
 import model.GameData;
 import model.UserRepository;
 import view.CollectionView;
+import view.GameView;
 import view.LoginView;
 import view.ProfileView;
 import view.QuestView;
@@ -66,10 +68,11 @@ public class Main {
                 authController, gameData.getPlantFactory(), gameData.getZombieFactory(),
                 gameData.getArmorFactory());
         QuestController questController = new QuestController(gameData.getQuestFactory());
+        GameController gameController = new GameController(authController, gameData, new GameView());
         RegisterMenu registerMenu = new RegisterMenu(manager, authController, new RegisterView());
         LoginMenu loginMenu = new LoginMenu(manager, authController, new LoginView());
         MainMenu mainMenu = new MainMenu(manager, authController);
-        GameMenu gameMenu = new GameMenu(manager);
+        GameMenu gameMenu = new GameMenu(manager, gameController);
         CollectionMenu collectionMenu = new CollectionMenu(manager, collectionController,
                 new CollectionView());
         GreenhouseMenu greenhouseMenu = new GreenhouseMenu(manager);
