@@ -1,8 +1,17 @@
 package model;
 
-public class ConeheadZombie extends Zombie {
-    private int armorHealth;
+import java.util.List;
 
-    public void absorbDamage() {
+public class ConeheadZombie extends Zombie {
+    public ConeheadZombie(ZombieDefinition definition, List<Armor> armors) {
+        super(definition, armors);
+    }
+
+    public int getArmorHealth() {
+        int total = 0;
+        for (Armor armor : getArmors()) {
+            total += armor.getHealth();
+        }
+        return total;
     }
 }
