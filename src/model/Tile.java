@@ -6,13 +6,17 @@ import java.util.List;
 
 public class Tile {
     private final GridPosition position;
-    private String tileType;
+    private TileType tileType;
     private Plant plant;
     private final List<Zombie> zombies;
 
     public Tile(int row, int col, String tileType) {
+        this(row, col, TileType.fromText(tileType));
+    }
+
+    public Tile(int row, int col, TileType tileType) {
         this.position = new GridPosition(row, col);
-        this.tileType = tileType;
+        this.tileType = tileType == null ? TileType.NORMAL : tileType;
         this.zombies = new ArrayList<>();
     }
 
@@ -21,11 +25,19 @@ public class Tile {
     }
 
     public String getTileType() {
+        return tileType.name();
+    }
+
+    public TileType getType() {
         return tileType;
     }
 
     public void setTileType(String tileType) {
-        this.tileType = tileType;
+        this.tileType = TileType.fromText(tileType);
+    }
+
+    public void setTileType(TileType tileType) {
+        this.tileType = tileType == null ? TileType.NORMAL : tileType;
     }
 
     public Plant getPlant() {
@@ -41,8 +53,7 @@ public class Tile {
     }
 
     public boolean canPlant() {
-        return plant == null && !"WATER".equals(tileType) && !"TOMB".equals(tileType)
-            && !"ICE".equals(tileType) && !"SLIPPERY".equals(tileType);
+        return plant == null && tileType.isPlantable();
     }
 
     public void addZombie(Zombie zombie) {
@@ -53,6 +64,10 @@ public class Tile {
 
     public void removeZombie(Zombie zombie) {
         zombies.remove(zombie);
+    }
+
+    public void clearZombies() {
+        zombies.clear();
     }
 
     public boolean isEmpty() {
