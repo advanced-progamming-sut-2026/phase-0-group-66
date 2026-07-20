@@ -12,9 +12,11 @@ public class GameView {
     }
 
     public void showPlantStatus() {
+        showMessage("Plant status is available through the game controller.");
     }
 
     public void showTileStatus(int row, int col) {
+        showMessage("Tile status requested for (" + col + ", " + row + ").");
     }
 
     public void showWaveInfo(int waveNumber) {

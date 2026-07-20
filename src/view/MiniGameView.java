@@ -1,13 +1,13 @@
 package view;
 
-import model.MiniGame;
-
 import java.util.List;
 
 public class MiniGameView {
-    public void showMiniGames(List<MiniGame> miniGames) {
+    public void showMiniGames(List<String> miniGames) {
+        miniGames.forEach(System.out::println);
     }
 
-    public void showMiniGameResult(int score, int bestScore) {
+    public void showMessage(String message) {
+        System.out.println(message);
     }
 }

@@ -1,13 +1,11 @@
 package view;
 
-import model.Greenhouse;
-
-import java.util.List;
-
 public class GreenhouseView {
-    public void showGreenhouseInfo(Greenhouse greenhouse) {
+    public void showGreenhouse(String rendered) {
+        System.out.print(rendered);
     }
 
-    public void showHarvestResult(List<String> items) {
+    public void showMessage(String message) {
+        System.out.println(message);
     }
 }

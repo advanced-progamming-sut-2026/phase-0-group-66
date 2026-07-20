@@ -97,7 +97,7 @@ public final class InputValidator {
 
     public static String validateGender(String gender) {
         if (normalizeGender(gender) == null) {
-            return "Gender must be male/female";
+            return "Gender must be MALE or FEMALE.";
         }
         return null;
     }
@@ -106,12 +106,9 @@ public final class InputValidator {
         if (gender == null) {
             return null;
         }
-        String normalized = gender.trim().toLowerCase(Locale.ROOT);
-        if (normalized.equals("male") || normalized.equals("man")) {
-            return "male";
-        }
-        if (normalized.equals("female") || normalized.equals("woman")) {
-            return "female";
+        String normalized = gender.trim().toUpperCase(Locale.ROOT);
+        if (normalized.equals("MALE") || normalized.equals("FEMALE")) {
+            return normalized;
         }
         return null;
     }
