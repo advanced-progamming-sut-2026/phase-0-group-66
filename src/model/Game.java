@@ -20,6 +20,9 @@ public class Game {
     private final LinkedHashSet<String> selectedPlants;
     private final LinkedHashMap<String, Integer> cooldownTicks;
     private final LinkedHashSet<GridPosition> waitingSunProducers;
+    private final LinkedHashSet<GridPosition> endangeredPositions;
+    private final LinkedHashMap<String, Integer> conveyorCards;
+    private final LinkedHashMap<GridPosition, Tomb> tombs;
     private final ArrayList<String> events;
 
     private GameState gameState;
@@ -32,6 +35,11 @@ public class Game {
     private int nextWaveIndex;
     private int nextSkySunTick;
     private int lostPlantsCount;
+    private int totalSunCollected;
+    private int zombieKillCount;
+    private int explosivePlantsUsed;
+    private int lawnMowerKills;
+    private int nextConveyorTick;
 
     public Game(PlantFactory plantFactory, ZombieFactory zombieFactory) {
         if (plantFactory == null || zombieFactory == null) {
@@ -43,6 +51,9 @@ public class Game {
         this.selectedPlants = new LinkedHashSet<>();
         this.cooldownTicks = new LinkedHashMap<>();
         this.waitingSunProducers = new LinkedHashSet<>();
+        this.endangeredPositions = new LinkedHashSet<>();
+        this.conveyorCards = new LinkedHashMap<>();
+        this.tombs = new LinkedHashMap<>();
         this.events = new ArrayList<>();
         this.gameState = GameState.PLANT_SELECTION;
     }
@@ -63,6 +74,14 @@ public class Game {
         selectedPlants.clear();
         cooldownTicks.clear();
         waitingSunProducers.clear();
+        endangeredPositions.clear();
+        conveyorCards.clear();
+        tombs.clear();
+        totalSunCollected = 0;
+        zombieKillCount = 0;
+        explosivePlantsUsed = 0;
+        lawnMowerKills = 0;
+        nextConveyorTick = 0;
         events.clear();
         gameState = GameState.PLANT_SELECTION;
         addEvent("Level prepared: " + currentLevel.getLevelId() + " ("
@@ -71,6 +90,9 @@ public class Game {
 
     public void selectPlant(String plantType) {
         requirePlantSelection();
+        if (currentLevel != null && currentLevel.getSpecialType() == SpecialLevelType.CONVEYOR_BELT) {
+            throw new IllegalStateException("Plant selection is automatic in Conveyor Belt levels.");
+        }
         PlantDefinition definition = plantFactory.findDefinition(plantType)
             .orElseThrow(() -> new IllegalArgumentException("Plant does not exist: " + plantType));
         String canonicalName = definition.getName();
@@ -98,7 +120,9 @@ public class Game {
 
     public void startGame(Level level) {
         prepareLevel(null, level);
-        if (selectedPlants.isEmpty()) {
+        if (currentLevel.getSpecialType() == SpecialLevelType.CONVEYOR_BELT) {
+            autoSelectStarterPlantsForConveyor();
+        } else if (selectedPlants.isEmpty()) {
             autoSelectStarterPlants();
         }
         startGame();
@@ -106,6 +130,10 @@ public class Game {
 
     public void startGame() {
         requirePlantSelection();
+        if (selectedPlants.isEmpty()
+            && currentLevel.getSpecialType() == SpecialLevelType.CONVEYOR_BELT) {
+            autoSelectStarterPlantsForConveyor();
+        }
         if (selectedPlants.isEmpty()) {
             throw new IllegalStateException("Select at least one plant before starting the game.");
         }
@@ -117,6 +145,8 @@ public class Game {
         lostPlantsCount = 0;
         currentLevel.startLevel();
         gameState = GameState.RUNNING;
+        initializeSeasonTerrain();
+        initializeSpecialLevel();
         addEvent("Game started with " + sunAmount + " suns.");
         startNextWave();
     }
@@ -139,6 +169,7 @@ public class Game {
         }
         Wave wave = waves.get(nextWaveIndex);
         wave.populate(zombieFactory, board.getRows(), board.getCols() - 0.05, random);
+        configureWaveForSeason(wave);
         wave.startWave();
         for (Zombie zombie : wave.getZombies()) {
             board.addZombie(zombie);
@@ -175,20 +206,29 @@ public class Game {
             throw new IllegalStateException("Plant was not selected for this level.");
         }
         String key = definition.getNormalizedName();
+        boolean conveyor = currentLevel.getSpecialType() == SpecialLevelType.CONVEYOR_BELT;
         int remainingCooldown = cooldownTicks.getOrDefault(key, 0);
-        if (remainingCooldown > 0) {
+        if (!conveyor && remainingCooldown > 0) {
             throw new IllegalStateException("Plant is on cooldown for "
                 + formatSeconds(remainingCooldown) + " seconds.");
         }
-        if (sunAmount < definition.getCost()) {
+        if (conveyor) {
+            int cards = conveyorCards.getOrDefault(definition.getName(), 0);
+            if (cards <= 0) {
+                throw new IllegalStateException("No conveyor card is available for this plant.");
+            }
+            conveyorCards.put(definition.getName(), cards - 1);
+        } else if (sunAmount < definition.getCost()) {
             throw new IllegalStateException("Not enough sun.");
         }
         Plant plant = plantFactory.createPlant(definition.getName());
         board.placePlant(plant, row, col);
-        sunAmount -= definition.getCost();
-        int recharge = (int) Math.round(definition.getRechargeSeconds().orElse(0)
-            * TICKS_PER_SECOND);
-        cooldownTicks.put(key, Math.max(0, recharge));
+        if (!conveyor) {
+            sunAmount -= definition.getCost();
+            int recharge = (int) Math.round(definition.getRechargeSeconds().orElse(0)
+                * TICKS_PER_SECOND);
+            cooldownTicks.put(key, Math.max(0, recharge));
+        }
         addEvent("Plant " + plant.getName() + " planted at " + display(row, col) + ".");
         handleImmediatePlant(plant);
     }
@@ -219,6 +259,7 @@ public class Game {
         }
         int collectedAmount = sun.collect();
         sunAmount += collectedAmount;
+        totalSunCollected += collectedAmount;
         board.removeSun(sun);
         GridPosition position = new GridPosition(row, col);
         if (waitingSunProducers.remove(position)) {
@@ -371,7 +412,8 @@ public class Game {
         int waveNumber = currentWave == null ? 0 : currentWave.getWaveNumber();
         return "state=" + gameState + ", level=" + currentLevel.getLevelId()
             + ", wave=" + waveNumber + "/" + currentLevel.getWaves().size()
-            + ", sun=" + sunAmount + ", ticks=" + elapsedTicks;
+            + ", sun=" + sunAmount + ", ticks=" + elapsedTicks
+            + (conveyorCards.isEmpty() ? "" : ", conveyor=" + conveyorCards);
     }
 
     public GameState getGameState() {
@@ -406,9 +448,200 @@ public class Game {
         return lostPlantsCount;
     }
 
+    public int getTotalSunCollected() { return totalSunCollected; }
+    public int getZombieKillCount() { return zombieKillCount; }
+    public int getExplosivePlantsUsed() { return explosivePlantsUsed; }
+    public int getLawnMowerKills() { return lawnMowerKills; }
+    public Map<String, Integer> getConveyorCards() {
+        return Collections.unmodifiableMap(conveyorCards);
+    }
+
+    private void initializeSeasonTerrain() {
+        if (currentLevel.getSeason() == SeasonType.ANCIENT_EGYPT) {
+            addRandomTombs(3, false);
+        } else if (currentLevel.getSeason() == SeasonType.FROSTBITE_CAVES) {
+            board.getTile(1, 4).setTileType(TileType.SLIPPERY_UP);
+            board.getTile(3, 5).setTileType(TileType.SLIPPERY_DOWN);
+            board.getTile(0, 6).setTileType(TileType.ICE);
+            board.getTile(4, 6).setTileType(TileType.ICE);
+        } else if (currentLevel.getSeason() == SeasonType.BIG_WAVE_BEACH) {
+            setBeachWaterLevel(7);
+            board.getTile(1, 6).setTileType(TileType.LOW_TIDE);
+            board.getTile(3, 6).setTileType(TileType.LOW_TIDE);
+        } else if (currentLevel.getSeason() == SeasonType.DARK_AGES) {
+            addRandomTombs(3, true);
+            board.getTile(1, 5).setTileType(TileType.NECROMANCY);
+            board.getTile(3, 6).setTileType(TileType.NECROMANCY);
+        }
+    }
+
+    private void addRandomTombs(int count, boolean mayContainRewards) {
+        int created = 0;
+        while (created < count) {
+            int row = random.nextInt(board.getRows());
+            int col = 3 + random.nextInt(4);
+            GridPosition position = new GridPosition(row, col);
+            if (tombs.containsKey(position) || board.getTile(row, col).getPlant() != null) {
+                continue;
+            }
+            boolean sun = mayContainRewards && random.nextInt(5) == 0;
+            boolean plantFood = mayContainRewards && !sun && random.nextInt(10) == 0;
+            tombs.put(position, new Tomb(row, col, sun, plantFood));
+            board.getTile(row, col).setTileType(TileType.TOMB);
+            created++;
+        }
+    }
+
+    private void configureWaveForSeason(Wave wave) {
+        boolean finalWave = nextWaveIndex == currentLevel.getWaves().size() - 1;
+        for (Zombie zombie : wave.getZombies()) {
+            if (currentLevel.getSeason() == SeasonType.FROSTBITE_CAVES) {
+                zombie.setIceImmune(true);
+            }
+            if (currentLevel.getSeason() == SeasonType.ANCIENT_EGYPT
+                && finalWave && random.nextBoolean()) {
+                double shifted = Math.max(4.0,
+                    zombie.getPosition().getColumn() - 1 - random.nextInt(4));
+                zombie.setPosition(new BoardPosition(zombie.getPosition().getRow(), shifted));
+            }
+        }
+        if (currentLevel.getSeason() == SeasonType.BIG_WAVE_BEACH) {
+            int waterStart = 6 + random.nextInt(3);
+            setBeachWaterLevel(waterStart);
+        }
+        if (currentLevel.getSeason() == SeasonType.DARK_AGES) {
+            spawnNecromancyZombie(wave);
+        }
+    }
+
+    private void setBeachWaterLevel(int startColumn) {
+        for (int row = 0; row < board.getRows(); row++) {
+            for (int col = 0; col < board.getCols(); col++) {
+                Tile tile = board.getTile(row, col);
+                if (col >= startColumn) {
+                    tile.setTileType(TileType.WATER);
+                    Plant plant = tile.getPlant();
+                    if (plant != null && !plant.getDefinition().hasTag("Water")
+                        && !plant.getDefinition().getNormalizedName().contains("lilypad")) {
+                        plant.takeDamage(plant.getHealth());
+                    }
+                } else if (tile.getType() == TileType.WATER) {
+                    tile.setTileType(TileType.NORMAL);
+                }
+            }
+        }
+    }
+
+    private void spawnNecromancyZombie(Wave wave) {
+        for (int row = 0; row < board.getRows(); row++) {
+            for (int col = 0; col < board.getCols(); col++) {
+                if (board.getTile(row, col).getType() == TileType.NECROMANCY
+                    && random.nextBoolean()) {
+                    Zombie zombie = zombieFactory.createZombie("Basic Zombie");
+                    zombie.setPosition(new BoardPosition(row, col + 0.5));
+                    wave.addZombie(zombie);
+                }
+            }
+        }
+    }
+
+    private void applySlipperyTile(Zombie zombie) {
+        BoardPosition position = zombie.getPosition();
+        if (position == null) {
+            return;
+        }
+        int col = (int) Math.floor(position.getColumn());
+        if (!board.isInside(position.getRow(), col)) {
+            return;
+        }
+        TileType type = board.getTile(position.getRow(), col).getType();
+        int targetRow = position.getRow();
+        if (type == TileType.SLIPPERY_UP) {
+            targetRow--;
+        } else if (type == TileType.SLIPPERY_DOWN) {
+            targetRow++;
+        }
+        if (targetRow >= 0 && targetRow < board.getRows() && targetRow != position.getRow()) {
+            zombie.setPosition(position.withRow(targetRow));
+        }
+    }
+
+    private boolean hitTomb(Projectile projectile, double fromColumn, double toColumn) {
+        int row = projectile.getPosition().getRow();
+        for (Map.Entry<GridPosition, Tomb> entry : new ArrayList<>(tombs.entrySet())) {
+            GridPosition position = entry.getKey();
+            if (position.getRow() != row || position.getColumn() + 0.001 < fromColumn
+                || position.getColumn() - 0.001 > toColumn) {
+                continue;
+            }
+            Tomb tomb = entry.getValue();
+            tomb.takeDamage(projectile.getDamage());
+            projectile.deactivate();
+            if (tomb.isDestroyed()) {
+                board.getTile(position.getRow(), position.getColumn())
+                    .setTileType(TileType.NORMAL);
+                tombs.remove(position);
+                if (tomb.containsSun()) {
+                    board.addSun(new Sun(50, position));
+                }
+                addEvent("Tomb destroyed at " + position + ".");
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private void initializeSpecialLevel() {
+        if (currentLevel.getSpecialType() == SpecialLevelType.CONVEYOR_BELT) {
+            if (selectedPlants.isEmpty()) {
+                autoSelectStarterPlantsForConveyor();
+            }
+            addConveyorCard();
+            nextConveyorTick = 120;
+        }
+        if (currentLevel.getSpecialType() == SpecialLevelType.SAVE_OUR_SEEDS) {
+            for (int row : List.of(0, 2, 4)) {
+                Plant protectedPlant = plantFactory.createPlant("Wall-nut");
+                board.placePlant(protectedPlant, row, 2);
+                endangeredPositions.add(new GridPosition(row, 2));
+            }
+            addEvent("Protected seed plants were placed in column 3.");
+        }
+    }
+
+    private void tickConveyor() {
+        if (currentLevel.getSpecialType() != SpecialLevelType.CONVEYOR_BELT
+            || elapsedTicks < nextConveyorTick) {
+            return;
+        }
+        addConveyorCard();
+        nextConveyorTick += 120;
+    }
+
+    private void addConveyorCard() {
+        if (selectedPlants.isEmpty()) {
+            return;
+        }
+        List<String> options = List.copyOf(selectedPlants);
+        String plant = options.get(random.nextInt(options.size()));
+        conveyorCards.merge(plant, 1, Integer::sum);
+        addEvent("Conveyor produced a " + plant + " card.");
+    }
+
+    private void autoSelectStarterPlantsForConveyor() {
+        for (String starter : List.of("Sunflower", "Peashooter", "Wall-nut")) {
+            PlantDefinition definition = plantFactory.findDefinition(starter).orElse(null);
+            if (definition != null) {
+                selectedPlants.add(definition.getName());
+                cooldownTicks.put(definition.getNormalizedName(), 0);
+            }
+        }
+    }
+
     private void advanceOneTick() {
         elapsedTicks++;
         tickCooldowns();
+        tickConveyor();
         tickSuns();
         spawnSkySunIfNeeded();
         performPlantActions();
@@ -563,6 +796,10 @@ public class Game {
             }
             double previousColumn = projectile.moveOneTick();
             double currentColumn = projectile.getPosition().getColumn();
+            if (hitTomb(projectile, previousColumn, currentColumn)) {
+                board.removeProjectile(projectile);
+                continue;
+            }
             Zombie target = findProjectileTarget(projectile.getPosition().getRow(),
                 previousColumn, currentColumn);
             if (target != null) {
@@ -605,6 +842,7 @@ public class Game {
                 }
             } else {
                 zombie.moveOneTick();
+                applySlipperyTile(zombie);
             }
             if (zombie.getPosition() != null && zombie.getPosition().getColumn() < 0) {
                 handleZombieAtHouse(zombie);
@@ -621,6 +859,7 @@ public class Game {
                 if (!zombie.isBoss()) {
                     zombie.kill();
                     killed.add(zombie.getName());
+                    lawnMowerKills++;
                 }
             }
             addEvent("The lawn mower in row " + (row + 1)
@@ -639,6 +878,9 @@ public class Game {
             GridPosition position = plant.getPosition();
             board.removePlant(position.getRow(), position.getColumn());
             waitingSunProducers.remove(position);
+            if (endangeredPositions.contains(position)) {
+                board.setEndangeredPlantsEaten(true);
+            }
             lostPlantsCount++;
             addEvent("Plant " + plant.getName() + " at " + position + " is destroyed.");
         }
@@ -648,6 +890,7 @@ public class Game {
             }
             BoardPosition position = zombie.getPosition();
             board.removeZombie(zombie);
+            zombieKillCount++;
             addEvent("Zombie of type " + zombie.getName() + " is dead at " + position + ".");
         }
     }
@@ -695,6 +938,7 @@ public class Game {
             board.removePlant(position.getRow(), position.getColumn());
             addEvent("Gold Bloom produced 375 suns and disappeared.");
         } else if (plant.isExplosive() && !plant.isTrap()) {
+            explosivePlantsUsed++;
             detonatePlant(plant);
             cleanupDestroyedEntities();
         }

@@ -13,6 +13,9 @@ public class GameProgress implements Serializable {
     private int bestMeowPoints;
     private int completedDailyQuests;
     private int completedOtherQuests;
+    private int completedMiniGames;
+    private int lastChapterNumber;
+    private int lastLevelNumber;
     private final LinkedHashSet<String> unlockedChapters;
     private final LinkedHashSet<String> unlockedLevels;
     private final LinkedHashSet<String> completedLevelIds;
@@ -46,6 +49,10 @@ public class GameProgress implements Serializable {
     public int getCompletedOtherQuests() {
         return completedOtherQuests;
     }
+
+    public int getCompletedMiniGames() { return completedMiniGames; }
+    public int getLastChapterNumber() { return lastChapterNumber; }
+    public int getLastLevelNumber() { return lastLevelNumber; }
 
     public Set<String> getUnlockedChapters() {
         return Collections.unmodifiableSet(unlockedChapters);
@@ -97,6 +104,19 @@ public class GameProgress implements Serializable {
             String levelId = level.getLevelId();
             unlockedLevels.add(levelId);
             completedLevelIds.add(levelId);
+        }
+    }
+
+    public void recordCompletedMiniGame(int score) {
+        completedMiniGames++;
+        updateBestScore(score);
+    }
+
+    public void recordCompletedLevel(int chapterNumber, int levelNumber) {
+        if (chapterNumber > lastChapterNumber
+            || (chapterNumber == lastChapterNumber && levelNumber > lastLevelNumber)) {
+            lastChapterNumber = chapterNumber;
+            lastLevelNumber = levelNumber;
         }
     }
 
