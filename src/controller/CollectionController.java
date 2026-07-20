@@ -85,6 +85,8 @@ public class CollectionController {
             return ActionResult.failure("Not enough coins. Plant purchase costs 2000 coins.");
         }
         user.getCollectionBook().unlockPlant(canonicalName);
+        user.addNews(new model.News("New plant unlocked",
+            canonicalName + " was purchased from the collection."));
         return saveResult("Plant purchased: " + canonicalName);
     }
 
@@ -98,10 +100,29 @@ public class CollectionController {
             return ActionResult.failure("Plant does not exist.");
         }
         String canonicalName = definition.get().getName();
-        if (user.getCollectionBook().getPlantLevel(canonicalName) == 0) {
+        int currentLevel = user.getCollectionBook().getPlantLevel(canonicalName);
+        if (currentLevel == 0) {
             return ActionResult.failure("Plant is not owned.");
         }
-        return ActionResult.failure("Upgrade effects are loaded, but upgrade costs are not defined in the data file.");
+        int maximumLevel = Math.max(1, definition.get().getLevelUpgrades().size() + 1);
+        if (currentLevel >= maximumLevel) {
+            return ActionResult.failure("Plant is already at maximum level.");
+        }
+        int seedCost = currentLevel * 10;
+        int coinCost = currentLevel * 1000;
+        if (user.getInventory().getSeedPacketCount(canonicalName) < seedCost) {
+            return ActionResult.failure("Not enough seed packets. Required: " + seedCost + ".");
+        }
+        if (user.getWallet().getCoins() < coinCost) {
+            return ActionResult.failure("Not enough coins. Required: " + coinCost + ".");
+        }
+        user.getInventory().consumeSeedPackets(canonicalName, seedCost);
+        user.getWallet().spendCoins(coinCost);
+        user.getCollectionBook().upgradePlant(canonicalName);
+        int newLevel = user.getCollectionBook().getPlantLevel(canonicalName);
+        user.addNews(new model.News("Plant upgraded",
+            canonicalName + " reached level " + newLevel + "."));
+        return saveResult("Plant upgraded to level " + newLevel + ".");
     }
 
     public List<PlantDefinition> getOwnedPlantDefinitions() {
