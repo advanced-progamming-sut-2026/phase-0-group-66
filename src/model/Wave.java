@@ -32,9 +32,6 @@ public class Wave {
         initialEffectiveHealth = getRemainingEffectiveHealth();
     }
 
-    public void spawnZombies() {
-    }
-
     public void populate(ZombieFactory zombieFactory, int rows, double spawnColumn, Random random) {
         if (started || !zombies.isEmpty()) {
             throw new IllegalStateException("Wave is already populated.");
@@ -101,6 +98,12 @@ public class Wave {
 
     public List<Zombie> getZombies() {
         return Collections.unmodifiableList(zombies);
+    }
+
+    public void addZombie(Zombie zombie) {
+        if (zombie != null && !started) {
+            zombies.add(zombie);
+        }
     }
 
     private List<ZombieDefinition> chooseExactCost(List<ZombieDefinition> definitions,

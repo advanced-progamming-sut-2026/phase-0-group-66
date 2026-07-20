@@ -1,5 +1,7 @@
 package model;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,12 +15,14 @@ public class Inventory implements Serializable {
 
     private int plantFoods;
     private int pots;
-    private final ArrayList<String> selectedPlants;
-    private final LinkedHashMap<String, Integer> seedPackets;
+    private ArrayList<String> selectedPlants;
+    private LinkedHashMap<String, Integer> seedPackets;
+    private LinkedHashMap<String, Integer> storedBoosts;
 
     public Inventory() {
         selectedPlants = new ArrayList<>();
         seedPackets = new LinkedHashMap<>();
+        storedBoosts = new LinkedHashMap<>();
     }
 
     public int getPlantFoods() {
@@ -35,6 +39,30 @@ public class Inventory implements Serializable {
 
     public Map<String, Integer> getSeedPackets() {
         return Collections.unmodifiableMap(seedPackets);
+    }
+
+    public Map<String, Integer> getStoredBoosts() {
+        return Collections.unmodifiableMap(storedBoosts);
+    }
+
+    public int getPlantFoodCapacityLeft() {
+        return MAX_PLANT_FOODS - plantFoods;
+    }
+
+    public boolean addStoredBoost(String plantName) {
+        if (plantName == null || plantName.isBlank() || storedBoosts.getOrDefault(plantName, 0) > 0) {
+            return false;
+        }
+        storedBoosts.put(plantName, 1);
+        return true;
+    }
+
+    public boolean consumeStoredBoost(String plantName) {
+        if (storedBoosts.getOrDefault(plantName, 0) <= 0) {
+            return false;
+        }
+        storedBoosts.remove(plantName);
+        return true;
     }
 
     public void addPlantFood(int count) {
@@ -74,6 +102,19 @@ public class Inventory implements Serializable {
         selectedPlants.clear();
     }
 
+
+    private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+        input.defaultReadObject();
+        if (selectedPlants == null) {
+            selectedPlants = new ArrayList<>();
+        }
+        if (seedPackets == null) {
+            seedPackets = new LinkedHashMap<>();
+        }
+        if (storedBoosts == null) {
+            storedBoosts = new LinkedHashMap<>();
+        }
+    }
 
     public int getSeedPacketCount(String plantName) {
         return seedPackets.getOrDefault(plantName, 0);

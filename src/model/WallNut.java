@@ -9,6 +9,7 @@ public class WallNut extends Plant {
     }
 
     public void block() {
+        healToFull();
     }
 
     public int getDefenseBonus() {

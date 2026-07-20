@@ -15,6 +15,9 @@ public abstract class Zombie {
     protected BoardPosition position;
     private final ArrayList<Armor> armors;
     private int chilledTicks;
+    private boolean iceImmune;
+    private boolean rewardDropped;
+    private int specialAbilityUses;
 
     protected Zombie(ZombieDefinition definition, List<Armor> armors) {
         if (definition == null) {
@@ -50,7 +53,9 @@ public abstract class Zombie {
     }
 
     public void chill(int ticks) {
-        chilledTicks = Math.max(chilledTicks, Math.max(0, ticks));
+        if (!iceImmune) {
+            chilledTicks = Math.max(chilledTicks, Math.max(0, ticks));
+        }
     }
 
     public void clearChill() {
@@ -60,6 +65,9 @@ public abstract class Zombie {
     public int getChilledTicks() {
         return chilledTicks;
     }
+
+    public boolean isIceImmune() { return iceImmune; }
+    public void setIceImmune(boolean iceImmune) { this.iceImmune = iceImmune; }
 
     public void attackPlant(Plant target) {
         if (target != null) {
@@ -88,10 +96,15 @@ public abstract class Zombie {
     }
 
     public void dropReward() {
+        rewardDropped = true;
     }
 
     public void specialAbility() {
+        specialAbilityUses++;
     }
+
+    public boolean isRewardDropped() { return rewardDropped; }
+    public int getSpecialAbilityUses() { return specialAbilityUses; }
 
     public boolean isDead() {
         return health <= 0;
