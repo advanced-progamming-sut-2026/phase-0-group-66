@@ -1,17 +1,17 @@
 package model;
 
 public class MiniGame {
-    private String name;
-    private String ruleDescription;
-    private int reward;
-    private int bestScore;
+    private final MiniGameDefinition definition;
 
-    public void start() {
+    public MiniGame(MiniGameDefinition definition) {
+        this.definition = definition;
     }
 
-    public void finish() {
+    public MiniGameDefinition getDefinition() {
+        return definition;
     }
 
-    public void updateBestScore(int score) {
+    public MiniGameSession start(int level) {
+        return new MiniGameSession(definition, level);
     }
 }
