@@ -21,16 +21,23 @@ public class GameController {
     private final GameData gameData;
     private final AdventureFactory adventureFactory;
     private final GameView view;
+    private final QuestController questController;
     private Game game;
     private boolean resultRecorded;
+    private int syncedSun;
+    private int syncedKills;
+    private int syncedExplosives;
+    private int syncedMowerKills;
 
-    public GameController(AuthController authController, GameData gameData, GameView view) {
-        if (authController == null || gameData == null || view == null) {
+    public GameController(AuthController authController, GameData gameData, GameView view,
+                          QuestController questController) {
+        if (authController == null || gameData == null || view == null || questController == null) {
             throw new IllegalArgumentException("Game controller dependencies cannot be null.");
         }
         this.authController = authController;
         this.gameData = gameData;
         this.view = view;
+        this.questController = questController;
         this.adventureFactory = new AdventureFactory();
     }
 
@@ -61,6 +68,10 @@ public class GameController {
         game = new Game(gameData.getPlantFactory(), gameData.getZombieFactory());
         game.prepareLevel(chapter, level);
         resultRecorded = false;
+        syncedSun = 0;
+        syncedKills = 0;
+        syncedExplosives = 0;
+        syncedMowerKills = 0;
         flushEvents();
         return ActionResult.success("Choose up to " + level.getAllowedPlantCount()
             + " plants, then use 'start game'.");
@@ -91,16 +102,34 @@ public class GameController {
     }
 
     public ActionResult boostPlant(String plantType) {
-        return ActionResult.failure(
-            "Plant boost belongs to the plant-food extension and is not part of this core step.");
+        User user = authController.getCurrentUser();
+        if (user == null) {
+            return ActionResult.failure("Login is required.");
+        }
+        Optional<PlantDefinition> definition = gameData.getPlantFactory().findDefinition(plantType);
+        if (definition.isEmpty()
+            || !user.getCollectionBook().getOwnedPlants().contains(definition.get().getName())) {
+            return ActionResult.failure("Plant is not owned.");
+        }
+        if (!user.getWallet().spendGems(2)) {
+            return ActionResult.failure("Boosting a plant costs 2 gems.");
+        }
+        user.getInventory().addStoredBoost(definition.get().getName());
+        ActionResult save = authController.saveCurrentState();
+        return save.isSuccessful()
+            ? ActionResult.success("Boost stored for " + definition.get().getName() + ".") : save;
     }
 
     public ActionResult plantPlant(String plantType, int col, int row) {
-        return perform(() -> {
+        ActionResult result = perform(() -> {
             int internalRow = toRow(row);
             int internalColumn = toColumn(col);
             game.plant(plantType, internalRow, internalColumn);
         }, "Planting completed.");
+        if (result.isSuccessful()) {
+            synchronizeQuestProgress();
+        }
+        return result;
     }
 
     public ActionResult pluckPlant(int col, int row) {
@@ -108,7 +137,12 @@ public class GameController {
     }
 
     public ActionResult collectSun(int col, int row) {
-        return perform(() -> game.collectSun(toRow(row), toColumn(col)), "Sun collected.");
+        ActionResult result = perform(() -> game.collectSun(toRow(row), toColumn(col)),
+            "Sun collected.");
+        if (result.isSuccessful()) {
+            synchronizeQuestProgress();
+        }
+        return result;
     }
 
     public ActionResult advanceTime(int ticks) {
@@ -116,6 +150,7 @@ public class GameController {
             "Advanced time by " + ticks + " tick(s).");
         if (result.isSuccessful()) {
             synchronizeSeenZombies();
+            synchronizeQuestProgress();
             recordGameResultIfNeeded();
         }
         return result;
@@ -132,6 +167,7 @@ public class GameController {
     public ActionResult releaseNuke() {
         ActionResult result = perform(() -> game.releaseNuke(), "Nuke released.");
         if (result.isSuccessful()) {
+            synchronizeQuestProgress();
             recordGameResultIfNeeded();
         }
         return result;
@@ -268,6 +304,27 @@ public class GameController {
         return game;
     }
 
+    public boolean isGameFinished() {
+        return game != null && (game.getGameState() == GameState.WON
+            || game.getGameState() == GameState.LOST);
+    }
+
+    private void synchronizeQuestProgress() {
+        if (game == null) {
+            return;
+        }
+        int sunDelta = game.getTotalSunCollected() - syncedSun;
+        int killDelta = game.getZombieKillCount() - syncedKills;
+        int explosiveDelta = game.getExplosivePlantsUsed() - syncedExplosives;
+        int mowerDelta = game.getLawnMowerKills() - syncedMowerKills;
+        questController.recordCombatProgress(game, sunDelta, killDelta,
+            explosiveDelta, mowerDelta);
+        syncedSun = game.getTotalSunCollected();
+        syncedKills = game.getZombieKillCount();
+        syncedExplosives = game.getExplosivePlantsUsed();
+        syncedMowerKills = game.getLawnMowerKills();
+    }
+
     private ActionResult perform(GameAction action, String successMessage) {
         if (game == null) {
             return ActionResult.failure("First choose a chapter and level.");
@@ -316,8 +373,14 @@ public class GameController {
         user.getProgress().recordGamePlayed();
         if (state == GameState.WON) {
             Level level = game.getCurrentLevel();
+            Chapter chapter = game.getCurrentChapter();
             user.getProgress().completeLevel(level);
-            unlockFollowingContent(user, game.getCurrentChapter(), level);
+            if (chapter != null) {
+                user.getProgress().recordCompletedLevel(chapter.getChapterNumber(),
+                    level.getLevelNumber());
+            }
+            questController.recordLevelWin(game, user.getDifficultyLevel());
+            unlockFollowingContent(user, chapter, level);
         }
         ActionResult saveResult = authController.saveCurrentState();
         if (!saveResult.isSuccessful()) {
@@ -331,8 +394,12 @@ public class GameController {
             return;
         }
         if (level.getLevelNumber() < 4) {
-            chapter.findLevel(level.getLevelNumber() + 1)
-                .ifPresent(next -> user.getProgress().unlockLevelId(next.getLevelId()));
+            chapter.findLevel(level.getLevelNumber() + 1).ifPresent(next -> {
+                user.getProgress().unlockLevelId(next.getLevelId());
+                user.addNews(new model.News("New level unlocked",
+                    "Level " + next.getLevelNumber() + " of " + chapter.getName()
+                        + " is now available."));
+            });
             return;
         }
         int nextChapterIndex = chapter.getChapterNumber();
@@ -341,6 +408,8 @@ public class GameController {
             user.getProgress().unlockChapterName(nextChapter.getName());
             nextChapter.findLevel(1)
                 .ifPresent(next -> user.getProgress().unlockLevelId(next.getLevelId()));
+            user.addNews(new model.News("New chapter unlocked",
+                nextChapter.getName() + " is now available."));
         }
     }
 
