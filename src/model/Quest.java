@@ -2,63 +2,35 @@ package model;
 
 public class Quest {
     private final QuestDefinition definition;
-    private final int targetProgress;
-    private int progress;
-    private boolean completed;
-    private boolean rewardClaimed;
+    private final QuestProgress progress;
 
     public Quest(QuestDefinition definition) {
-        this(definition, definition == null ? 1 : definition.inferDefaultTarget());
-    }
-
-    public Quest(QuestDefinition definition, int targetProgress) {
         if (definition == null) {
             throw new IllegalArgumentException("Quest definition cannot be null.");
         }
-        if (targetProgress <= 0) {
-            throw new IllegalArgumentException("Quest target must be positive.");
-        }
         this.definition = definition;
-        this.targetProgress = targetProgress;
+        this.progress = new QuestProgress();
     }
 
     public void updateProgress(int value) {
-        if (value < 0) {
-            throw new IllegalArgumentException("Quest progress cannot be negative.");
-        }
-        progress = Math.min(targetProgress, progress + value);
-        completed = progress >= targetProgress;
+        progress.addProgress(value, definition.getTarget());
     }
 
     public boolean isCompleted() {
-        return completed;
+        return progress.isCompleted(definition.getTarget());
     }
 
     public boolean claimReward() {
-        if (!completed || rewardClaimed) {
+        if (!isCompleted() || progress.isRewardClaimed()) {
             return false;
         }
-        rewardClaimed = true;
+        progress.claim();
         return true;
     }
 
-    public QuestDefinition getDefinition() {
-        return definition;
-    }
-
-    public String getTitle() {
-        return definition.getTitle();
-    }
-
-    public int getProgress() {
-        return progress;
-    }
-
-    public int getTargetProgress() {
-        return targetProgress;
-    }
-
-    public boolean isRewardClaimed() {
-        return rewardClaimed;
-    }
+    public QuestDefinition getDefinition() { return definition; }
+    public String getTitle() { return definition.getTitle(); }
+    public int getProgress() { return progress.getProgress(); }
+    public int getTargetProgress() { return definition.getTarget(); }
+    public boolean isRewardClaimed() { return progress.isRewardClaimed(); }
 }

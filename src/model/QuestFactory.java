@@ -4,51 +4,43 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 public final class QuestFactory {
-    private final LinkedHashMap<String, QuestDefinition> definitions;
+    private final LinkedHashMap<Integer, QuestDefinition> byId = new LinkedHashMap<>();
+    private final LinkedHashMap<String, QuestDefinition> byTitle = new LinkedHashMap<>();
 
     public QuestFactory(Collection<QuestDefinition> definitions) {
-        this.definitions = new LinkedHashMap<>();
         if (definitions != null) {
-            for (QuestDefinition definition : definitions) {
-                registerQuest(definition);
-            }
+            definitions.forEach(this::registerQuest);
         }
-    }
-
-    public Quest createQuest(String title) {
-        QuestDefinition definition = findDefinition(title)
-            .orElseThrow(() -> new IllegalArgumentException("Unknown quest: " + title));
-        return new Quest(definition);
-    }
-
-    public Quest createQuest(String title, int targetProgress) {
-        QuestDefinition definition = findDefinition(title)
-            .orElseThrow(() -> new IllegalArgumentException("Unknown quest: " + title));
-        return new Quest(definition, targetProgress);
-    }
-
-    public Optional<QuestDefinition> findDefinition(String title) {
-        return Optional.ofNullable(definitions.get(normalize(title)));
     }
 
     public void registerQuest(QuestDefinition definition) {
         if (definition == null) {
             throw new IllegalArgumentException("Quest definition cannot be null.");
         }
-        definitions.put(definition.getNormalizedTitle(), definition);
+        byId.put(definition.getId(), definition);
+        byTitle.put(definition.getNormalizedTitle(), definition);
+    }
+
+    public Optional<QuestDefinition> findDefinition(int id) {
+        return Optional.ofNullable(byId.get(id));
+    }
+
+    public Optional<QuestDefinition> findDefinition(String title) {
+        return Optional.ofNullable(byTitle.get(normalize(title)));
     }
 
     public List<QuestDefinition> getAllDefinitions() {
-        return List.copyOf(definitions.values());
+        return List.copyOf(byId.values());
     }
 
-    public List<QuestDefinition> getByCategory(String category) {
+    public List<QuestDefinition> getByCategory(QuestCategory category) {
         ArrayList<QuestDefinition> result = new ArrayList<>();
-        for (QuestDefinition definition : definitions.values()) {
-            if (definition.isInCategory(category)) {
+        for (QuestDefinition definition : byId.values()) {
+            if (definition.getCategory() == category) {
                 result.add(definition);
             }
         }
@@ -56,17 +48,7 @@ public final class QuestFactory {
     }
 
     private String normalize(String value) {
-        if (value == null) {
-            return "";
-        }
-        StringBuilder result = new StringBuilder();
-        String trimmed = value.trim().toLowerCase(java.util.Locale.ROOT);
-        for (int index = 0; index < trimmed.length(); index++) {
-            char current = trimmed.charAt(index);
-            if (!Character.isWhitespace(current) && current != '-' && current != '_') {
-                result.append(current);
-            }
-        }
-        return result.toString();
+        return value == null ? "" : value.trim().toLowerCase(Locale.ROOT)
+            .replace(" ", "").replace("-", "").replace("_", "");
     }
 }

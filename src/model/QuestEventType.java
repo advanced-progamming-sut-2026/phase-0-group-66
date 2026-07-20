@@ -1,0 +1,12 @@
+package model;
+
+public enum QuestEventType {
+    SUN_COLLECTED,
+    ZOMBIE_KILLED,
+    LEVEL_WON,
+    EXPLOSIVE_PLANT_USED,
+    LAWN_MOWER_KILL,
+    MINI_GAME_WON,
+    PLANT_PURCHASED,
+    PLANT_UPGRADED
+}

@@ -23,14 +23,28 @@ public final class QuestDataLoader {
     }
 
     private QuestDefinition parseDefinition(Map<String, Object> entry) {
+        Map<String, Object> reward = requireMap(entry.get("reward"), "reward");
         return new QuestDefinition(
+            requireInt(entry.get("id"), "id"),
             requireString(entry.get("title"), "title"),
-            requireString(entry.get("category"), "category"),
-            requireString(entry.get("completionCondition"), "completionCondition"),
-            requireString(entry.get("rewardDescription"), "rewardDescription"),
-            requireString(entry.get("priority"), "priority"),
-            optionalString(entry.get("variables"))
+            enumValue(QuestCategory.class, entry.get("category"), "category"),
+            requireString(entry.get("description"), "description"),
+            enumValue(QuestEventType.class, entry.get("eventType"), "eventType"),
+            requireInt(entry.get("target"), "target"),
+            enumValue(RewardType.class, reward.get("type"), "reward.type"),
+            requireInt(reward.get("amount"), "reward.amount"),
+            enumValue(QuestPriority.class, entry.get("priority"), "priority"),
+            optionalString(entry.get("parameter"))
         );
+    }
+
+    private <T extends Enum<T>> T enumValue(Class<T> type, Object value, String fieldName) {
+        String text = requireString(value, fieldName);
+        try {
+            return Enum.valueOf(type, text.toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException(fieldName + " has an unknown value: " + text);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -54,6 +68,13 @@ public final class QuestDataLoader {
             throw new IllegalArgumentException(fieldName + " must be a non-empty string.");
         }
         return text.trim();
+    }
+
+    private int requireInt(Object value, String fieldName) {
+        if (!(value instanceof Number number)) {
+            throw new IllegalArgumentException(fieldName + " must be a number.");
+        }
+        return number.intValue();
     }
 
     private String optionalString(Object value) {
