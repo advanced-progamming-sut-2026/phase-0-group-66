@@ -2,16 +2,20 @@ package menu;
 
 import controller.ActionResult;
 import controller.AuthController;
+import controller.NewsController;
 
 import java.util.Arrays;
 import java.util.List;
 
 public class MainMenu extends Menu {
     private final AuthController authController;
+    private final NewsController newsController;
 
-    public MainMenu(MenuManager menuManager, AuthController authController) {
+    public MainMenu(MenuManager menuManager, AuthController authController,
+                    NewsController newsController) {
         super("Main Menu", menuManager);
         this.authController = authController;
+        this.newsController = newsController;
     }
 
     @Override
@@ -36,7 +40,9 @@ public class MainMenu extends Menu {
 
     @Override
     public void showCommands() {
-        System.out.println("menu enter <Game Menu|Settings Menu|News Menu|Profile Menu|Leaderboard Menu>");
+        String newsLabel = newsController.hasUnreadNews() ? "News Menu [NEW]" : "News Menu";
+        System.out.println("menu enter <Game Menu|Settings Menu|" + newsLabel
+            + "|Profile Menu|Leaderboard Menu>");
         System.out.println("menu logout");
     }
 

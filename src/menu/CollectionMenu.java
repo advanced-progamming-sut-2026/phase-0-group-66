@@ -27,6 +27,8 @@ public class CollectionMenu extends Menu {
         System.out.println("menu collection show-all-zombies");
         System.out.println("menu collection show-plant -p <plant_name>");
         System.out.println("menu collection show-zombie -z <zombie_name>");
+        System.out.println("menu collection purchase-plant -p <plant_name>");
+        System.out.println("menu collection upgrade-plant -p <plant_name>");
     }
 
     @Override
