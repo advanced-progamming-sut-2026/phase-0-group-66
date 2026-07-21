@@ -275,6 +275,60 @@ public class Board {
         this.endangeredPlantsEaten = endangeredPlantsEaten;
     }
 
+    public boolean isHorizontallySymmetric() {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols / 2; col++) {
+                String left = plantNameAt(row, col);
+                String right = plantNameAt(row, cols - 1 - col);
+                if (!left.equals(right)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public boolean hasEmptyRow() {
+        for (int row = 0; row < rows; row++) {
+            boolean empty = true;
+            for (int col = 0; col < cols; col++) {
+                if (tiles[row][col].getPlant() != null) {
+                    empty = false;
+                    break;
+                }
+            }
+            if (empty) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasEmptyColumn() {
+        for (int col = 0; col < cols; col++) {
+            boolean empty = true;
+            for (int row = 0; row < rows; row++) {
+                if (tiles[row][col].getPlant() != null) {
+                    empty = false;
+                    break;
+                }
+            }
+            if (empty) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasEmptyCross() {
+        return hasEmptyRow() && hasEmptyColumn();
+    }
+
+    private String plantNameAt(int row, int col) {
+        Plant plant = tiles[row][col].getPlant();
+        return plant == null ? "" : plant.getName();
+    }
+
     public String render() {
         StringBuilder output = new StringBuilder();
         output.append("     ");

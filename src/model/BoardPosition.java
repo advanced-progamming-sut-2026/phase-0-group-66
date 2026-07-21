@@ -25,6 +25,10 @@ public final class BoardPosition implements Serializable {
         return new BoardPosition(row, column + amount);
     }
 
+    public BoardPosition withRow(int newRow) {
+        return new BoardPosition(newRow, column);
+    }
+
     @Override
     public String toString() {
         return "(" + column + ", " + row + ")";
