@@ -12,6 +12,7 @@ public class Wave {
     private final List<Zombie> zombies;
     private boolean started;
     private int initialEffectiveHealth;
+    private int actualSpawnCost;
 
     public Wave() {
         this(1, 1000, 0);
@@ -33,17 +34,27 @@ public class Wave {
     }
 
     public void populate(ZombieFactory zombieFactory, int rows, double spawnColumn, Random random) {
+        populate(zombieFactory, zombieFactory.getAllDefinitions(), difficultyCost,
+            rows, spawnColumn, random);
+    }
+
+    public void populate(ZombieFactory zombieFactory, List<ZombieDefinition> allowedDefinitions,
+                         int targetCost, int rows, double spawnColumn, Random random) {
         if (started || !zombies.isEmpty()) {
             throw new IllegalStateException("Wave is already populated.");
         }
-        List<ZombieDefinition> definitions = zombieFactory.getAllDefinitions().stream()
+        if (targetCost <= 0) {
+            throw new IllegalArgumentException("Wave target cost must be positive.");
+        }
+        List<ZombieDefinition> definitions = allowedDefinitions.stream()
             .filter(definition -> definition.getWavePointCost() > 0
-                && definition.getWavePointCost() <= difficultyCost)
+                && definition.getWavePointCost() <= targetCost)
             .toList();
         if (definitions.isEmpty()) {
             throw new IllegalStateException("No zombie can be used for this wave.");
         }
-        List<ZombieDefinition> selected = chooseExactCost(definitions, difficultyCost, random);
+        List<ZombieDefinition> selected = chooseBestCost(definitions, targetCost, random);
+        actualSpawnCost = selected.stream().mapToInt(ZombieDefinition::getWavePointCost).sum();
         for (ZombieDefinition definition : selected) {
             Zombie zombie = zombieFactory.createZombie(definition.getAlias());
             zombie.setPosition(new BoardPosition(random.nextInt(rows), spawnColumn));
@@ -80,25 +91,12 @@ public class Wave {
         return result;
     }
 
-    public int getWaveNumber() {
-        return waveNumber;
-    }
-
-    public int getDifficultyCost() {
-        return difficultyCost;
-    }
-
-    public int getDelay() {
-        return delay;
-    }
-
-    public boolean isStarted() {
-        return started;
-    }
-
-    public List<Zombie> getZombies() {
-        return Collections.unmodifiableList(zombies);
-    }
+    public int getWaveNumber() { return waveNumber; }
+    public int getDifficultyCost() { return difficultyCost; }
+    public int getActualSpawnCost() { return actualSpawnCost; }
+    public int getDelay() { return delay; }
+    public boolean isStarted() { return started; }
+    public List<Zombie> getZombies() { return Collections.unmodifiableList(zombies); }
 
     public void addZombie(Zombie zombie) {
         if (zombie != null && !started) {
@@ -106,8 +104,8 @@ public class Wave {
         }
     }
 
-    private List<ZombieDefinition> chooseExactCost(List<ZombieDefinition> definitions,
-                                                    int target, Random random) {
+    private List<ZombieDefinition> chooseBestCost(List<ZombieDefinition> definitions,
+                                                   int target, Random random) {
         boolean[] reachable = new boolean[target + 1];
         int[] previousCost = new int[target + 1];
         int[] previousDefinition = new int[target + 1];
@@ -127,11 +125,15 @@ public class Wave {
                 }
             }
         }
-        if (!reachable[target]) {
-            throw new IllegalStateException("Wave cost cannot be built exactly: " + target);
+        int selectedCost = target;
+        while (selectedCost > 0 && !reachable[selectedCost]) {
+            selectedCost--;
+        }
+        if (selectedCost == 0) {
+            throw new IllegalStateException("Wave cost cannot be built: " + target);
         }
         ArrayList<ZombieDefinition> result = new ArrayList<>();
-        int current = target;
+        int current = selectedCost;
         while (current > 0) {
             int definitionIndex = previousDefinition[current];
             result.add(shuffled.get(definitionIndex));

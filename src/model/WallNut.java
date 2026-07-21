@@ -4,15 +4,14 @@ public class WallNut extends Plant {
     private final int defenseBonus;
 
     public WallNut(PlantDefinition definition) {
-        super(definition);
-        defenseBonus = definition.getBaseHealth();
+        this(definition, 1);
     }
 
-    public void block() {
-        healToFull();
+    public WallNut(PlantDefinition definition, int level) {
+        super(definition, level);
+        defenseBonus = PlantStats.calculate(definition, level).getMaxHealth();
     }
 
-    public int getDefenseBonus() {
-        return defenseBonus;
-    }
+    public void block() { healToFull(); }
+    public int getDefenseBonus() { return defenseBonus; }
 }

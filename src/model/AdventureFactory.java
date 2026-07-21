@@ -42,12 +42,15 @@ public final class AdventureFactory {
         return Collections.unmodifiableList(result);
     }
 
+    private int roundToNearestFifty(double value) {
+        return Math.max(1000, (int) Math.round(value / 50.0) * 50);
+    }
+
     private Chapter createChapter(int chapterNumber, String name, SeasonType season,
                                   SpecialLevelType thirdLevelType) {
         Chapter chapter = new Chapter(name, chapterNumber, season, chapterNumber == 1);
         int[] waveCounts = {3, 4, 5, 6};
         int[] firstWaveCosts = {1000, 1250, 1500, 1750};
-        int[] waveIncrements = {500, 600, 700, 800};
         for (int levelNumber = 1; levelNumber <= 4; levelNumber++) {
             SpecialLevelType type = levelNumber == 3
                 ? thirdLevelType : SpecialLevelType.NORMAL;
@@ -55,10 +58,18 @@ public final class AdventureFactory {
             Level level = new Level(
                 season.name().toLowerCase().replace('_', '-') + "-" + levelNumber,
                 season, levelNumber, type, 8, startingSun);
+            int previousCost = firstWaveCosts[levelNumber - 1];
             for (int waveNumber = 1; waveNumber <= waveCounts[levelNumber - 1]; waveNumber++) {
-                int cost = firstWaveCosts[levelNumber - 1]
-                    + (waveNumber - 1) * waveIncrements[levelNumber - 1];
+                int cost;
+                if (waveNumber == 1) {
+                    cost = previousCost;
+                } else if (waveNumber == waveCounts[levelNumber - 1]) {
+                    cost = roundToNearestFifty(previousCost * 2.0);
+                } else {
+                    cost = roundToNearestFifty(previousCost * 1.25);
+                }
                 level.addWave(new Wave(waveNumber, cost, 0));
+                previousCost = cost;
             }
             chapter.addLevel(level);
         }

@@ -12,16 +12,15 @@ public final class Armor {
         this.health = definition.getBaseHealth();
     }
 
-    public ArmorDefinition getDefinition() {
-        return definition;
-    }
+    public ArmorDefinition getDefinition() { return definition; }
+    public int getHealth() { return health; }
+    public boolean isDestroyed() { return health <= 0; }
 
-    public int getHealth() {
-        return health;
-    }
-
-    public boolean isDestroyed() {
-        return health <= 0;
+    public void scaleHealth(double factor) {
+        if (factor <= 0) {
+            throw new IllegalArgumentException("Armor health factor must be positive.");
+        }
+        health = Math.max(1, (int) Math.round(health * factor));
     }
 
     public int absorbDamage(int damage) {

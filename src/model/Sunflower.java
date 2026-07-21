@@ -4,15 +4,21 @@ public class Sunflower extends Plant {
     private final int productionAmount;
 
     public Sunflower(PlantDefinition definition) {
-        super(definition);
+        this(definition, 1);
+    }
+
+    public Sunflower(PlantDefinition definition, int level) {
+        super(definition, level);
         String normalized = definition.getNormalizedName();
+        int baseAmount;
         if (normalized.equals("twinsunflower")) {
-            productionAmount = 100;
+            baseAmount = 100;
         } else if (normalized.equals("primalsunflower")) {
-            productionAmount = 75;
+            baseAmount = 75;
         } else {
-            productionAmount = 50;
+            baseAmount = 50;
         }
+        productionAmount = baseAmount + PlantStats.calculate(definition, level).getSunProductionBonus();
     }
 
     public Sun produceSun() {

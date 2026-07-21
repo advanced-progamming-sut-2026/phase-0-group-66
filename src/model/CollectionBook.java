@@ -50,4 +50,8 @@ public class CollectionBook implements Serializable {
     public int getPlantLevel(String plantName) {
         return plantLevels.getOrDefault(plantName, 0);
     }
+
+    public Map<String, Integer> getPlantLevels() {
+        return Collections.unmodifiableMap(plantLevels);
+    }
 }
