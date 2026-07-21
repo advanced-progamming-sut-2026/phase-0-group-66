@@ -15,21 +15,40 @@ public abstract class Plant {
     protected GridPosition position;
     protected int attackPower;
     protected int cooldown;
+    private final int plantLevel;
     private final int actionIntervalTicks;
+    private final int rechargeTicks;
+    private final int sunProductionBonus;
+    private final boolean doubleSunChance;
+    private final int chillDurationTicks;
+    private final int pierceBonus;
     private int actionTicksRemaining;
+    private int plantFoodShield;
 
     protected Plant(PlantDefinition definition) {
+        this(definition, 1);
+    }
+
+    protected Plant(PlantDefinition definition, int level) {
         if (definition == null) {
             throw new IllegalArgumentException("Plant definition cannot be null.");
         }
+        PlantStats stats = PlantStats.calculate(definition, level);
         this.definition = definition;
         this.name = definition.getName();
-        this.maxHealth = Math.max(1, definition.getBaseHealth());
+        this.plantLevel = stats.getLevel();
+        this.maxHealth = stats.getMaxHealth();
         this.health = maxHealth;
-        this.sunCost = definition.getCost();
-        this.attackPower = definition.getBaseDamage();
-        double interval = definition.getActionIntervalSeconds().orElse(1.0);
-        this.actionIntervalTicks = Math.max(1, (int) Math.round(interval * Game.TICKS_PER_SECOND));
+        this.sunCost = stats.getCost();
+        this.attackPower = stats.getDamage();
+        this.actionIntervalTicks = Math.max(1, (int) Math.round(
+            stats.getActionIntervalSeconds() * Game.TICKS_PER_SECOND));
+        this.rechargeTicks = Math.max(0, (int) Math.round(
+            stats.getRechargeSeconds() * Game.TICKS_PER_SECOND));
+        this.sunProductionBonus = stats.getSunProductionBonus();
+        this.doubleSunChance = stats.hasDoubleSunChance();
+        this.chillDurationTicks = 50 + stats.getChillBonusTicks();
+        this.pierceBonus = stats.getPierceBonus();
         this.actionTicksRemaining = actionIntervalTicks;
     }
 
@@ -41,7 +60,13 @@ public abstract class Plant {
         if (amount < 0) {
             throw new IllegalArgumentException("Damage cannot be negative.");
         }
-        health = Math.max(0, health - amount);
+        int remaining = amount;
+        if (plantFoodShield > 0) {
+            int absorbed = Math.min(plantFoodShield, remaining);
+            plantFoodShield -= absorbed;
+            remaining -= absorbed;
+        }
+        health = Math.max(0, health - remaining);
     }
 
     public void healToFull() {
@@ -50,6 +75,7 @@ public abstract class Plant {
 
     public void usePlantFood() {
         healToFull();
+        plantFoodShield = Math.max(plantFoodShield, maxHealth);
         actionTicksRemaining = 0;
     }
 
@@ -98,7 +124,7 @@ public abstract class Plant {
     }
 
     public boolean isPiercing() {
-        return categoryEquals("Strike-through");
+        return categoryEquals("Strike-through") || pierceBonus > 0;
     }
 
     public int getProjectileCount() {
@@ -125,49 +151,28 @@ public abstract class Plant {
         return ProjectileType.NORMAL;
     }
 
-    public int getActionIntervalTicks() {
-        return actionIntervalTicks;
-    }
+    public int getPlantLevel() { return plantLevel; }
+    public int getActionIntervalTicks() { return actionIntervalTicks; }
+    public int getActionTicksRemaining() { return actionTicksRemaining; }
+    public int getRechargeTicks() { return rechargeTicks; }
+    public int getSunProductionBonus() { return sunProductionBonus; }
+    public boolean hasDoubleSunChance() { return doubleSunChance; }
+    public int getChillDurationTicks() { return chillDurationTicks; }
+    public int getPlantFoodShield() { return plantFoodShield; }
 
-    public int getActionTicksRemaining() {
-        return actionTicksRemaining;
-    }
-
-    public PlantDefinition getDefinition() {
-        return definition;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public int getHealth() {
-        return health;
-    }
-
-    public int getMaxHealth() {
-        return maxHealth;
-    }
-
-    public int getSunCost() {
-        return sunCost;
-    }
-
-    public int getAttackPower() {
-        return attackPower;
-    }
-
-    public int getCooldown() {
-        return cooldown;
-    }
+    public PlantDefinition getDefinition() { return definition; }
+    public String getName() { return name; }
+    public int getHealth() { return health; }
+    public int getMaxHealth() { return maxHealth; }
+    public int getSunCost() { return sunCost; }
+    public int getAttackPower() { return attackPower; }
+    public int getCooldown() { return cooldown; }
 
     public void setCooldown(int cooldown) {
         this.cooldown = Math.max(0, cooldown);
     }
 
-    public GridPosition getPosition() {
-        return position;
-    }
+    public GridPosition getPosition() { return position; }
 
     public void setPosition(GridPosition position) {
         this.position = position;

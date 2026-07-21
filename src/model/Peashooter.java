@@ -4,7 +4,11 @@ public class Peashooter extends Plant {
     private final String projectileType;
 
     public Peashooter(PlantDefinition definition) {
-        super(definition);
+        this(definition, 1);
+    }
+
+    public Peashooter(PlantDefinition definition, int level) {
+        super(definition, level);
         if (definition.hasTag("Poison")) {
             projectileType = "poison";
         } else if (definition.hasTag("Fire")) {
@@ -24,11 +28,6 @@ public class Peashooter extends Plant {
         return new Projectile(getAttackPower(), 5.0, start, getProjectileElementType(), isPiercing());
     }
 
-    public String getProjectileTypeName() {
-        return projectileType;
-    }
-
-    public String getProjectileType() {
-        return projectileType;
-    }
+    public String getProjectileTypeName() { return projectileType; }
+    public String getProjectileType() { return projectileType; }
 }

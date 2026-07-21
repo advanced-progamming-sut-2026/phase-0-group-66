@@ -21,19 +21,23 @@ public final class PlantFactory {
     }
 
     public Plant createPlant(String type) {
+        return createPlant(type, 1);
+    }
+
+    public Plant createPlant(String type, int level) {
         PlantDefinition definition = findDefinition(type)
             .orElseThrow(() -> new IllegalArgumentException("Unknown plant type: " + type));
         String normalizedName = definition.getNormalizedName();
         if (isSunflower(normalizedName)) {
-            return new Sunflower(definition);
+            return new Sunflower(definition, level);
         }
         if (isWallNut(normalizedName)) {
-            return new WallNut(definition);
+            return new WallNut(definition, level);
         }
         if (isPeaShooter(normalizedName)) {
-            return new Peashooter(definition);
+            return new Peashooter(definition, level);
         }
-        return new GenericPlant(definition);
+        return new GenericPlant(definition, level);
     }
 
     public Optional<PlantDefinition> findDefinition(String type) {

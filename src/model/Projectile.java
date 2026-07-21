@@ -5,16 +5,22 @@ public class Projectile {
     private final double speed;
     private final ProjectileType type;
     private final boolean piercing;
+    private final int chillDurationTicks;
     private BoardPosition position;
     private boolean active;
 
     public Projectile() {
-        this(20, 5.0, new BoardPosition(0, 0), ProjectileType.NORMAL, false);
+        this(20, 5.0, new BoardPosition(0, 0), ProjectileType.NORMAL, false, 50);
     }
 
     public Projectile(int damage, double speed, BoardPosition position,
                       ProjectileType type, boolean piercing) {
-        if (damage < 0 || speed < 0 || position == null) {
+        this(damage, speed, position, type, piercing, 50);
+    }
+
+    public Projectile(int damage, double speed, BoardPosition position,
+                      ProjectileType type, boolean piercing, int chillDurationTicks) {
+        if (damage < 0 || speed < 0 || position == null || chillDurationTicks < 0) {
             throw new IllegalArgumentException("Invalid projectile data.");
         }
         this.damage = damage;
@@ -22,6 +28,7 @@ public class Projectile {
         this.position = position;
         this.type = type == null ? ProjectileType.NORMAL : type;
         this.piercing = piercing;
+        this.chillDurationTicks = chillDurationTicks;
         this.active = true;
     }
 
@@ -31,9 +38,7 @@ public class Projectile {
         return previousColumn;
     }
 
-    public void move() {
-        moveOneTick();
-    }
+    public void move() { moveOneTick(); }
 
     public void hitTarget(Zombie target) {
         if (target == null || !active) {
@@ -47,7 +52,7 @@ public class Projectile {
         } else {
             target.takeDamage(damage);
             if (type == ProjectileType.ICE) {
-                target.chill(50);
+                target.chill(chillDurationTicks);
             }
         }
         if (!piercing) {
@@ -55,31 +60,11 @@ public class Projectile {
         }
     }
 
-    public int getDamage() {
-        return damage;
-    }
-
-    public double getSpeed() {
-        return speed;
-    }
-
-    public ProjectileType getType() {
-        return type;
-    }
-
-    public boolean isPiercing() {
-        return piercing;
-    }
-
-    public BoardPosition getPosition() {
-        return position;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void deactivate() {
-        active = false;
-    }
+    public int getDamage() { return damage; }
+    public double getSpeed() { return speed; }
+    public ProjectileType getType() { return type; }
+    public boolean isPiercing() { return piercing; }
+    public BoardPosition getPosition() { return position; }
+    public boolean isActive() { return active; }
+    public void deactivate() { active = false; }
 }
