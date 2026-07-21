@@ -8,7 +8,8 @@ public enum TileType {
     SLIPPERY_UP(false),
     SLIPPERY_DOWN(false),
     LOW_TIDE(true),
-    NECROMANCY(true);
+    NECROMANCY(true),
+    CRATER(false);
 
     private final boolean plantable;
 

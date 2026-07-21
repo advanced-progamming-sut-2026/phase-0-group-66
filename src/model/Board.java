@@ -41,14 +41,8 @@ public class Board {
         }
     }
 
-    public int getRows() {
-        return rows;
-    }
-
-    public int getCols() {
-        return cols;
-    }
-
+    public int getRows() { return rows; }
+    public int getCols() { return cols; }
     public List<LawnMower> getLawnMowers() {
         return Collections.unmodifiableList(lawnMowers);
     }
@@ -63,19 +57,83 @@ public class Board {
             throw new IllegalArgumentException("Plant cannot be null.");
         }
         Tile tile = getTile(row, col);
-        if (!tile.canPlant()) {
+        GridPosition position = new GridPosition(row, col);
+        PlantAbility ability = plant.getAbility();
+        if (ability == PlantAbility.LILY_PAD) {
+            placeLilyPad(tile, plant, position);
+            return;
+        }
+        if (ability == PlantAbility.PUMPKIN) {
+            placePumpkin(tile, plant, position);
+            return;
+        }
+        if (ability == PlantAbility.PEA_POD && tile.getMainPlant() != null
+            && tile.getMainPlant().getAbility() == PlantAbility.PEA_POD) {
+            if (!tile.getMainPlant().addStack()) {
+                throw new IllegalStateException("Pea Pod is already at five heads.");
+            }
+            return;
+        }
+        if (tile.getMainPlant() != null) {
             throw new IllegalStateException("Cannot plant on this tile.");
         }
-        tile.setPlant(plant);
-        plant.setPosition(new GridPosition(row, col));
+        boolean waterTile = tile.getType() == TileType.WATER || tile.getType() == TileType.LOW_TIDE;
+        boolean supported = tile.getSupportPlant() != null
+            && tile.getSupportPlant().getAbility() == PlantAbility.LILY_PAD;
+        if (waterTile && !plant.getDefinition().hasTag("Water") && !supported) {
+            throw new IllegalStateException("A Lily Pad is required on water.");
+        }
+        if (!waterTile && !tile.getType().isPlantable()) {
+            throw new IllegalStateException("Cannot plant on this tile.");
+        }
+        tile.setMainPlant(plant);
+        plant.setPosition(position);
+    }
+
+    private void placeLilyPad(Tile tile, Plant plant, GridPosition position) {
+        boolean waterTile = tile.getType() == TileType.WATER || tile.getType() == TileType.LOW_TIDE;
+        if (!waterTile || tile.getSupportPlant() != null || tile.getMainPlant() != null) {
+            throw new IllegalStateException("Lily Pad can only be planted on empty water.");
+        }
+        tile.setSupportPlant(plant);
+        plant.setPosition(position);
+    }
+
+    private void placePumpkin(Tile tile, Plant plant, GridPosition position) {
+        if (tile.getCoverPlant() != null || tile.getMainPlant() == null) {
+            throw new IllegalStateException("Pumpkin must cover an existing plant.");
+        }
+        tile.setCoverPlant(plant);
+        plant.setPosition(position);
     }
 
     public Plant removePlant(int row, int col) {
         Tile tile = getTile(row, col);
-        Plant removed = tile.getPlant();
-        tile.setPlant(null);
+        Plant removed = tile.getCoverPlant();
+        if (removed == null) {
+            removed = tile.getMainPlant();
+        }
+        if (removed == null) {
+            removed = tile.getSupportPlant();
+        }
         if (removed != null) {
+            tile.removePlant(removed);
             removed.setPosition(null);
+        }
+        return removed;
+    }
+
+    public boolean removePlant(Plant plant) {
+        if (plant == null || plant.getPosition() == null) {
+            return false;
+        }
+        GridPosition position = plant.getPosition();
+        if (!isInside(position.getRow(), position.getColumn())) {
+            return false;
+        }
+        boolean removed = tiles[position.getRow()][position.getColumn()].removePlant(plant);
+        if (removed) {
+            plant.setPosition(null);
         }
         return removed;
     }
@@ -84,10 +142,17 @@ public class Board {
         ArrayList<Plant> result = new ArrayList<>();
         for (Tile[] rowTiles : tiles) {
             for (Tile tile : rowTiles) {
-                if (tile.getPlant() != null) {
-                    result.add(tile.getPlant());
-                }
+                result.addAll(tile.getPlants());
             }
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+    public List<Plant> getPlantsInRow(int row) {
+        validateRow(row);
+        ArrayList<Plant> result = new ArrayList<>();
+        for (int col = 0; col < cols; col++) {
+            result.addAll(tiles[row][col].getPlants());
         }
         return Collections.unmodifiableList(result);
     }
@@ -119,9 +184,7 @@ public class Board {
         }
     }
 
-    public List<Zombie> getZombies() {
-        return Collections.unmodifiableList(zombies);
-    }
+    public List<Zombie> getZombies() { return Collections.unmodifiableList(zombies); }
 
     public List<Zombie> getZombiesInRow(int row) {
         validateRow(row);
@@ -140,11 +203,24 @@ public class Board {
         Zombie nearest = null;
         for (Zombie zombie : getZombiesInRow(row)) {
             double zombieColumn = zombie.getPosition().getColumn();
-            if (zombieColumn + 0.001 < column) {
+            if (zombieColumn + 0.001 < column || zombie.isHypnotized()) {
                 continue;
             }
-            if (nearest == null
-                || zombieColumn < nearest.getPosition().getColumn()) {
+            if (nearest == null || zombieColumn < nearest.getPosition().getColumn()) {
+                nearest = zombie;
+            }
+        }
+        return nearest;
+    }
+
+    public Zombie findNearestZombieBehind(int row, double column) {
+        Zombie nearest = null;
+        for (Zombie zombie : getZombiesInRow(row)) {
+            double zombieColumn = zombie.getPosition().getColumn();
+            if (zombieColumn - 0.001 > column || zombie.isHypnotized()) {
+                continue;
+            }
+            if (nearest == null || zombieColumn > nearest.getPosition().getColumn()) {
                 nearest = zombie;
             }
         }
@@ -154,7 +230,7 @@ public class Board {
     public Zombie findNearestZombieAnywhere() {
         Zombie nearest = null;
         for (Zombie zombie : zombies) {
-            if (zombie.isDead() || zombie.getPosition() == null) {
+            if (zombie.isDead() || zombie.getPosition() == null || zombie.isHypnotized()) {
                 continue;
             }
             if (nearest == null
@@ -166,7 +242,7 @@ public class Board {
     }
 
     public Plant findBlockingPlant(Zombie zombie) {
-        if (zombie == null || zombie.getPosition() == null) {
+        if (zombie == null || zombie.getPosition() == null || zombie.isHypnotized()) {
             return null;
         }
         int row = zombie.getPosition().getRow();
@@ -175,7 +251,7 @@ public class Board {
             return null;
         }
         for (int col = cols - 1; col >= 0; col--) {
-            Plant plant = tiles[row][col].getPlant();
+            Plant plant = tiles[row][col].getBlockingPlant();
             if (plant == null || plant.isDestroyed()) {
                 continue;
             }
@@ -192,10 +268,7 @@ public class Board {
         }
     }
 
-    public void removeProjectile(Projectile projectile) {
-        projectiles.remove(projectile);
-    }
-
+    public void removeProjectile(Projectile projectile) { projectiles.remove(projectile); }
     public List<Projectile> getProjectiles() {
         return Collections.unmodifiableList(projectiles);
     }
@@ -206,13 +279,8 @@ public class Board {
         }
     }
 
-    public void removeSun(Sun sun) {
-        suns.remove(sun);
-    }
-
-    public List<Sun> getSuns() {
-        return Collections.unmodifiableList(suns);
-    }
+    public void removeSun(Sun sun) { suns.remove(sun); }
+    public List<Sun> getSuns() { return Collections.unmodifiableList(suns); }
 
     public List<Sun> getSunsAt(int row, int col) {
         ArrayList<Sun> result = new ArrayList<>();
@@ -259,7 +327,7 @@ public class Board {
 
     public boolean hasZombiesCrossedColumn(int column) {
         for (Zombie zombie : zombies) {
-            if (!zombie.isDead() && zombie.getPosition() != null
+            if (!zombie.isDead() && zombie.getPosition() != null && !zombie.isHypnotized()
                 && zombie.getPosition().getColumn() < column) {
                 return true;
             }
@@ -267,13 +335,8 @@ public class Board {
         return false;
     }
 
-    public boolean areEndangeredPlantsEaten() {
-        return endangeredPlantsEaten;
-    }
-
-    public void setEndangeredPlantsEaten(boolean endangeredPlantsEaten) {
-        this.endangeredPlantsEaten = endangeredPlantsEaten;
-    }
+    public boolean areEndangeredPlantsEaten() { return endangeredPlantsEaten; }
+    public void setEndangeredPlantsEaten(boolean value) { endangeredPlantsEaten = value; }
 
     public boolean isHorizontallySymmetric() {
         for (int row = 0; row < rows; row++) {
@@ -320,9 +383,7 @@ public class Board {
         return false;
     }
 
-    public boolean hasEmptyCross() {
-        return hasEmptyRow() && hasEmptyColumn();
-    }
+    public boolean hasEmptyCross() { return hasEmptyRow() && hasEmptyColumn(); }
 
     private String plantNameAt(int row, int col) {
         Plant plant = tiles[row][col].getPlant();
@@ -346,7 +407,7 @@ public class Board {
                 if (hasPlant && hasZombie) {
                     token = "PZ";
                 } else if (hasPlant) {
-                    token = "P ";
+                    token = tile.getCoverPlant() != null ? "PC" : "P ";
                 } else if (hasZombie) {
                     token = "Z" + Math.min(9, tile.getZombies().size());
                 } else if (!getSunsAt(row, col).isEmpty()) {
@@ -373,6 +434,7 @@ public class Board {
             case SLIPPERY_DOWN -> "v ";
             case LOW_TIDE -> "L ";
             case NECROMANCY -> "N ";
+            case CRATER -> "C ";
         };
     }
 

@@ -287,32 +287,33 @@ public class Game {
             throw new IllegalStateException("Plant is on cooldown for "
                 + formatSeconds(remainingCooldown) + " seconds.");
         }
-        if (conveyor) {
-            int cards = conveyorCards.getOrDefault(definition.getName(), 0);
-            if (cards <= 0) {
-                throw new IllegalStateException("No conveyor card is available for this plant.");
-            }
-            conveyorCards.put(definition.getName(), cards - 1);
-        }
+        consumeConveyorCardIfNeeded(definition, conveyor);
         int plantLevel = plantLevels.getOrDefault(key, 1);
-        Plant plant = plantFactory.createPlant(definition.getName(), plantLevel);
+        Plant plant = createPlantForPlacement(definition, plantLevel);
         if (!conveyor && sunAmount < plant.getSunCost()) {
             throw new IllegalStateException("Not enough sun.");
         }
+        if (handleTerrainUtilityPlant(plant, row, col)) {
+            finishPlantPurchase(key, plant, conveyor);
+            return;
+        }
+        validateSpecialPlantLocation(plant, row, col);
         board.placePlant(plant, row, col);
-        if (!conveyor) {
-            sunAmount -= plant.getSunCost();
-            cooldownTicks.put(key, plant.getRechargeTicks());
+        finishPlantPurchase(key, plant, conveyor);
+        Plant activePlant = plant.getPosition() == null
+            ? board.getTile(row, col).getMainPlant() : plant;
+        if (activePlant == null) {
+            throw new IllegalStateException("Plant placement did not create an active plant.");
         }
+        String detail = activePlant == plant ? "planted" : "stacked";
         addEvent("Plant " + plant.getName() + " (level " + plant.getPlantLevel()
-            + ") planted at " + display(row, col) + ".");
-        boolean boosted = applyAutomaticBoostIfPresent(plant);
-        if (!boosted || !plant.isExplosive()) {
-            handleImmediatePlant(plant);
+            + ") " + detail + " at " + display(row, col) + ".");
+        boolean boosted = applyAutomaticBoostIfPresent(activePlant);
+        if (!boosted || !activePlant.isExplosive()) {
+            handleImmediatePlant(activePlant);
         }
-        if (plant.isDestroyed()) {
-            cleanupDestroyedEntities();
-        }
+        cleanupDestroyedEntities();
+        evaluateGameState();
     }
 
     public void pluckPlant(int row, int col) {
@@ -647,10 +648,11 @@ public class Game {
                 Tile tile = board.getTile(row, col);
                 if (col >= startColumn) {
                     tile.setTileType(TileType.WATER);
-                    Plant plant = tile.getPlant();
-                    if (plant != null && !plant.getDefinition().hasTag("Water")
-                        && !plant.getDefinition().getNormalizedName().contains("lilypad")) {
-                        plant.takeDamage(plant.getHealth());
+                    Plant plant = tile.getMainPlant();
+                    boolean supported = tile.getSupportPlant() != null
+                        && tile.getSupportPlant().getAbility() == PlantAbility.LILY_PAD;
+                    if (plant != null && !plant.getDefinition().hasTag("Water") && !supported) {
+                        plant.takeDamage(Math.max(plant.getHealth(), 1));
                     }
                 } else if (tile.getType() == TileType.WATER) {
                     tile.setTileType(TileType.NORMAL);
@@ -742,24 +744,39 @@ public class Game {
             throw new IllegalStateException("Plant food cannot be applied to this plant.");
         }
         plant.usePlantFood();
+        PlantAbility ability = plant.getAbility();
         if (plant.isSunProducer()) {
-            int amount = plantFoodSunAmount(plant);
-            sunAmount += amount;
-            addEvent("Plant food made " + plant.getName() + " produce " + amount
-                + " suns immediately.");
-        } else if (plant.isExplosive()) {
-            explosivePlantsUsed++;
-            detonatePlant(plant, 2);
-        } else if (plant.isShooter()) {
-            plantFoodShooterVolley(plant);
-        } else if (plant.isHoming()) {
-            plantFoodHomingStrike(plant);
-        } else if (plant.isMelee()) {
-            plantFoodMeleeStrike(plant);
+            activateSunProducerFood(plant);
         } else {
-            addEvent("Plant food fully healed " + plant.getName()
-                + " and granted a " + plant.getPlantFoodShield() + " point shield.");
+            switch (ability) {
+                case POTATO_MINE, PRIMAL_POTATO_MINE -> armMineWithPlantFood(plant);
+                case CHERRY_BOMB, GRAPESHOT, JALAPENO, DOOM_SHROOM -> {
+                    explosivePlantsUsed++;
+                    detonatePlant(plant, 2);
+                }
+                case SQUASH -> squashMultipleZombies(plant, 2);
+                case TANGLE_KELP -> drownMultipleZombies(plant, 3);
+                case ICEBERG_LETTUCE, ICE_SHROOM -> freezeAllZombies(plant, false);
+                case WALL_NUT, TALL_NUT, ENDURIAN, EXPLODE_O_NUT, PUMPKIN,
+                     SUN_BEAN -> addEvent(plant.getName() + " received reinforced armor.");
+                case GARLIC -> redirectWholeLane(plant);
+                case SWEET_POTATO -> {
+                    plant.healToFull();
+                    pullZombiesTowardSweetPotato(plant);
+                }
+                case TORCHWOOD -> addEvent("Torchwood ignited a blue triple-damage flame.");
+                case MAGNET_SHROOM -> magnetizeAllZombies(plant);
+                case LILY_PAD -> cloneLilyPads(plant);
+                case SHORT_RANGE_SHROOM -> resetShortRangeShrooms();
+                case CAULIPOWER -> hypnotizeRandomZombies(3);
+                case ELECTRIC_BLUEBERRY -> killRandomZombies(3, plant.getName());
+                case CITRON -> clearPlantLane(plant);
+                case CHOMPER -> killRandomZombies(3, plant.getName());
+                case FUME_SHROOM -> fumePlantFoodPush(plant);
+                default -> activateGeneralOffensiveFood(plant);
+            }
         }
+        cleanupDestroyedEntities();
         addEvent("Plant food activated on " + plant.getName() + " from " + source + ".");
     }
 
@@ -831,7 +848,7 @@ public class Game {
             zombie.takeDirectDamage(damage);
         } else if (type == ProjectileType.FIRE) {
             zombie.clearChill();
-            zombie.takeDamage(damage * 2);
+            zombie.takeDamage(damage);
         } else {
             zombie.takeDamage(damage);
             if (type == ProjectileType.ICE) {
@@ -945,30 +962,27 @@ public class Game {
             if (plant.isDestroyed() || plant.getPosition() == null) {
                 continue;
             }
-            if (plant.isTrap()) {
-                Zombie target = board.findNearestZombieAhead(plant.getPosition().getRow(),
-                    plant.getPosition().getColumn() - 0.5);
-                if (target != null && target.getPosition().getColumn()
-                    <= plant.getPosition().getColumn() + 0.8) {
-                    detonatePlant(plant);
-                }
+            plant.tickRuntimeState();
+            warmAdjacentIce(plant);
+            if (plant.isDestroyed() || !plant.isOperational()) {
                 continue;
             }
+            if (plant.isTrap()) {
+                performTrapAction(plant);
+                continue;
+            }
+            performPassivePlantAction(plant);
             if (!plant.tickActionTimer()) {
+                continue;
+            }
+            if (!plant.isSunProducer() && assistDisabledPlant(plant)) {
+                plant.resetActionTimer();
                 continue;
             }
             if (plant.isSunProducer()) {
                 produceSun(plant);
-            } else if (plant.isShooter()) {
-                shootProjectiles(plant);
-                plant.resetActionTimer();
-            } else if (plant.isHoming()) {
-                attackHoming(plant);
-                plant.resetActionTimer();
-            } else if (plant.isMelee()) {
-                attackMelee(plant);
-                plant.resetActionTimer();
             } else {
+                performActivePlantAction(plant);
                 plant.resetActionTimer();
             }
         }
@@ -980,16 +994,22 @@ public class Game {
             || board.hasPlantGeneratedSunAt(position)) {
             return;
         }
-        int amount = plant instanceof Sunflower sunflower
-            ? sunflower.getProductionAmount() : inferSunProduction(plant)
-                + plant.getSunProductionBonus();
+        int amount;
+        if (plant.getAbility() == PlantAbility.SUN_SHROOM) {
+            amount = plant.getSunShroomProduction() + plant.getSunProductionBonus();
+        } else if (plant instanceof Sunflower sunflower) {
+            amount = sunflower.getProductionAmount();
+        } else {
+            amount = inferSunProduction(plant) + plant.getSunProductionBonus();
+        }
         if (plant.hasDoubleSunChance() && random.nextBoolean()) {
             amount *= 2;
         }
         Sun sun = new Sun(amount, position);
         board.addSun(sun);
         waitingSunProducers.add(position);
-        addEvent("Plant " + plant.getName() + " produced a sun at " + position + ".");
+        addEvent("Plant " + plant.getName() + " produced a " + amount
+            + " sun at " + position + ".");
     }
 
     private int inferSunProduction(Plant plant) {
@@ -1009,13 +1029,19 @@ public class Game {
         if (target == null) {
             return;
         }
+        if (plant.getAbility() == PlantAbility.SHORT_RANGE_SHROOM
+            && target.getPosition().getColumn() - position.getColumn() > 3.5) {
+            return;
+        }
         int projectileCount = plant.getProjectileCount();
+        int maxHits = plant.getAbility() == PlantAbility.CACTUS ? 3
+            : plant.isPiercing() ? Integer.MAX_VALUE : 1;
         for (int index = 0; index < projectileCount; index++) {
             double startColumn = position.getColumn() + 0.25 - index * 0.03;
-            Projectile projectile = new Projectile(plant.getAttackPower(), PROJECTILE_SPEED,
-                new BoardPosition(position.getRow(), startColumn),
-                plant.getProjectileElementType(), plant.isPiercing(),
-                plant.getChillDurationTicks());
+            Projectile projectile = new Projectile(plant.getEffectiveAttackPower(),
+                PROJECTILE_SPEED, new BoardPosition(position.getRow(), startColumn),
+                plant.getProjectileElementType(), maxHits > 1,
+                plant.getChillDurationTicks(), plant.isLobber(), plant.getName(), maxHits);
             board.addProjectile(projectile);
         }
         addEvent("Plant " + plant.getName() + " fired " + projectileCount
@@ -1025,17 +1051,33 @@ public class Game {
     private void attackHoming(Plant plant) {
         Zombie target = board.findNearestZombieAnywhere();
         if (target != null) {
-            target.takeDamage(Math.max(1, plant.getAttackPower()));
+            damageZombieFromPlant(target, plant, Math.max(1, plant.getEffectiveAttackPower()), false);
             addEvent("Plant " + plant.getName() + " hit " + target.getName() + ".");
         }
     }
 
     private void attackMelee(Plant plant) {
         GridPosition position = plant.getPosition();
-        Zombie target = board.findNearestZombieAhead(position.getRow(), position.getColumn() - 0.5);
-        if (target != null && target.getPosition().getColumn() <= position.getColumn() + 1.25) {
-            target.takeDamage(Math.max(1, plant.getAttackPower()));
-            addEvent("Plant " + plant.getName() + " struck " + target.getName() + ".");
+        int hits = 0;
+        for (Zombie zombie : new ArrayList<>(board.getZombies())) {
+            if (zombie.isDead() || zombie.isHypnotized() || zombie.getPosition() == null) {
+                continue;
+            }
+            int rowDistance = Math.abs(zombie.getPosition().getRow() - position.getRow());
+            double columnDistance = Math.abs(zombie.getPosition().getColumn()
+                - position.getColumn());
+            boolean inRange = plant.getAbility() == PlantAbility.PHAT_BEET
+                || plant.getAbility() == PlantAbility.KIWIBEAST
+                ? rowDistance <= 1 && columnDistance <= 1.5
+                : rowDistance == 0 && columnDistance <= 1.25;
+            if (inRange) {
+                damageZombieFromPlant(zombie, plant,
+                    Math.max(1, plant.getEffectiveAttackPower()), false);
+                hits++;
+            }
+        }
+        if (hits > 0) {
+            addEvent("Plant " + plant.getName() + " struck " + hits + " zombie(s).");
         }
     }
 
@@ -1051,16 +1093,26 @@ public class Game {
             }
             double previousColumn = projectile.moveOneTick();
             double currentColumn = projectile.getPosition().getColumn();
-            if (hitTomb(projectile, previousColumn, currentColumn)) {
+            if (!projectile.isLobbed() && hitTomb(projectile, previousColumn, currentColumn)) {
                 board.removeProjectile(projectile);
                 continue;
             }
             Zombie target = findProjectileTarget(projectile.getPosition().getRow(),
                 previousColumn, currentColumn);
             if (target != null) {
-                projectile.hitTarget(target);
-                addEvent("Projectile hit " + target.getName() + " for "
-                    + projectile.getDamage() + " base damage.");
+                if (reflectProjectileIfNeeded(projectile, target)) {
+                    board.removeProjectile(projectile);
+                    continue;
+                }
+                int multiplier = torchwoodMultiplier(projectile, previousColumn, currentColumn);
+                boolean affected = projectile.hitTarget(target, multiplier);
+                if (affected) {
+                    addEvent("Projectile from " + projectile.getSourcePlant() + " hit "
+                        + target.getName() + " for "
+                        + projectile.getDamage() * multiplier + " damage.");
+                } else {
+                    addEvent(target.getName() + " blocked or avoided the projectile.");
+                }
             }
             if (!projectile.isActive() || currentColumn > board.getCols() + 1) {
                 board.removeProjectile(projectile);
@@ -1071,6 +1123,9 @@ public class Game {
     private Zombie findProjectileTarget(int row, double fromColumn, double toColumn) {
         Zombie target = null;
         for (Zombie zombie : board.getZombiesInRow(row)) {
+            if (zombie.isHypnotized()) {
+                continue;
+            }
             double column = zombie.getPosition().getColumn();
             if (column + 0.001 < fromColumn || column - 0.001 > toColumn) {
                 continue;
@@ -1088,14 +1143,23 @@ public class Game {
                 continue;
             }
             zombie.tickEffects();
+            updateZombieEnvironmentState(zombie);
+            performZombieSpecialAbility(zombie);
+            if (zombie.isDead()) {
+                continue;
+            }
+            if (zombie.isHypnotized()) {
+                moveHypnotizedZombie(zombie);
+                continue;
+            }
             Plant blockingPlant = board.findBlockingPlant(zombie);
+            if (blockingPlant != null && shouldZombieBypassPlant(zombie, blockingPlant)) {
+                zombie.moveOneTick();
+                continue;
+            }
             if (blockingPlant != null) {
-                if (elapsedTicks % TICKS_PER_SECOND == 0) {
-                    zombie.attackPlant(blockingPlant);
-                    addEvent("Zombie " + zombie.getName() + " attacked "
-                        + blockingPlant.getName() + " at " + blockingPlant.getPosition() + ".");
-                }
-            } else {
+                resolveZombiePlantCombat(zombie, blockingPlant);
+            } else if (!isStationaryZombie(zombie)) {
                 zombie.moveOneTick();
                 applySlipperyTile(zombie);
             }
@@ -1131,19 +1195,27 @@ public class Game {
                 continue;
             }
             GridPosition position = plant.getPosition();
-            board.removePlant(position.getRow(), position.getColumn());
+            if (plant.getAbility() == PlantAbility.EXPLODE_O_NUT) {
+                explodeDestroyedDefender(plant);
+            }
+            boolean endangered = endangeredPositions.contains(position)
+                && board.getTile(position.getRow(), position.getColumn()).getMainPlant() == plant;
+            board.removePlant(plant);
             waitingSunProducers.remove(position);
-            if (endangeredPositions.contains(position)) {
+            if (endangered) {
                 board.setEndangeredPlantsEaten(true);
             }
             lostPlantsCount++;
             addEvent("Plant " + plant.getName() + " at " + position + " is destroyed.");
         }
+        removeUnsupportedWaterPlants();
         for (Zombie zombie : new ArrayList<>(board.getZombies())) {
             if (!zombie.isDead()) {
                 continue;
             }
             BoardPosition position = zombie.getPosition();
+            releaseWizardTransformations(zombie.getRuntimeId());
+            dropStolenSunFromZombie(zombie);
             handleZombieRewards(zombie);
             board.removeZombie(zombie);
             zombieKillCount++;
@@ -1220,16 +1292,22 @@ public class Game {
     }
 
     private void handleImmediatePlant(Plant plant) {
-        String normalized = plant.getDefinition().getNormalizedName();
-        if (normalized.equals("goldbloom")) {
+        PlantAbility ability = plant.getAbility();
+        if (ability == PlantAbility.GOLD_BLOOM) {
             sunAmount += 375;
-            GridPosition position = plant.getPosition();
-            board.removePlant(position.getRow(), position.getColumn());
+            removeInstantPlant(plant);
             addEvent("Gold Bloom produced 375 suns and disappeared.");
-        } else if (plant.isExplosive() && !plant.isTrap()) {
+        } else if (ability.isMint()) {
+            activateMint(plant);
+        } else if (ability == PlantAbility.ICE_SHROOM) {
+            freezeAllZombies(plant, false);
+            removeInstantPlant(plant);
+        } else if (ability == PlantAbility.CHERRY_BOMB
+            || ability == PlantAbility.GRAPESHOT
+            || ability == PlantAbility.JALAPENO
+            || ability == PlantAbility.DOOM_SHROOM) {
             explosivePlantsUsed++;
             detonatePlant(plant);
-            cleanupDestroyedEntities();
         }
     }
 
@@ -1239,23 +1317,34 @@ public class Game {
 
     private void detonatePlant(Plant plant, int damageMultiplier) {
         GridPosition center = plant.getPosition();
-        int damage = plant.getDefinition().isInstantKill()
-            ? Integer.MAX_VALUE / 4 : Math.max(1, plant.getAttackPower())
-                * Math.max(1, damageMultiplier);
-        boolean wholeRow = plant.getDefinition().getNormalizedName().contains("jalapeno");
+        if (center == null) {
+            return;
+        }
+        int baseDamage = plant.getDefinition().isInstantKill()
+            ? Integer.MAX_VALUE / 4 : Math.max(1, plant.getEffectiveAttackPower());
+        int damage = baseDamage * Math.max(1, damageMultiplier);
+        PlantAbility ability = plant.getAbility();
         for (Zombie zombie : new ArrayList<>(board.getZombies())) {
-            if (zombie.getPosition() == null) {
+            if (zombie.isDead() || zombie.isHypnotized() || zombie.getPosition() == null) {
                 continue;
             }
             int rowDistance = Math.abs(zombie.getPosition().getRow() - center.getRow());
             double columnDistance = Math.abs(zombie.getPosition().getColumn() - center.getColumn());
-            if ((wholeRow && rowDistance == 0) || (!wholeRow && rowDistance <= 1
-                && columnDistance <= 1.5)) {
-                zombie.takeDamage(damage);
+            if (explosionHits(ability, rowDistance, columnDistance)) {
+                if (ability == PlantAbility.JALAPENO) {
+                    zombie.clearChill();
+                }
+                damageZombieFromPlant(zombie, plant, damage, false);
             }
         }
-        plant.takeDamage(plant.getHealth());
-        addEvent("Plant " + plant.getName() + " exploded at " + center + ".");
+        if (ability == PlantAbility.GRAPESHOT) {
+            launchGrapeshotFragments(plant, damageMultiplier);
+        }
+        if (ability == PlantAbility.DOOM_SHROOM) {
+            board.getTile(center.getRow(), center.getColumn()).setTileType(TileType.CRATER);
+        }
+        plant.takeDamage(Math.max(plant.getHealth(), 1));
+        addEvent("Plant " + plant.getName() + " activated at " + center + ".");
     }
 
     private void explodeRadioactiveSun(Sun sun) {
@@ -1278,6 +1367,1119 @@ public class Game {
             }
         }
         sun.collect();
+    }
+
+    private void activateSunProducerFood(Plant plant) {
+        if (plant.getAbility() == PlantAbility.SUN_SHROOM) {
+            plant.matureFully();
+        }
+        int amount = plantFoodSunAmount(plant);
+        sunAmount += amount;
+        addEvent("Plant food made " + plant.getName() + " produce " + amount
+            + " suns immediately.");
+    }
+
+    private void armMineWithPlantFood(Plant plant) {
+        addEvent(plant.getName() + " armed immediately.");
+        GridPosition center = plant.getPosition();
+        int clones = 0;
+        for (int row = Math.max(0, center.getRow() - 1);
+             row <= Math.min(board.getRows() - 1, center.getRow() + 1) && clones < 2; row++) {
+            for (int col = Math.max(0, center.getColumn() - 1);
+                 col <= Math.min(board.getCols() - 1, center.getColumn() + 1) && clones < 2; col++) {
+                if (row == center.getRow() && col == center.getColumn()) {
+                    continue;
+                }
+                Tile tile = board.getTile(row, col);
+                if (tile.getPlant() == null && tile.getType().isPlantable()) {
+                    Plant clone = plantFactory.createPlant(plant.getName(), plant.getPlantLevel());
+                    clone.usePlantFood();
+                    board.placePlant(clone, row, col);
+                    clones++;
+                }
+            }
+        }
+        addEvent(plant.getName() + " created " + clones + " armed clone(s).");
+    }
+
+    private void squashMultipleZombies(Plant plant, int count) {
+        ArrayList<Zombie> targets = hostileZombies();
+        int killed = 0;
+        while (!targets.isEmpty() && killed < count) {
+            Zombie target = targets.remove(random.nextInt(targets.size()));
+            target.kill();
+            killed++;
+        }
+        plant.takeDamage(Math.max(plant.getHealth(), 1));
+        addEvent("Squash crushed " + killed + " zombie(s) with plant food.");
+    }
+
+    private void drownMultipleZombies(Plant plant, int count) {
+        ArrayList<Zombie> waterTargets = new ArrayList<>();
+        for (Zombie zombie : hostileZombies()) {
+            int col = (int) Math.floor(zombie.getPosition().getColumn());
+            if (board.isInside(zombie.getPosition().getRow(), col)) {
+                TileType type = board.getTile(zombie.getPosition().getRow(), col).getType();
+                if (type == TileType.WATER || type == TileType.LOW_TIDE) {
+                    waterTargets.add(zombie);
+                }
+            }
+        }
+        int killed = 0;
+        while (!waterTargets.isEmpty() && killed < count) {
+            Zombie target = waterTargets.remove(random.nextInt(waterTargets.size()));
+            target.kill();
+            killed++;
+        }
+        addEvent("Tangle Kelp drowned " + killed + " zombie(s).");
+    }
+
+    private void redirectWholeLane(Plant plant) {
+        int row = plant.getPosition().getRow();
+        int redirected = 0;
+        for (Zombie zombie : new ArrayList<>(board.getZombiesInRow(row))) {
+            if (!zombie.isHypnotized()) {
+                moveZombieToAdjacentLane(zombie);
+                redirected++;
+            }
+        }
+        addEvent("Garlic redirected " + redirected + " zombie(s) from its lane.");
+    }
+
+    private void magnetizeAllZombies(Plant plant) {
+        int removed = 0;
+        for (Zombie zombie : hostileZombies()) {
+            removed += zombie.removeMetalArmor();
+        }
+        addEvent("Magnet-shroom removed " + removed + " total metal armor health.");
+    }
+
+    private void cloneLilyPads(Plant plant) {
+        int created = 0;
+        for (int row = 0; row < board.getRows() && created < 3; row++) {
+            for (int col = 0; col < board.getCols() && created < 3; col++) {
+                Tile tile = board.getTile(row, col);
+                boolean water = tile.getType() == TileType.WATER
+                    || tile.getType() == TileType.LOW_TIDE;
+                if (water && tile.getSupportPlant() == null && tile.getMainPlant() == null) {
+                    Plant clone = plantFactory.createPlant("Lily Pad", plant.getPlantLevel());
+                    board.placePlant(clone, row, col);
+                    created++;
+                }
+            }
+        }
+        addEvent("Lily Pad created " + created + " copy/copies.");
+    }
+
+    private void resetShortRangeShrooms() {
+        int reset = 0;
+        for (Plant plant : board.getPlants()) {
+            if (plant.getAbility() == PlantAbility.SHORT_RANGE_SHROOM) {
+                plant.restoreLifetime();
+                reset++;
+            }
+        }
+        addEvent("Plant food reset the lifetime of " + reset + " short-range shroom(s).");
+    }
+
+    private void hypnotizeRandomZombies(int count) {
+        ArrayList<Zombie> targets = hostileZombies();
+        int affected = 0;
+        while (!targets.isEmpty() && affected < count) {
+            Zombie target = targets.remove(random.nextInt(targets.size()));
+            target.hypnotize();
+            affected++;
+        }
+        addEvent("Plant food hypnotized " + affected + " zombie(s).");
+    }
+
+    private void killRandomZombies(int count, String sourceName) {
+        ArrayList<Zombie> targets = hostileZombies();
+        int killed = 0;
+        while (!targets.isEmpty() && killed < count) {
+            Zombie target = targets.remove(random.nextInt(targets.size()));
+            target.kill();
+            killed++;
+        }
+        addEvent(sourceName + " eliminated " + killed + " zombie(s).");
+    }
+
+    private void clearPlantLane(Plant plant) {
+        int row = plant.getPosition().getRow();
+        int killed = 0;
+        for (Zombie zombie : new ArrayList<>(board.getZombiesInRow(row))) {
+            if (!zombie.isHypnotized()) {
+                zombie.kill();
+                killed++;
+            }
+        }
+        addEvent("Citron's plasma ball cleared " + killed + " zombie(s) from its lane.");
+    }
+
+    private void fumePlantFoodPush(Plant plant) {
+        int row = plant.getPosition().getRow();
+        int pushed = 0;
+        for (Zombie zombie : new ArrayList<>(board.getZombiesInRow(row))) {
+            if (!zombie.isHypnotized()) {
+                zombie.takeDamage(Math.max(1, plant.getEffectiveAttackPower()) * 5);
+                zombie.setPosition(zombie.getPosition().moveHorizontal(1.5));
+                pushed++;
+            }
+        }
+        addEvent("Fume-shroom pushed " + pushed + " zombie(s) backward.");
+    }
+
+    private void activateGeneralOffensiveFood(Plant plant) {
+        if (plant.isShooter()) {
+            if (plant.getAbility() == PlantAbility.THREEPEATER
+                || plant.getAbility() == PlantAbility.STARFRUIT
+                || plant.getAbility() == PlantAbility.ROTOBAGA) {
+                for (int index = 0; index < 5; index++) {
+                    performActivePlantAction(plant);
+                }
+            } else {
+                plantFoodShooterVolley(plant);
+            }
+        } else if (plant.isHoming()) {
+            plantFoodHomingStrike(plant);
+        } else if (plant.isMelee()) {
+            plantFoodMeleeStrike(plant);
+        } else {
+            addEvent("Plant food fully healed " + plant.getName()
+                + " and granted a " + plant.getPlantFoodShield() + " point shield.");
+        }
+    }
+
+    private void consumeConveyorCardIfNeeded(PlantDefinition definition, boolean conveyor) {
+        if (!conveyor) {
+            return;
+        }
+        int cards = conveyorCards.getOrDefault(definition.getName(), 0);
+        if (cards <= 0) {
+            throw new IllegalStateException("No conveyor card is available for this plant.");
+        }
+        conveyorCards.put(definition.getName(), cards - 1);
+    }
+
+    private Plant createPlantForPlacement(PlantDefinition definition, int level) {
+        if (PlantAbility.fromDefinition(definition) != PlantAbility.IMITATER) {
+            return plantFactory.createPlant(definition.getName(), level);
+        }
+        for (String selected : selectedPlants) {
+            PlantDefinition candidate = plantFactory.findDefinition(selected).orElse(null);
+            if (candidate != null && PlantAbility.fromDefinition(candidate) != PlantAbility.IMITATER) {
+                addEvent("Imitater copied " + candidate.getName() + ".");
+                return plantFactory.createPlant(candidate.getName(),
+                    plantLevels.getOrDefault(candidate.getNormalizedName(), 1));
+            }
+        }
+        throw new IllegalStateException("Imitater needs another selected plant to copy.");
+    }
+
+    private void finishPlantPurchase(String cooldownKey, Plant plant, boolean conveyor) {
+        if (!conveyor) {
+            sunAmount -= plant.getSunCost();
+            cooldownTicks.put(cooldownKey, plant.getRechargeTicks());
+        }
+    }
+
+    private boolean handleTerrainUtilityPlant(Plant plant, int row, int col) {
+        GridPosition position = new GridPosition(row, col);
+        Tile tile = board.getTile(row, col);
+        if (plant.getAbility() == PlantAbility.HOT_POTATO) {
+            if (tile.getType() != TileType.ICE) {
+                throw new IllegalStateException("Hot Potato can only be used on ice.");
+            }
+            tile.setTileType(TileType.NORMAL);
+            addEvent("Hot Potato melted the ice at " + position + ".");
+            return true;
+        }
+        if (plant.getAbility() == PlantAbility.GRAVE_BUSTER) {
+            Tomb tomb = tombs.remove(position);
+            if (tomb == null) {
+                throw new IllegalStateException("There is no tomb on this tile.");
+            }
+            tile.setTileType(TileType.NORMAL);
+            addEvent("Grave Buster removed the tomb at " + position + ".");
+            return true;
+        }
+        return false;
+    }
+
+    private void validateSpecialPlantLocation(Plant plant, int row, int col) {
+        Tile tile = board.getTile(row, col);
+        if (plant.getAbility() == PlantAbility.TANGLE_KELP
+            && tile.getType() != TileType.WATER && tile.getType() != TileType.LOW_TIDE) {
+            throw new IllegalStateException("Tangle Kelp can only be planted in water.");
+        }
+    }
+
+    private void warmAdjacentIce(Plant plant) {
+        if (!plant.getDefinition().hasTag("Fire") || elapsedTicks % TICKS_PER_SECOND != 0) {
+            return;
+        }
+        GridPosition center = plant.getPosition();
+        for (Plant other : board.getPlants()) {
+            if (other == plant || other.getPosition() == null) {
+                continue;
+            }
+            GridPosition position = other.getPosition();
+            if (Math.abs(position.getRow() - center.getRow()) <= 1
+                && Math.abs(position.getColumn() - center.getColumn()) <= 1) {
+                other.damageIce(60, false);
+            }
+        }
+        for (int row = Math.max(0, center.getRow() - 1);
+             row <= Math.min(board.getRows() - 1, center.getRow() + 1); row++) {
+            for (int col = Math.max(0, center.getColumn() - 1);
+                 col <= Math.min(board.getCols() - 1, center.getColumn() + 1); col++) {
+                if (board.getTile(row, col).getType() == TileType.ICE) {
+                    board.getTile(row, col).setTileType(TileType.NORMAL);
+                }
+            }
+        }
+    }
+
+    private boolean assistDisabledPlant(Plant helper) {
+        Plant target = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (Plant plant : board.getPlants()) {
+            if (plant == helper || plant.getPosition() == null || plant.isDestroyed()) {
+                continue;
+            }
+            if (plant.getFrozenHealth() <= 0 && plant.getOctopusHealth() <= 0) {
+                continue;
+            }
+            int rowDistance = Math.abs(plant.getPosition().getRow()
+                - helper.getPosition().getRow());
+            double columnDistance = Math.abs(plant.getPosition().getColumn()
+                - helper.getPosition().getColumn());
+            if (!helper.isLobber() && rowDistance != 0) {
+                continue;
+            }
+            double distance = rowDistance * board.getCols() + columnDistance;
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                target = plant;
+            }
+        }
+        if (target == null) {
+            return false;
+        }
+        int damage = Math.max(1, helper.getEffectiveAttackPower());
+        if (target.getFrozenHealth() > 0) {
+            target.damageIce(damage, helper.getDefinition().hasTag("Fire"));
+            addEvent(helper.getName() + " damaged the ice covering " + target.getName() + ".");
+        } else {
+            target.damageOctopus(damage);
+            addEvent(helper.getName() + " damaged the octopus covering " + target.getName() + ".");
+        }
+        return true;
+    }
+
+    private void performTrapAction(Plant plant) {
+        if (!plant.isArmed()) {
+            return;
+        }
+        GridPosition position = plant.getPosition();
+        Zombie target = board.findNearestZombieAhead(position.getRow(), position.getColumn() - 0.5);
+        if (target == null || target.getPosition().getColumn() > position.getColumn() + 0.85) {
+            return;
+        }
+        switch (plant.getAbility()) {
+            case ICEBERG_LETTUCE -> {
+                target.stun(5 * TICKS_PER_SECOND);
+                target.chill(10 * TICKS_PER_SECOND);
+                plant.takeDamage(Math.max(plant.getHealth(), 1));
+                addEvent("Iceberg Lettuce froze " + target.getName() + ".");
+            }
+            case TANGLE_KELP -> {
+                target.kill();
+                plant.takeDamage(Math.max(plant.getHealth(), 1));
+                addEvent("Tangle Kelp pulled " + target.getName() + " underwater.");
+            }
+            case SQUASH -> {
+                target.kill();
+                plant.takeDamage(Math.max(plant.getHealth(), 1));
+                addEvent("Squash crushed " + target.getName() + ".");
+            }
+            default -> detonatePlant(plant);
+        }
+    }
+
+    private void performPassivePlantAction(Plant plant) {
+        if (elapsedTicks % TICKS_PER_SECOND != 0) {
+            return;
+        }
+        if (plant.getAbility() == PlantAbility.SWEET_POTATO) {
+            pullZombiesTowardSweetPotato(plant);
+        }
+    }
+
+    private void performActivePlantAction(Plant plant) {
+        switch (plant.getAbility()) {
+            case THREEPEATER -> fireThreepeater(plant);
+            case ROTOBAGA -> fireRotobaga(plant);
+            case SPLIT_PEA -> fireSplitPea(plant);
+            case STARFRUIT -> fireStarfruit(plant);
+            case BOWLING_BULB -> bowlBulbs(plant);
+            case FUME_SHROOM -> attackFumeShroom(plant);
+            case CABBAGE_PULT, KERNEL_PULT, MELON_PULT,
+                 WINTER_MELON, PEPPER_PULT -> attackLobber(plant);
+            case CAULIPOWER -> hypnotizeWithCaulipower(plant);
+            case ELECTRIC_BLUEBERRY -> strikeWithBlueberry(plant);
+            case MAGNET_SHROOM -> useMagnetShroom(plant);
+            case CHOMPER -> chompZombie(plant);
+            case CAT_TAIL -> attackHoming(plant);
+            case BONK_CHOY, PHAT_BEET, WASABI_WHIP, KIWIBEAST -> attackMelee(plant);
+            case TORCHWOOD, WALL_NUT, TALL_NUT, ENDURIAN, GARLIC,
+                 SWEET_POTATO, EXPLODE_O_NUT, PUMPKIN, SUN_BEAN,
+                 HYPNO_SHROOM, LILY_PAD, IMITATER, GENERIC -> { }
+            default -> {
+                if (plant.isHoming()) {
+                    attackHoming(plant);
+                } else if (plant.isMelee()) {
+                    attackMelee(plant);
+                } else if (plant.isShooter()) {
+                    shootProjectiles(plant);
+                }
+            }
+        }
+    }
+
+    private void fireThreepeater(Plant plant) {
+        int centerRow = plant.getPosition().getRow();
+        int fired = 0;
+        for (int row = Math.max(0, centerRow - 1);
+             row <= Math.min(board.getRows() - 1, centerRow + 1); row++) {
+            if (fireProjectileInRow(plant, row, 1, 1)) {
+                fired++;
+            }
+        }
+        if (fired > 0) {
+            addEvent("Threepeater fired into " + fired + " lane(s).");
+        }
+    }
+
+    private void fireRotobaga(Plant plant) {
+        GridPosition position = plant.getPosition();
+        int hits = 0;
+        for (int row : List.of(position.getRow() - 1, position.getRow() + 1)) {
+            if (row < 0 || row >= board.getRows()) {
+                continue;
+            }
+            Zombie target = board.findNearestZombieAhead(row, position.getColumn());
+            if (target != null) {
+                damageZombieFromPlant(target, plant,
+                    Math.max(1, plant.getEffectiveAttackPower()) * 3, false);
+                hits++;
+            }
+        }
+        addEvent("Rotobaga hit " + hits + " diagonal target(s).");
+    }
+
+    private void fireSplitPea(Plant plant) {
+        GridPosition position = plant.getPosition();
+        Zombie ahead = board.findNearestZombieAhead(position.getRow(), position.getColumn());
+        Zombie behind = board.findNearestZombieBehind(position.getRow(), position.getColumn());
+        if (ahead != null) {
+            damageZombieFromPlant(ahead, plant, Math.max(1, plant.getEffectiveAttackPower()), false);
+        }
+        if (behind != null) {
+            damageZombieFromPlant(behind, plant,
+                Math.max(1, plant.getEffectiveAttackPower()) * 2, false);
+        }
+    }
+
+    private void fireStarfruit(Plant plant) {
+        GridPosition position = plant.getPosition();
+        LinkedHashSet<Zombie> targets = new LinkedHashSet<>();
+        Zombie ahead = board.findNearestZombieAhead(position.getRow(), position.getColumn());
+        Zombie behind = board.findNearestZombieBehind(position.getRow(), position.getColumn());
+        if (ahead != null) {
+            targets.add(ahead);
+        }
+        if (behind != null) {
+            targets.add(behind);
+        }
+        for (int row : List.of(position.getRow() - 1, position.getRow() + 1)) {
+            if (row >= 0 && row < board.getRows()) {
+                Zombie diagonal = board.findNearestZombieAhead(row, position.getColumn());
+                if (diagonal != null) {
+                    targets.add(diagonal);
+                }
+            }
+        }
+        for (Zombie target : targets) {
+            damageZombieFromPlant(target, plant, Math.max(1, plant.getEffectiveAttackPower()), false);
+        }
+        addEvent("Starfruit fired in multiple directions and hit " + targets.size() + " target(s).");
+    }
+
+    private void bowlBulbs(Plant plant) {
+        GridPosition position = plant.getPosition();
+        int[] damages = {40, 120, 180};
+        int row = position.getRow();
+        int hits = 0;
+        for (int damage : damages) {
+            Zombie target = board.findNearestZombieAhead(row, position.getColumn());
+            if (target == null) {
+                break;
+            }
+            damageZombieFromPlant(target, plant, damage, false);
+            hits++;
+            row += random.nextBoolean() ? 1 : -1;
+            row = Math.max(0, Math.min(board.getRows() - 1, row));
+        }
+        addEvent("Bowling Bulb bounced through " + hits + " target(s).");
+    }
+
+    private void attackFumeShroom(Plant plant) {
+        GridPosition position = plant.getPosition();
+        int hits = 0;
+        for (Zombie zombie : new ArrayList<>(board.getZombiesInRow(position.getRow()))) {
+            double distance = zombie.getPosition().getColumn() - position.getColumn();
+            if (!zombie.isHypnotized() && distance >= 0 && distance <= 4.0) {
+                damageZombieFromPlant(zombie, plant,
+                    Math.max(1, plant.getEffectiveAttackPower()), false);
+                hits++;
+            }
+        }
+        if (hits > 0) {
+            addEvent("Fume-shroom pierced " + hits + " zombie(s).");
+        }
+    }
+
+    private void attackLobber(Plant plant) {
+        GridPosition position = plant.getPosition();
+        Zombie target = board.findNearestZombieAhead(position.getRow(), position.getColumn());
+        if (target == null) {
+            return;
+        }
+        int damage = Math.max(1, plant.getEffectiveAttackPower());
+        if (plant.getAbility() == PlantAbility.KERNEL_PULT && random.nextInt(4) == 0) {
+            damage = Math.max(damage, 40);
+            target.stun(3 * TICKS_PER_SECOND);
+            addEvent("Kernel-pult butter stunned " + target.getName() + ".");
+        }
+        damageZombieFromPlant(target, plant, damage, true);
+        if (plant.getDefinition().hasTag("AoE")) {
+            damageAdjacentZombies(target, plant, Math.max(1, damage / 2), true);
+        }
+    }
+
+    private void hypnotizeWithCaulipower(Plant plant) {
+        ArrayList<Zombie> targets = hostileZombies();
+        if (targets.isEmpty()) {
+            return;
+        }
+        Zombie target = targets.get(random.nextInt(targets.size()));
+        target.hypnotize();
+        addEvent("Caulipower hypnotized " + target.getName() + ".");
+    }
+
+    private void strikeWithBlueberry(Plant plant) {
+        ArrayList<Zombie> targets = hostileZombies();
+        if (targets.isEmpty()) {
+            return;
+        }
+        Zombie target = targets.get(random.nextInt(targets.size()));
+        target.kill();
+        addEvent("Electric Blueberry electrocuted " + target.getName() + ".");
+    }
+
+    private void useMagnetShroom(Plant plant) {
+        Zombie target = null;
+        for (Zombie zombie : hostileZombies()) {
+            if (zombie.hasMetalArmor()) {
+                target = zombie;
+                break;
+            }
+        }
+        if (target != null) {
+            int removed = target.removeMetalArmor();
+            addEvent("Magnet-shroom removed " + removed + " armor health from "
+                + target.getName() + ".");
+        }
+    }
+
+    private void chompZombie(Plant plant) {
+        GridPosition position = plant.getPosition();
+        Zombie target = board.findNearestZombieAhead(position.getRow(), position.getColumn() - 0.5);
+        if (target != null && target.getPosition().getColumn() <= position.getColumn() + 1.25) {
+            target.kill();
+            plant.startDigestion(40 * TICKS_PER_SECOND);
+            addEvent("Chomper swallowed " + target.getName() + " and started digesting.");
+        }
+    }
+
+    private boolean fireProjectileInRow(Plant plant, int row, int count, int maxHits) {
+        Zombie target = board.findNearestZombieAhead(row, plant.getPosition().getColumn());
+        if (target == null) {
+            return false;
+        }
+        for (int index = 0; index < count; index++) {
+            Projectile projectile = new Projectile(plant.getEffectiveAttackPower(),
+                PROJECTILE_SPEED, new BoardPosition(row, plant.getPosition().getColumn() + 0.25),
+                plant.getProjectileElementType(), maxHits > 1,
+                plant.getChillDurationTicks(), false, plant.getName(), maxHits);
+            board.addProjectile(projectile);
+        }
+        return true;
+    }
+
+    private void pullZombiesTowardSweetPotato(Plant plant) {
+        int targetRow = plant.getPosition().getRow();
+        for (Zombie zombie : hostileZombies()) {
+            if (zombie.getPosition() == null) {
+                continue;
+            }
+            int row = zombie.getPosition().getRow();
+            double distance = Math.abs(zombie.getPosition().getColumn()
+                - plant.getPosition().getColumn());
+            if (Math.abs(row - targetRow) == 1 && distance <= 3.0) {
+                zombie.setPosition(zombie.getPosition().withRow(targetRow));
+            }
+        }
+    }
+
+    private void damageAdjacentZombies(Zombie center, Plant source, int damage, boolean lobbed) {
+        if (center.getPosition() == null) {
+            return;
+        }
+        for (Zombie zombie : hostileZombies()) {
+            if (zombie == center || zombie.getPosition() == null) {
+                continue;
+            }
+            if (Math.abs(zombie.getPosition().getRow() - center.getPosition().getRow()) <= 1
+                && Math.abs(zombie.getPosition().getColumn()
+                    - center.getPosition().getColumn()) <= 1.5) {
+                damageZombieFromPlant(zombie, source, damage, lobbed);
+            }
+        }
+    }
+
+    private void damageZombieFromPlant(Zombie zombie, Plant plant, int damage, boolean lobbed) {
+        if (zombie == null || zombie.isDead()) {
+            return;
+        }
+        zombie.takeProjectileDamage(Math.max(0, damage), plant.getProjectileElementType(),
+            plant.getChillDurationTicks(), lobbed);
+    }
+
+    private ArrayList<Zombie> hostileZombies() {
+        ArrayList<Zombie> result = new ArrayList<>();
+        for (Zombie zombie : board.getZombies()) {
+            if (!zombie.isDead() && !zombie.isHypnotized() && zombie.getPosition() != null) {
+                result.add(zombie);
+            }
+        }
+        return result;
+    }
+
+    private boolean reflectProjectileIfNeeded(Projectile projectile, Zombie target) {
+        if (target.getAbility() != ZombieAbility.JUGGLER || projectile.isLobbed()) {
+            return false;
+        }
+        Plant victim = nearestPlantInRow(target.getPosition().getRow(),
+            target.getPosition().getColumn());
+        if (victim != null) {
+            victim.takeDamage(projectile.getDamage());
+            addEvent("Juggler Zombie reflected a projectile into " + victim.getName() + ".");
+        }
+        projectile.deactivate();
+        return true;
+    }
+
+    private Plant nearestPlantInRow(int row, double zombieColumn) {
+        Plant nearest = null;
+        double best = Double.MAX_VALUE;
+        for (Plant plant : board.getPlantsInRow(row)) {
+            if (plant.getPosition() == null || plant.isDestroyed()) {
+                continue;
+            }
+            double distance = Math.abs(plant.getPosition().getColumn() - zombieColumn);
+            if (distance < best) {
+                best = distance;
+                nearest = plant;
+            }
+        }
+        return nearest;
+    }
+
+    private int torchwoodMultiplier(Projectile projectile, double fromColumn, double toColumn) {
+        String source = PlantDefinition.normalizeKey(projectile.getSourcePlant());
+        if (!source.contains("pea") || projectile.getType() == ProjectileType.FIRE) {
+            return 1;
+        }
+        int row = projectile.getPosition().getRow();
+        for (Plant plant : board.getPlantsInRow(row)) {
+            if (plant.getAbility() != PlantAbility.TORCHWOOD || plant.getPosition() == null) {
+                continue;
+            }
+            int column = plant.getPosition().getColumn();
+            if (column - 0.001 <= toColumn) {
+                return plant.getPlantFoodShield() > 0 ? 3 : 2;
+            }
+        }
+        return 1;
+    }
+
+    private void updateZombieEnvironmentState(Zombie zombie) {
+        if (zombie.getPosition() == null) {
+            return;
+        }
+        int col = (int) Math.floor(zombie.getPosition().getColumn());
+        if (zombie.getAbility() == ZombieAbility.SNORKEL
+            && board.isInside(zombie.getPosition().getRow(), col)) {
+            TileType type = board.getTile(zombie.getPosition().getRow(), col).getType();
+            zombie.setSubmerged(type == TileType.WATER || type == TileType.LOW_TIDE);
+        }
+    }
+
+    private void performZombieSpecialAbility(Zombie zombie) {
+        switch (zombie.getAbility()) {
+            case GARGANTUAR -> throwGargantuarImp(zombie);
+            case RA -> stealSunWithRa(zombie);
+            case TOMB_RAISER -> raiseTombs(zombie);
+            case HUNTER -> throwHunterSnowball(zombie);
+            case TROGLOBITE -> pushTroglobiteIce(zombie);
+            case FISHERMAN -> hookPlantWithFisherman(zombie);
+            case OCTOPUS -> throwOctopus(zombie);
+            case WIZARD -> transformPlantWithWizard(zombie);
+            case KING -> knightNearbyZombie(zombie);
+            case TURQUOISE_SKULL -> useTurquoiseSkull(zombie);
+            case PROSPECTOR -> launchProspectorDynamite(zombie);
+            case PIANIST -> playPiano(zombie);
+            default -> { }
+        }
+    }
+
+    private void throwGargantuarImp(Zombie gargantuar) {
+        if (gargantuar.isImpThrown()
+            || gargantuar.getHealth() * 2 > gargantuar.getMaximumHealth()) {
+            return;
+        }
+        Zombie imp = zombieFactory.createZombie("ZombieImp");
+        imp.applyDifficulty(difficultyLevel);
+        int row = gargantuar.getPosition().getRow();
+        imp.setPosition(new BoardPosition(row, 2.0));
+        board.addZombie(imp);
+        gargantuar.markImpThrown();
+        addEvent("Gargantuar threw an Imp into column 3.");
+    }
+
+    private void stealSunWithRa(Zombie zombie) {
+        if (elapsedTicks % TICKS_PER_SECOND != 0 || zombie.getPosition() == null) {
+            return;
+        }
+        for (Sun sun : new ArrayList<>(board.getSuns())) {
+            if (sun.isCollected() || sun.getPosition() == null) {
+                continue;
+            }
+            if (sun.getPosition().getRow() == zombie.getPosition().getRow()) {
+                int amount = sun.collect();
+                zombie.addStolenSun(amount);
+                board.removeSun(sun);
+                addEvent("Ra Zombie stole " + amount + " sun.");
+            }
+        }
+    }
+
+    private void raiseTombs(Zombie zombie) {
+        if (zombie.getAbilityCooldownTicks() > 0 || zombie.getPosition() == null) {
+            return;
+        }
+        int created = 0;
+        for (int attempts = 0; attempts < 20 && created < 2; attempts++) {
+            int row = random.nextInt(board.getRows());
+            int col = 2 + random.nextInt(Math.max(1, board.getCols() - 3));
+            GridPosition position = new GridPosition(row, col);
+            Tile tile = board.getTile(row, col);
+            if (tile.getPlant() == null && tile.getType() == TileType.NORMAL
+                && !tombs.containsKey(position)) {
+                tombs.put(position, new Tomb(row, col, false, false));
+                tile.setTileType(TileType.TOMB);
+                created++;
+            }
+        }
+        zombie.setAbilityCooldownTicks(8 * TICKS_PER_SECOND);
+        if (created > 0) {
+            addEvent("Tomb Raiser created " + created + " tomb(s).");
+        }
+    }
+
+    private void throwHunterSnowball(Zombie zombie) {
+        if (zombie.getAbilityCooldownTicks() > 0 || zombie.getPosition() == null) {
+            return;
+        }
+        Plant target = nearestPlantInRow(zombie.getPosition().getRow(),
+            zombie.getPosition().getColumn());
+        if (target != null) {
+            target.addIceLayer();
+            addEvent("Hunter Zombie hit " + target.getName() + " with an ice ball ("
+                + target.getIceHits() + "/3).");
+        }
+        zombie.setAbilityCooldownTicks(6 * TICKS_PER_SECOND);
+    }
+
+    private void pushTroglobiteIce(Zombie zombie) {
+        if (zombie.getAbilityCooldownTicks() > 0 || zombie.getPosition() == null) {
+            return;
+        }
+        Plant target = nearestPlantInRow(zombie.getPosition().getRow(),
+            zombie.getPosition().getColumn());
+        if (target != null && target.getPosition().getColumn()
+            < zombie.getPosition().getColumn()
+            && zombie.getPosition().getColumn() - target.getPosition().getColumn() <= 2.0) {
+            target.takeDamage(Math.max(target.getHealth(), 1));
+            addEvent("Troglobite pushed an ice block through " + target.getName() + ".");
+        }
+        zombie.setAbilityCooldownTicks(5 * TICKS_PER_SECOND);
+    }
+
+    private void hookPlantWithFisherman(Zombie zombie) {
+        if (zombie.getAbilityCooldownTicks() > 0 || zombie.getPosition() == null) {
+            return;
+        }
+        Plant target = nearestPlantInRow(zombie.getPosition().getRow(),
+            zombie.getPosition().getColumn());
+        if (target != null && target.getPosition() != null) {
+            GridPosition old = target.getPosition();
+            int newCol = Math.min(board.getCols() - 1, old.getColumn() + 1);
+            if (newCol == (int) Math.floor(zombie.getPosition().getColumn())) {
+                target.takeDamage(Math.max(target.getHealth(), 1));
+                addEvent("Fisherman threw away " + target.getName() + ".");
+            } else if (board.getTile(old.getRow(), newCol).getPlant() == null
+                && board.getTile(old.getRow(), newCol).getType().isPlantable()) {
+                board.removePlant(target);
+                board.placePlant(target, old.getRow(), newCol);
+                addEvent("Fisherman hooked " + target.getName() + " one tile forward.");
+            }
+        }
+        zombie.setAbilityCooldownTicks(6 * TICKS_PER_SECOND);
+    }
+
+    private void throwOctopus(Zombie zombie) {
+        if (zombie.getAbilityCooldownTicks() > 0 || zombie.getPosition() == null) {
+            return;
+        }
+        Plant target = nearestPlantInRow(zombie.getPosition().getRow(),
+            zombie.getPosition().getColumn());
+        if (target != null) {
+            target.coverWithOctopus();
+            addEvent("Octopus Zombie covered " + target.getName() + ".");
+        }
+        zombie.setAbilityCooldownTicks(6 * TICKS_PER_SECOND);
+    }
+
+    private void transformPlantWithWizard(Zombie zombie) {
+        if (zombie.getAbilityCooldownTicks() > 0) {
+            return;
+        }
+        ArrayList<Plant> candidates = new ArrayList<>();
+        for (Plant plant : board.getPlants()) {
+            if (!plant.isDestroyed() && plant.getPosition() != null
+                && plant.getAbility() != PlantAbility.LILY_PAD) {
+                candidates.add(plant);
+            }
+        }
+        if (!candidates.isEmpty()) {
+            Plant target = candidates.get(random.nextInt(candidates.size()));
+            target.transformByWizard(zombie.getRuntimeId());
+            addEvent("Wizard transformed " + target.getName() + " into a harmless cat.");
+        }
+        zombie.setAbilityCooldownTicks(8 * TICKS_PER_SECOND);
+    }
+
+    private void knightNearbyZombie(Zombie king) {
+        if (king.getAbilityCooldownTicks() > 0 || king.getPosition() == null) {
+            return;
+        }
+        Zombie target = null;
+        for (Zombie zombie : hostileZombies()) {
+            if (zombie != king && zombie.getAbility() == ZombieAbility.BASIC
+                && Math.abs(zombie.getPosition().getRow() - king.getPosition().getRow()) <= 1
+                && Math.abs(zombie.getPosition().getColumn()
+                    - king.getPosition().getColumn()) <= 3.0) {
+                target = zombie;
+                break;
+            }
+        }
+        if (target != null) {
+            target.addBonusArmor(3200);
+            addEvent("King promoted " + target.getName() + " to a Knight.");
+        }
+        king.setAbilityCooldownTicks(8 * TICKS_PER_SECOND);
+    }
+
+    private void useTurquoiseSkull(Zombie zombie) {
+        if (zombie.getPosition() == null || zombie.getAbilityCooldownTicks() > 0
+            || elapsedTicks % TICKS_PER_SECOND != 0) {
+            return;
+        }
+        Plant target = nearestPlantInRow(zombie.getPosition().getRow(),
+            zombie.getPosition().getColumn());
+        if (target == null || Math.abs(zombie.getPosition().getColumn()
+            - target.getPosition().getColumn()) > 4.0) {
+            return;
+        }
+        int stolen = Math.min(25, sunAmount);
+        sunAmount -= stolen;
+        zombie.addStolenSun(stolen);
+        zombie.specialAbility();
+        addEvent("Turquoise Skull stole " + stolen + " sun while charging.");
+        if (zombie.getSpecialAbilityUses() % 5 == 0) {
+            fireTurquoiseLaser(zombie);
+            zombie.setAbilityCooldownTicks(10 * TICKS_PER_SECOND);
+        }
+    }
+
+    private void fireTurquoiseLaser(Zombie zombie) {
+        int row = zombie.getPosition().getRow();
+        int start = (int) Math.floor(zombie.getPosition().getColumn()) - 1;
+        int destroyed = 0;
+        for (int col = Math.max(0, start - 3); col <= Math.min(board.getCols() - 1, start); col++) {
+            Plant plant = board.getTile(row, col).getBlockingPlant();
+            if (plant != null) {
+                plant.takeDamage(Math.max(plant.getHealth(), 1));
+                destroyed++;
+            }
+        }
+        addEvent("Turquoise Skull fired its laser and destroyed " + destroyed + " plant(s).");
+    }
+
+    private void launchProspectorDynamite(Zombie zombie) {
+        if (!zombie.isReversed() && !zombie.isSpecialDisabled()
+            && zombie.getAgeTicks() >= 10 * TICKS_PER_SECOND) {
+            zombie.reverseDirection();
+            addEvent("Prospector's dynamite launched it toward the house from the other side.");
+        }
+    }
+
+    private void playPiano(Zombie pianist) {
+        if (pianist.getAbilityCooldownTicks() > 0) {
+            return;
+        }
+        int moved = 0;
+        for (Zombie zombie : hostileZombies()) {
+            if (zombie == pianist || zombie.getPosition() == null) {
+                continue;
+            }
+            int row = zombie.getPosition().getRow();
+            int direction = random.nextBoolean() ? 1 : -1;
+            int targetRow = row + direction;
+            if (targetRow >= 0 && targetRow < board.getRows()) {
+                zombie.setPosition(zombie.getPosition().withRow(targetRow));
+                moved++;
+            }
+        }
+        pianist.setAbilityCooldownTicks(5 * TICKS_PER_SECOND);
+        if (moved > 0) {
+            addEvent("Pianist changed the lane of " + moved + " zombie(s).");
+        }
+    }
+
+    private void moveHypnotizedZombie(Zombie zombie) {
+        Zombie enemy = nearestHostileZombieForHypnotized(zombie);
+        if (enemy != null && Math.abs(enemy.getPosition().getColumn()
+            - zombie.getPosition().getColumn()) <= 0.9) {
+            enemy.takeDirectDamage(Math.max(1, zombie.getDamage()));
+            return;
+        }
+        zombie.moveOneTick();
+        if (zombie.getPosition().getColumn() > board.getCols() + 1) {
+            zombie.kill();
+        }
+    }
+
+    private Zombie nearestHostileZombieForHypnotized(Zombie ally) {
+        Zombie target = null;
+        double best = Double.MAX_VALUE;
+        for (Zombie zombie : board.getZombiesInRow(ally.getPosition().getRow())) {
+            if (zombie.isHypnotized() || zombie.isDead()) {
+                continue;
+            }
+            double distance = Math.abs(zombie.getPosition().getColumn()
+                - ally.getPosition().getColumn());
+            if (distance < best) {
+                best = distance;
+                target = zombie;
+            }
+        }
+        return target;
+    }
+
+    private boolean shouldZombieBypassPlant(Zombie zombie, Plant plant) {
+        if (zombie.getAbility() != ZombieAbility.DODO_RIDER) {
+            return false;
+        }
+        return plant.getAbility() != PlantAbility.TALL_NUT;
+    }
+
+    private boolean isStationaryZombie(Zombie zombie) {
+        return zombie.getAbility() == ZombieAbility.FISHERMAN
+            || zombie.getAbility() == ZombieAbility.KING;
+    }
+
+    private void resolveZombiePlantCombat(Zombie zombie, Plant plant) {
+        if (zombie.getAbility() == ZombieAbility.WIZARD) {
+            plant.transformByWizard(zombie.getRuntimeId());
+            return;
+        }
+        if (zombie.getAbility() == ZombieAbility.GARGANTUAR
+            || zombie.getAbility() == ZombieAbility.PIANIST
+            || (zombie.getAbility() == ZombieAbility.ARCADE && zombie.isMachineActive())
+            || (zombie.getAbility() == ZombieAbility.ALL_STAR && !zombie.isChargeUsed())) {
+            plant.takeDamage(Math.max(plant.getHealth(), 1));
+            zombie.markChargeUsed();
+            addEvent(zombie.getName() + " destroyed " + plant.getName() + " on contact.");
+            return;
+        }
+        if (zombie.getAbility() == ZombieAbility.EXPLORER && !zombie.isSpecialDisabled()) {
+            plant.takeDamage(Math.max(plant.getHealth(), 1));
+            addEvent("Explorer Zombie burned " + plant.getName() + ".");
+            return;
+        }
+        if (elapsedTicks % TICKS_PER_SECOND != 0) {
+            return;
+        }
+        if (plant.getAbility() == PlantAbility.HYPNO_SHROOM) {
+            plant.takeDamage(Math.max(plant.getHealth(), 1));
+            zombie.hypnotize();
+            addEvent("Hypno-shroom converted " + zombie.getName() + ".");
+            return;
+        }
+        zombie.attackPlant(plant);
+        if (plant.getAbility() == PlantAbility.ENDURIAN) {
+            zombie.takeDirectDamage(Math.max(1, plant.getEffectiveAttackPower()));
+        } else if (plant.getAbility() == PlantAbility.SUN_BEAN) {
+            sunAmount += 5;
+            totalSunCollected += 5;
+            addEvent("Sun Bean produced 5 sun after being hit.");
+        } else if (plant.getAbility() == PlantAbility.GARLIC && !plant.isDestroyed()) {
+            moveZombieToAdjacentLane(zombie);
+        }
+        addEvent("Zombie " + zombie.getName() + " attacked " + plant.getName()
+            + " at " + plant.getPosition() + ".");
+    }
+
+    private void moveZombieToAdjacentLane(Zombie zombie) {
+        int row = zombie.getPosition().getRow();
+        int target = row == 0 ? 1 : row == board.getRows() - 1 ? row - 1
+            : row + (random.nextBoolean() ? 1 : -1);
+        zombie.setPosition(zombie.getPosition().withRow(target));
+        addEvent("Garlic redirected " + zombie.getName() + " to lane " + (target + 1) + ".");
+    }
+
+    private void explodeDestroyedDefender(Plant plant) {
+        GridPosition center = plant.getPosition();
+        int damage = Math.max(1800, plant.getEffectiveAttackPower());
+        for (Zombie zombie : hostileZombies()) {
+            if (Math.abs(zombie.getPosition().getRow() - center.getRow()) <= 1
+                && Math.abs(zombie.getPosition().getColumn() - center.getColumn()) <= 1.5) {
+                zombie.takeDamage(damage);
+            }
+        }
+        addEvent("Explode-o-nut detonated when destroyed.");
+    }
+
+    private void removeUnsupportedWaterPlants() {
+        for (int row = 0; row < board.getRows(); row++) {
+            for (int col = 0; col < board.getCols(); col++) {
+                Tile tile = board.getTile(row, col);
+                boolean water = tile.getType() == TileType.WATER
+                    || tile.getType() == TileType.LOW_TIDE;
+                Plant main = tile.getMainPlant();
+                if (water && main != null && !main.getDefinition().hasTag("Water")
+                    && tile.getSupportPlant() == null) {
+                    main.takeDamage(Math.max(main.getHealth(), 1));
+                }
+            }
+        }
+    }
+
+    private void releaseWizardTransformations(String wizardId) {
+        for (Plant plant : board.getPlants()) {
+            plant.releaseWizardTransformation(wizardId);
+        }
+    }
+
+    private void dropStolenSunFromZombie(Zombie zombie) {
+        int stolen = zombie.takeStolenSun();
+        if (stolen <= 0) {
+            return;
+        }
+        int returned = zombie.getAbility() == ZombieAbility.TURQUOISE_SKULL
+            ? stolen / 2 : stolen;
+        sunAmount += returned;
+        addEvent(zombie.getName() + " dropped " + returned + " stolen sun.");
+    }
+
+    private void removeInstantPlant(Plant plant) {
+        plant.takeDamage(Math.max(plant.getHealth(), 1));
+    }
+
+    private void activateMint(Plant mint) {
+        int affected = 0;
+        for (Plant plant : new ArrayList<>(board.getPlants())) {
+            if (plant != mint && plantMatchesMint(plant, mint.getAbility())) {
+                activatePlantFood(plant, mint.getName());
+                affected++;
+            }
+        }
+        removeInstantPlant(mint);
+        addEvent(mint.getName() + " empowered " + affected + " related plant(s).");
+    }
+
+    private boolean plantMatchesMint(Plant plant, PlantAbility mint) {
+        return switch (mint) {
+            case ENLIGHTEN_MINT -> plant.isSunProducer();
+            case APPEASE_MINT -> plant.getDefinition().getCategory().equalsIgnoreCase("Shooter");
+            case ARMA_MINT -> plant.isLobber();
+            case BOMBARD_MINT -> plant.isExplosive();
+            case ENFORCE_MINT -> plant.isMelee();
+            case REINFORCE_MINT -> plant.getDefinition().getCategory().equalsIgnoreCase("Wall-nut");
+            case ENCHANT_MINT -> plant.getDefinition().getCategory().equalsIgnoreCase("Modifier");
+            case PIERCE_MINT -> plant.getDefinition().getCategory().equalsIgnoreCase("Strike-through");
+            case CATTAIL_MINT -> plant.isHoming();
+            default -> false;
+        };
+    }
+
+    private void freezeAllZombies(Plant source, boolean killWeak) {
+        int affected = 0;
+        for (Zombie zombie : hostileZombies()) {
+            if (killWeak && zombie.getEffectiveHealth() <= source.getEffectiveAttackPower() * 5) {
+                zombie.kill();
+            } else {
+                zombie.stun(5 * TICKS_PER_SECOND);
+                zombie.chill(10 * TICKS_PER_SECOND);
+            }
+            affected++;
+        }
+        addEvent(source.getName() + " froze " + affected + " zombie(s).");
+    }
+
+    private boolean explosionHits(PlantAbility ability, int rowDistance,
+                                  double columnDistance) {
+        return switch (ability) {
+            case JALAPENO -> rowDistance == 0;
+            case DOOM_SHROOM -> true;
+            case POTATO_MINE, SQUASH, TANGLE_KELP -> rowDistance == 0
+                && columnDistance <= 0.9;
+            default -> rowDistance <= 1 && columnDistance <= 1.5;
+        };
+    }
+
+    private void launchGrapeshotFragments(Plant plant, int multiplier) {
+        ArrayList<Zombie> targets = hostileZombies();
+        int fragments = Math.min(8, targets.size());
+        for (int index = 0; index < fragments; index++) {
+            Zombie target = targets.get(random.nextInt(targets.size()));
+            target.takeDamage(100 * Math.max(1, multiplier));
+        }
+        addEvent("Grapeshot launched " + fragments + " bouncing fragment(s).");
     }
 
     private int calculateNextSkySunTick() {
