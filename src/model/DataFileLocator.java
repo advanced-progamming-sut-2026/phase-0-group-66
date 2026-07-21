@@ -15,13 +15,15 @@ public final class DataFileLocator {
     }
 
     public static Path locate(String fileName) throws IOException {
-        for (Path directory : candidateDirectories()) {
+        List<Path> directories = candidateDirectories();
+        for (Path directory : directories) {
             Path candidate = directory.resolve(fileName).normalize();
             if (Files.isRegularFile(candidate)) {
                 return candidate;
             }
         }
         throw new IOException("Data file was not found: " + fileName
+            + ". Searched directories: " + directories
             + ". Set -D" + DATA_DIRECTORY_PROPERTY + "=<data-directory> if needed.");
     }
 
@@ -29,9 +31,14 @@ public final class DataFileLocator {
         ArrayList<Path> directories = new ArrayList<>();
         addConfiguredPath(directories, System.getProperty(DATA_DIRECTORY_PROPERTY));
         addConfiguredPath(directories, System.getenv(DATA_DIRECTORY_ENVIRONMENT));
-        directories.add(Paths.get("src", "assets", "data"));
         directories.add(Paths.get("assets", "data"));
+        directories.add(Paths.get("src", "assets", "data"));
+        directories.add(Paths.get("src", "main", "resources", "assets", "data"));
         directories.add(Paths.get("data"));
+
+        // Backward-compatible fallback for older archives that used the misspelled folder name.
+        directories.add(Paths.get("assests", "data"));
+        directories.add(Paths.get("src", "assests", "data"));
         return directories;
     }
 
