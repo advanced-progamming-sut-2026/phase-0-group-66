@@ -2,181 +2,281 @@
   {
     "id": 1,
     "title": "آفتاب گیر روزانه",
-    "category": "روزانه",
-    "completionCondition": "جمع آوری sun_amount واحد خورشید در طول یک روز",
-    "rewardDescription": "sun_amount / ۱۰۰ سکه",
-    "priority": "متوسط",
-    "variables": "3000-4000-5000"
+    "category": "DAILY",
+    "description": "جمع آوری 3000 واحد خورشید در طول یک روز",
+    "eventType": "SUN_COLLECTED",
+    "target": 3000,
+    "reward": {
+      "type": "COINS",
+      "amount": 30
+    },
+    "priority": "MEDIUM",
+    "parameter": ""
   },
   {
     "id": 2,
     "title": "شکارچی chapter",
-    "category": "اصلی",
-    "completionCondition": "شکست دادن ۵۰ زامبی از فصل chapter",
-    "rewardDescription": "۱۰ پک دانه",
-    "priority": "بالا",
-    "variables": "هرکدام از فصل‌های بازی"
+    "category": "MAIN",
+    "description": "شکست دادن 50 زامبی از یک فصل بازی",
+    "eventType": "ZOMBIE_KILLED",
+    "target": 50,
+    "reward": {
+      "type": "SEED_PACKETS",
+      "amount": 10
+    },
+    "priority": "HIGH",
+    "parameter": "ANY_CHAPTER"
   },
   {
     "id": 3,
     "title": "plant باز حرفه‌ای",
-    "category": "روزانه",
-    "completionCondition": "ده تا زامبی را فقط با plant بکش",
-    "rewardDescription": "گیاه جدید شانسی",
-    "priority": "بالا",
-    "variables": "هر گیاهی که قابلیت کشتن دارد"
+    "category": "DAILY",
+    "description": "ده زامبی را فقط با یک گیاه مهاجم شکست بده",
+    "eventType": "ZOMBIE_KILLED",
+    "target": 10,
+    "reward": {
+      "type": "RANDOM_PLANT",
+      "amount": 1
+    },
+    "priority": "HIGH",
+    "parameter": "ANY_PLANT"
   },
   {
     "id": 4,
     "title": "only cactus",
-    "category": "روزانه",
-    "completionCondition": "ده تا زامبی را فقط با کاکتوس بکش",
-    "rewardDescription": "۲۰ الماس (Gem)",
-    "priority": "بالا",
-    "variables": ""
+    "category": "DAILY",
+    "description": "ده زامبی را فقط با Cactus شکست بده",
+    "eventType": "ZOMBIE_KILLED",
+    "target": 10,
+    "reward": {
+      "type": "GEMS",
+      "amount": 20
+    },
+    "priority": "HIGH",
+    "parameter": "CACTUS"
   },
   {
     "id": 5,
     "title": "گیاه خوار اقتصادی",
-    "category": "اصلی",
-    "completionCondition": "پیروزی در یک مرحله بدون از دست دادن بیش از n گیاه",
-    "rewardDescription": "۲۰ - n پک دانه",
-    "priority": "بالا",
-    "variables": "0-1-2-3-4-5"
+    "category": "MAIN",
+    "description": "یک مرحله را بدون از دست دادن بیش از 5 گیاه به پایان برسان",
+    "eventType": "LEVEL_WON",
+    "target": 1,
+    "reward": {
+      "type": "SEED_PACKETS",
+      "amount": 15
+    },
+    "priority": "HIGH",
+    "parameter": "MAX_LOSSES_5"
   },
   {
     "id": 6,
     "title": "استاد دفاع",
-    "category": "چالش (Epic)",
-    "completionCondition": "اتمام یک مرحله دقیقا با صفر خورشید",
-    "rewardDescription": "۲۰۰ الماس (Gem)",
-    "priority": "بحرانی",
-    "variables": ""
+    "category": "EPIC",
+    "description": "یک مرحله را دقیقا با صفر خورشید به پایان برسان",
+    "eventType": "LEVEL_WON",
+    "target": 1,
+    "reward": {
+      "type": "GEMS",
+      "amount": 200
+    },
+    "priority": "CRITICAL",
+    "parameter": "FINAL_SUN_0"
   },
   {
     "id": 7,
     "title": "سرعت عمل",
-    "category": "اصلی",
-    "completionCondition": "کشتن ۱۰ زامبی در کمتر از ۳۰ ثانیه از شروع موج اول حمله زامبی ها",
-    "rewardDescription": "۵۰۰ سکه (Coin)",
-    "priority": "متوسط",
-    "variables": ""
+    "category": "MAIN",
+    "description": "ده زامبی را در کمتر از 30 ثانیه از شروع موج اول شکست بده",
+    "eventType": "ZOMBIE_KILLED",
+    "target": 10,
+    "reward": {
+      "type": "COINS",
+      "amount": 500
+    },
+    "priority": "MEDIUM",
+    "parameter": "TIME_LIMIT_30_SECONDS"
   },
   {
     "id": 8,
     "title": "تخریب گر حرفه ای",
-    "category": "روزانه",
-    "completionCondition": "استفاده از ۳ گیاه انفجاری در یک مرحله",
-    "rewardDescription": "۱۰۰ سکه (Coin)",
-    "priority": "کم",
-    "variables": ""
+    "category": "DAILY",
+    "description": "در یک مرحله از سه گیاه انفجاری استفاده کن",
+    "eventType": "EXPLOSIVE_PLANT_USED",
+    "target": 3,
+    "reward": {
+      "type": "COINS",
+      "amount": 100
+    },
+    "priority": "LOW",
+    "parameter": ""
   },
   {
     "id": 9,
     "title": "تقارن",
-    "category": "روزانه",
-    "completionCondition": "باغچه بازی در نهایت باید متقارن باشد",
-    "rewardDescription": "۵۰۰ سکه (Coin)",
-    "priority": "بالا",
-    "variables": ""
+    "category": "DAILY",
+    "description": "مرحله را با باغچه متقارن به پایان برسان",
+    "eventType": "LEVEL_WON",
+    "target": 1,
+    "reward": {
+      "type": "COINS",
+      "amount": 500
+    },
+    "priority": "HIGH",
+    "parameter": "SYMMETRIC_GARDEN"
   },
   {
     "id": 10,
     "title": "کشتار خانوادگی",
-    "category": "روزانه",
-    "completionCondition": "تنها از گیاهان family_type برای کشتن زامبی ها استفاده شود",
-    "rewardDescription": "۱۰۰۰ سکه",
-    "priority": "متوسط",
-    "variables": "خانواده‌ی گیاهان"
+    "category": "DAILY",
+    "description": "مرحله را تنها با گیاهان یک خانواده به پایان برسان",
+    "eventType": "LEVEL_WON",
+    "target": 1,
+    "reward": {
+      "type": "COINS",
+      "amount": 1000
+    },
+    "priority": "MEDIUM",
+    "parameter": "SINGLE_FAMILY"
   },
   {
     "id": 11,
     "title": "شکوفایی در محدودیت‌ها",
-    "category": "روزانه",
-    "completionCondition": "برای برد در مرحله از هیچ گیاهی از خانواده family_type استفاده نشود",
-    "rewardDescription": "۱۰۰ الماس (Gem)",
-    "priority": "بالا",
-    "variables": "خانواده‌ی گیاهان"
+    "category": "DAILY",
+    "description": "مرحله را بدون استفاده از خانواده ممنوع شده گیاهان به پایان برسان",
+    "eventType": "LEVEL_WON",
+    "target": 1,
+    "reward": {
+      "type": "GEMS",
+      "amount": 100
+    },
+    "priority": "HIGH",
+    "parameter": "BANNED_FAMILY"
   },
   {
     "id": 12,
     "title": "شب یا صبح",
-    "category": "چالش (Epic)",
-    "completionCondition": "تبه پایان رساندن بازی روز با گیاهان شب (mushroom ها)",
-    "rewardDescription": "۲۰ الماس (Gem)",
-    "priority": "بالا",
-    "variables": ""
+    "category": "EPIC",
+    "description": "یک مرحله روز را فقط با گیاهان قارچی به پایان برسان",
+    "eventType": "LEVEL_WON",
+    "target": 1,
+    "reward": {
+      "type": "GEMS",
+      "amount": 20
+    },
+    "priority": "HIGH",
+    "parameter": "MUSHROOMS_ONLY"
   },
   {
     "id": 13,
     "title": "برد پشت برد",
-    "category": "روزانه",
-    "completionCondition": "۵ مرحله را پشت سر هم با بیشترین سختی ببر",
-    "rewardDescription": "۵۰۰۰ سکه(Coin)",
-    "priority": "متوسط",
-    "variables": ""
+    "category": "DAILY",
+    "description": "پنج مرحله را با درجه سختی 5 برنده شو",
+    "eventType": "LEVEL_WON",
+    "target": 5,
+    "reward": {
+      "type": "COINS",
+      "amount": 5000
+    },
+    "priority": "MEDIUM",
+    "parameter": "DIFFICULTY_5"
   },
   {
     "id": 14,
     "title": "تقریبا پیروز",
-    "category": "روزانه",
-    "completionCondition": "۱۰ زامبی را در ستون اول ردیفی بکش که چمن‌زن ندارد",
-    "rewardDescription": "۳۰۰ سکه(Coin)",
-    "priority": "متوسط",
-    "variables": ""
+    "category": "DAILY",
+    "description": "ده زامبی را در ستون اول ردیفی شکست بده که چمن زن ندارد",
+    "eventType": "ZOMBIE_KILLED",
+    "target": 10,
+    "reward": {
+      "type": "COINS",
+      "amount": 300
+    },
+    "priority": "MEDIUM",
+    "parameter": ""
   },
   {
     "id": 15,
     "title": "OCD نَمَنَ",
-    "category": "روزانه",
-    "completionCondition": "در حالتی مرحله را ببر که هیچ تقارنی در باغچه وجود ندارد (به جز ردیف وسط)",
-    "rewardDescription": "۸۰۰ سکه(Coin)",
-    "priority": "متوسط",
-    "variables": ""
+    "category": "DAILY",
+    "description": "مرحله را با باغچه نامتقارن به پایان برسان",
+    "eventType": "LEVEL_WON",
+    "target": 1,
+    "reward": {
+      "type": "COINS",
+      "amount": 800
+    },
+    "priority": "MEDIUM",
+    "parameter": "ASYMMETRIC_GARDEN"
   },
   {
     "id": 16,
     "title": "روز ابری",
-    "category": "روزانه",
-    "completionCondition": "یک مرحله را تنها با ۳ تا گیاه تولیدکننده خورشید بزن",
-    "rewardDescription": "۱۰ الماس (Gem)",
-    "priority": "بالا",
-    "variables": ""
+    "category": "DAILY",
+    "description": "یک مرحله را تنها با حداکثر سه گیاه تولیدکننده خورشید به پایان برسان",
+    "eventType": "LEVEL_WON",
+    "target": 1,
+    "reward": {
+      "type": "GEMS",
+      "amount": 10
+    },
+    "priority": "HIGH",
+    "parameter": "MAX_SUN_PRODUCERS_3"
   },
   {
     "id": 17,
     "title": "یه ستون کمتر",
-    "category": "روزانه",
-    "completionCondition": "یک مرحله را در صورتی ببرد که در ستون nام گیاهی نکاشته باشد",
-    "rewardDescription": "۱۰ الماس (Gem)",
-    "priority": "بالا",
-    "variables": "تعداد ستون‌ها"
+    "category": "DAILY",
+    "description": "مرحله را با حداقل یک ستون کاملا خالی به پایان برسان",
+    "eventType": "LEVEL_WON",
+    "target": 1,
+    "reward": {
+      "type": "GEMS",
+      "amount": 10
+    },
+    "priority": "HIGH",
+    "parameter": "EMPTY_COLUMN"
   },
   {
     "id": 18,
     "title": "سطر بی دفاع",
-    "category": "روزانه",
-    "completionCondition": "یک مرحله را در صورتی ببرد که سطر nام را هیچ گیاهی نکاشته باشد",
-    "rewardDescription": "۲۰ الماس (Gem)",
-    "priority": "بالا",
-    "variables": "تعداد سطرها"
+    "category": "DAILY",
+    "description": "مرحله را با حداقل یک ردیف کاملا خالی به پایان برسان",
+    "eventType": "LEVEL_WON",
+    "target": 1,
+    "reward": {
+      "type": "GEMS",
+      "amount": 20
+    },
+    "priority": "HIGH",
+    "parameter": "EMPTY_ROW"
   },
   {
     "id": 19,
     "title": "صلیب بی دفاع",
-    "category": "روزانه",
-    "completionCondition": "یک مرحله را در صورتی ببرد که ستون و ردیف nام خالی باشد",
-    "rewardDescription": "۲۵ الماس (Gem)",
-    "priority": "بالا",
-    "variables": "مینیمم تعداد سطر و ستون"
+    "category": "DAILY",
+    "description": "مرحله را با یک ردیف و یک ستون کاملا خالی به پایان برسان",
+    "eventType": "LEVEL_WON",
+    "target": 1,
+    "reward": {
+      "type": "GEMS",
+      "amount": 25
+    },
+    "priority": "HIGH",
+    "parameter": "EMPTY_CROSS"
   },
   {
     "id": 20,
     "title": "وقت چمن‌زنی",
-    "category": "چالش (Epic)",
-    "completionCondition": "حداقل n زامبی را با چمن‌زن بکش",
-    "rewardDescription": "n الماس",
-    "priority": "متوسط",
-    "variables": "10-20-30-40-50"
+    "category": "EPIC",
+    "description": "حداقل ده زامبی را با چمن زن شکست بده",
+    "eventType": "LAWN_MOWER_KILL",
+    "target": 10,
+    "reward": {
+      "type": "GEMS",
+      "amount": 10
+    },
+    "priority": "MEDIUM",
+    "parameter": ""
   }
 ]
