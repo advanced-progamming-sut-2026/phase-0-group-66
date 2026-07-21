@@ -17,10 +17,12 @@ public class BattleMenu extends Menu {
     public void showCommands() {
         System.out.println("plant plant -t <type> -l (<x>, <y>)");
         System.out.println("pluck plant -l (<x>, <y>) | collect sun -l (<x>, <y>)");
+        System.out.println("feed plant -l (<x>, <y>) | show plant-food amount");
         System.out.println("advance time -t <count> ticks");
         System.out.println("show map | show sun amount | show plants status");
         System.out.println("show tile status -l (<x>, <y>) | zombies info");
         System.out.println("cheat add -n <count> suns | cheat remove-cooldown");
+        System.out.println("cheat add-plant-food");
         System.out.println("release the nuke | cheat spawn-zombie -t <type> -l (<x>, <y>)");
     }
 
@@ -30,6 +32,7 @@ public class BattleMenu extends Menu {
             "plant plant -t (?<type>.+?) -l \\((?<x>\\d+),\\s*(?<y>\\d+)\\)");
         Matcher pluck = position(command, "pluck plant -l ");
         Matcher collect = position(command, "collect sun -l ");
+        Matcher feed = position(command, "feed plant -l ");
         Matcher tile = position(command, "show tile status -l ");
         Matcher advance = getMatcher(command, "advance time -t (?<ticks>\\d+) ticks");
         Matcher addSun = getMatcher(command, "cheat add -n (?<count>\\d+) suns");
@@ -42,6 +45,10 @@ public class BattleMenu extends Menu {
             show(controller.pluckPlant(number(pluck, "x"), number(pluck, "y")));
         } else if (collect != null) {
             show(controller.collectSun(number(collect, "x"), number(collect, "y")));
+        } else if (feed != null) {
+            show(controller.feedPlant(number(feed, "x"), number(feed, "y")));
+        } else if (command.equals("show plant-food amount")) {
+            System.out.println(controller.plantFoodAmount());
         } else if (advance != null) {
             show(controller.advanceTime(number(advance, "ticks")));
         } else if (command.equals("show map")) {
@@ -58,6 +65,8 @@ public class BattleMenu extends Menu {
             show(controller.addSuns(number(addSun, "count")));
         } else if (command.equals("cheat remove-cooldown")) {
             show(controller.removeCooldowns());
+        } else if (command.equals("cheat add-plant-food")) {
+            show(controller.addPlantFoodCheat());
         } else if (command.equals("release the nuke")) {
             show(controller.releaseNuke());
         } else if (spawn != null) {
