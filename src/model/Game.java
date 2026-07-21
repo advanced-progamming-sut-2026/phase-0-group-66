@@ -8,7 +8,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 public class Game {
     public static final int TICKS_PER_SECOND = 10;
@@ -17,7 +16,12 @@ public class Game {
     private final PlantFactory plantFactory;
     private final ZombieFactory zombieFactory;
     private final Random random;
+    private final int difficultyLevel;
+    private final Map<String, Integer> plantLevels;
+    private final Inventory inventory;
+    private final Wallet wallet;
     private final LinkedHashSet<String> selectedPlants;
+    private final LinkedHashSet<String> levelBoostedPlants;
     private final LinkedHashMap<String, Integer> cooldownTicks;
     private final LinkedHashSet<GridPosition> waitingSunProducers;
     private final LinkedHashSet<GridPosition> endangeredPositions;
@@ -42,13 +46,34 @@ public class Game {
     private int nextConveyorTick;
 
     public Game(PlantFactory plantFactory, ZombieFactory zombieFactory) {
-        if (plantFactory == null || zombieFactory == null) {
-            throw new IllegalArgumentException("Game factories cannot be null.");
+        this(plantFactory, zombieFactory, 3, Map.of(), new Inventory(), new Wallet(),
+            new Random());
+    }
+
+    public Game(PlantFactory plantFactory, ZombieFactory zombieFactory, int difficultyLevel,
+                Map<String, Integer> plantLevels, Inventory inventory, Wallet wallet) {
+        this(plantFactory, zombieFactory, difficultyLevel, plantLevels, inventory, wallet,
+            new Random());
+    }
+
+    Game(PlantFactory plantFactory, ZombieFactory zombieFactory, int difficultyLevel,
+         Map<String, Integer> plantLevels, Inventory inventory, Wallet wallet, Random random) {
+        if (plantFactory == null || zombieFactory == null || inventory == null
+            || wallet == null || random == null) {
+            throw new IllegalArgumentException("Game dependencies cannot be null.");
+        }
+        if (difficultyLevel < 1 || difficultyLevel > 5) {
+            throw new IllegalArgumentException("Difficulty level must be between 1 and 5.");
         }
         this.plantFactory = plantFactory;
         this.zombieFactory = zombieFactory;
-        this.random = new Random();
+        this.difficultyLevel = difficultyLevel;
+        this.inventory = inventory;
+        this.wallet = wallet;
+        this.random = random;
+        this.plantLevels = normalizePlantLevels(plantLevels);
         this.selectedPlants = new LinkedHashSet<>();
+        this.levelBoostedPlants = new LinkedHashSet<>();
         this.cooldownTicks = new LinkedHashMap<>();
         this.waitingSunProducers = new LinkedHashSet<>();
         this.endangeredPositions = new LinkedHashSet<>();
@@ -72,6 +97,7 @@ public class Game {
         nextSkySunTick = 0;
         lostPlantsCount = 0;
         selectedPlants.clear();
+        levelBoostedPlants.clear();
         cooldownTicks.clear();
         waitingSunProducers.clear();
         endangeredPositions.clear();
@@ -116,6 +142,51 @@ public class Game {
         }
         cooldownTicks.remove(definition.getNormalizedName());
         addEvent("Removed selected plant: " + definition.getName() + ".");
+    }
+
+    public void boostSelectedPlant(String plantType) {
+        requirePlantSelection();
+        PlantDefinition definition = plantFactory.findDefinition(plantType)
+            .orElseThrow(() -> new IllegalArgumentException("Plant does not exist: " + plantType));
+        if (!selectedPlants.contains(definition.getName())) {
+            throw new IllegalStateException("Select the plant before boosting it.");
+        }
+        if (!levelBoostedPlants.add(definition.getName())) {
+            throw new IllegalStateException("Plant is already boosted for this level.");
+        }
+        addEvent("Plant " + definition.getName() + " is boosted for this level.");
+    }
+
+    public boolean isLevelBoosted(String plantType) {
+        PlantDefinition definition = plantFactory.findDefinition(plantType).orElse(null);
+        return definition != null && levelBoostedPlants.contains(definition.getName());
+    }
+
+    public void feedPlant(int row, int col) {
+        requireRunning();
+        Plant plant = board.getTile(row, col).getPlant();
+        if (plant == null || plant.isDestroyed()) {
+            throw new IllegalStateException("There is no living plant on this tile.");
+        }
+        if (!inventory.consumePlantFood()) {
+            throw new IllegalStateException("No plant food is available.");
+        }
+        activatePlantFood(plant, "manual plant food");
+        cleanupDestroyedEntities();
+        evaluateGameState();
+    }
+
+    public void addPlantFoodCheat() {
+        requireRunning();
+        if (inventory.getPlantFoodCapacityLeft() <= 0) {
+            throw new IllegalStateException("Plant food storage is already full.");
+        }
+        inventory.addPlantFood(1);
+        addEvent("Cheat added one plant food; total=" + inventory.getPlantFoods() + ".");
+    }
+
+    public int getPlantFoodCount() {
+        return inventory.getPlantFoods();
     }
 
     public void startGame(Level level) {
@@ -168,8 +239,12 @@ public class Game {
             return;
         }
         Wave wave = waves.get(nextWaveIndex);
-        wave.populate(zombieFactory, board.getRows(), board.getCols() - 0.05, random);
+        int targetCost = adjustedWaveCost(wave.getDifficultyCost());
+        wave.populate(zombieFactory,
+            zombieFactory.getDefinitionsForSeason(currentLevel.getSeason()), targetCost,
+            board.getRows(), board.getCols() - 0.05, random);
         configureWaveForSeason(wave);
+        configureZombieDifficultyAndDrops(wave);
         wave.startWave();
         for (Zombie zombie : wave.getZombies()) {
             board.addZombie(zombie);
@@ -218,19 +293,26 @@ public class Game {
                 throw new IllegalStateException("No conveyor card is available for this plant.");
             }
             conveyorCards.put(definition.getName(), cards - 1);
-        } else if (sunAmount < definition.getCost()) {
+        }
+        int plantLevel = plantLevels.getOrDefault(key, 1);
+        Plant plant = plantFactory.createPlant(definition.getName(), plantLevel);
+        if (!conveyor && sunAmount < plant.getSunCost()) {
             throw new IllegalStateException("Not enough sun.");
         }
-        Plant plant = plantFactory.createPlant(definition.getName());
         board.placePlant(plant, row, col);
         if (!conveyor) {
-            sunAmount -= definition.getCost();
-            int recharge = (int) Math.round(definition.getRechargeSeconds().orElse(0)
-                * TICKS_PER_SECOND);
-            cooldownTicks.put(key, Math.max(0, recharge));
+            sunAmount -= plant.getSunCost();
+            cooldownTicks.put(key, plant.getRechargeTicks());
         }
-        addEvent("Plant " + plant.getName() + " planted at " + display(row, col) + ".");
-        handleImmediatePlant(plant);
+        addEvent("Plant " + plant.getName() + " (level " + plant.getPlantLevel()
+            + ") planted at " + display(row, col) + ".");
+        boolean boosted = applyAutomaticBoostIfPresent(plant);
+        if (!boosted || !plant.isExplosive()) {
+            handleImmediatePlant(plant);
+        }
+        if (plant.isDestroyed()) {
+            cleanupDestroyedEntities();
+        }
     }
 
     public void pluckPlant(int row, int col) {
@@ -303,6 +385,8 @@ public class Game {
             throw new IllegalArgumentException("Zombie row is outside the board.");
         }
         Zombie zombie = zombieFactory.createZombie(zombieType);
+        zombie.applyDifficulty(difficultyLevel);
+        zombie.setGlowing(zombie.getDefinition().canSpawnPlantFood() && random.nextInt(100) < 5);
         zombie.setPosition(new BoardPosition(row, column));
         board.addZombie(zombie);
         addEvent("Cheat spawned " + zombie.getName() + " at ("
@@ -345,7 +429,12 @@ public class Game {
         for (String name : selectedPlants) {
             PlantDefinition definition = plantFactory.findDefinition(name).orElseThrow();
             int remaining = cooldownTicks.getOrDefault(definition.getNormalizedName(), 0);
-            output.append(name).append(": cost=").append(definition.getCost())
+            int level = plantLevels.getOrDefault(definition.getNormalizedName(), 1);
+            Plant preview = plantFactory.createPlant(name, level);
+            output.append(name).append(": level=").append(preview.getPlantLevel())
+                .append(", cost=").append(preview.getSunCost())
+                .append(", damage=").append(preview.getAttackPower())
+                .append(", health=").append(preview.getMaxHealth())
                 .append(", available=").append(remaining <= 0);
             if (remaining > 0) {
                 output.append(", remaining=").append(formatSeconds(remaining)).append('s');
@@ -364,8 +453,10 @@ public class Game {
         if (plant == null) {
             output.append("plant: none").append(System.lineSeparator());
         } else {
-            output.append("plant: ").append(plant.getName()).append(", health=")
+            output.append("plant: ").append(plant.getName()).append(", level=")
+                .append(plant.getPlantLevel()).append(", health=")
                 .append(plant.getHealth()).append('/').append(plant.getMaxHealth())
+                .append(", shield=").append(plant.getPlantFoodShield())
                 .append(System.lineSeparator());
         }
         List<Zombie> tileZombies = tile.getZombies();
@@ -397,6 +488,10 @@ public class Game {
                     .append(armor.getHealth()).append(System.lineSeparator());
             }
             output.append("effects:").append(System.lineSeparator());
+            if (zombie.isGlowing()) {
+                output.append("  glowing: drops plant food on death")
+                    .append(System.lineSeparator());
+            }
             if (zombie.getChilledTicks() > 0) {
                 output.append("  chilled: ").append(formatSeconds(zombie.getChilledTicks()))
                     .append('s').append(System.lineSeparator());
@@ -411,8 +506,10 @@ public class Game {
         }
         int waveNumber = currentWave == null ? 0 : currentWave.getWaveNumber();
         return "state=" + gameState + ", level=" + currentLevel.getLevelId()
+            + ", difficulty=" + difficultyLevel
             + ", wave=" + waveNumber + "/" + currentLevel.getWaves().size()
-            + ", sun=" + sunAmount + ", ticks=" + elapsedTicks
+            + ", sun=" + sunAmount + ", plantFoods=" + inventory.getPlantFoods()
+            + ", ticks=" + elapsedTicks
             + (conveyorCards.isEmpty() ? "" : ", conveyor=" + conveyorCards);
     }
 
@@ -454,6 +551,36 @@ public class Game {
     public int getLawnMowerKills() { return lawnMowerKills; }
     public Map<String, Integer> getConveyorCards() {
         return Collections.unmodifiableMap(conveyorCards);
+    }
+
+    private Map<String, Integer> normalizePlantLevels(Map<String, Integer> levels) {
+        LinkedHashMap<String, Integer> result = new LinkedHashMap<>();
+        if (levels != null) {
+            for (Map.Entry<String, Integer> entry : levels.entrySet()) {
+                if (entry.getKey() != null && entry.getValue() != null) {
+                    result.put(PlantDefinition.normalizeKey(entry.getKey()),
+                        Math.max(1, entry.getValue()));
+                }
+            }
+        }
+        return Collections.unmodifiableMap(result);
+    }
+
+    private int adjustedWaveCost(int baseCost) {
+        double multiplier = difficultyLevel / 3.0;
+        return Math.max(100, (int) Math.round(baseCost * multiplier));
+    }
+
+    private void configureZombieDifficultyAndDrops(Wave wave) {
+        for (Zombie zombie : wave.getZombies()) {
+            zombie.applyDifficulty(difficultyLevel);
+            boolean glowing = zombie.getDefinition().canSpawnPlantFood()
+                && random.nextInt(100) < 5;
+            zombie.setGlowing(glowing);
+            if (glowing) {
+                addEvent("A glowing " + zombie.getName() + " joined the wave.");
+            }
+        }
     }
 
     private void initializeSeasonTerrain() {
@@ -584,11 +711,133 @@ public class Game {
                 if (tomb.containsSun()) {
                     board.addSun(new Sun(50, position));
                 }
+                if (tomb.containsPlantFood() && inventory.getPlantFoodCapacityLeft() > 0) {
+                    inventory.addPlantFood(1);
+                    addEvent("The tomb released a plant food; total="
+                        + inventory.getPlantFoods() + ".");
+                }
                 addEvent("Tomb destroyed at " + position + ".");
             }
             return true;
         }
         return false;
+    }
+
+    private boolean applyAutomaticBoostIfPresent(Plant plant) {
+        String name = plant.getName();
+        if (levelBoostedPlants.contains(name)) {
+            activatePlantFood(plant, "level boost");
+            return true;
+        }
+        if (inventory.consumeStoredBoost(name)) {
+            activatePlantFood(plant, "stored greenhouse boost");
+            addEvent("Stored boost for " + name + " was consumed.");
+            return true;
+        }
+        return false;
+    }
+
+    private void activatePlantFood(Plant plant, String source) {
+        if (plant == null || plant.isDestroyed() || plant.getPosition() == null) {
+            throw new IllegalStateException("Plant food cannot be applied to this plant.");
+        }
+        plant.usePlantFood();
+        if (plant.isSunProducer()) {
+            int amount = plantFoodSunAmount(plant);
+            sunAmount += amount;
+            addEvent("Plant food made " + plant.getName() + " produce " + amount
+                + " suns immediately.");
+        } else if (plant.isExplosive()) {
+            explosivePlantsUsed++;
+            detonatePlant(plant, 2);
+        } else if (plant.isShooter()) {
+            plantFoodShooterVolley(plant);
+        } else if (plant.isHoming()) {
+            plantFoodHomingStrike(plant);
+        } else if (plant.isMelee()) {
+            plantFoodMeleeStrike(plant);
+        } else {
+            addEvent("Plant food fully healed " + plant.getName()
+                + " and granted a " + plant.getPlantFoodShield() + " point shield.");
+        }
+        addEvent("Plant food activated on " + plant.getName() + " from " + source + ".");
+    }
+
+    private int plantFoodSunAmount(Plant plant) {
+        String normalized = plant.getDefinition().getNormalizedName();
+        if (normalized.equals("twinsunflower")) {
+            return 250 + plant.getSunProductionBonus();
+        }
+        if (normalized.equals("sunshroom") || normalized.equals("primalsunflower")) {
+            return 225 + plant.getSunProductionBonus();
+        }
+        return 150 + plant.getSunProductionBonus();
+    }
+
+    private void plantFoodShooterVolley(Plant plant) {
+        GridPosition position = plant.getPosition();
+        int damage = Math.max(1, plant.getAttackPower())
+            * Math.max(5, plant.getProjectileCount() * 3);
+        int hits = 0;
+        for (Zombie zombie : new ArrayList<>(board.getZombiesInRow(position.getRow()))) {
+            if (zombie.getPosition().getColumn() + 0.001 < position.getColumn()) {
+                continue;
+            }
+            applyPlantFoodDamage(zombie, plant, damage);
+            hits++;
+            if (!plant.isPiercing() && hits >= 3) {
+                break;
+            }
+        }
+        addEvent(plant.getName() + " fired a plant-food volley and hit " + hits
+            + " zombie(s).");
+    }
+
+    private void plantFoodHomingStrike(Plant plant) {
+        ArrayList<Zombie> targets = new ArrayList<>(board.getZombies());
+        targets.removeIf(Zombie::isDead);
+        targets.sort((first, second) -> Integer.compare(
+            second.getEffectiveHealth(), first.getEffectiveHealth()));
+        int limit = Math.min(5, targets.size());
+        for (int index = 0; index < limit; index++) {
+            applyPlantFoodDamage(targets.get(index), plant,
+                Math.max(1, plant.getAttackPower()) * 5);
+        }
+        addEvent(plant.getName() + " launched " + limit + " homing plant-food strike(s).");
+    }
+
+    private void plantFoodMeleeStrike(Plant plant) {
+        GridPosition center = plant.getPosition();
+        int hits = 0;
+        for (Zombie zombie : new ArrayList<>(board.getZombies())) {
+            if (zombie.getPosition() == null) {
+                continue;
+            }
+            int rowDistance = Math.abs(zombie.getPosition().getRow() - center.getRow());
+            double columnDistance = Math.abs(zombie.getPosition().getColumn()
+                - center.getColumn());
+            if (rowDistance <= 1 && columnDistance <= 1.5) {
+                zombie.takeDamage(Math.max(1, plant.getAttackPower()) * 5);
+                hits++;
+            }
+        }
+        addEvent(plant.getName() + " used a plant-food area strike on " + hits
+            + " zombie(s).");
+    }
+
+    private void applyPlantFoodDamage(Zombie zombie, Plant plant, int damage) {
+        ProjectileType type = plant.getProjectileElementType();
+        if (type == ProjectileType.POISON) {
+            zombie.takeDirectDamage(damage);
+        } else if (type == ProjectileType.FIRE) {
+            zombie.clearChill();
+            zombie.takeDamage(damage * 2);
+        } else {
+            zombie.takeDamage(damage);
+            if (type == ProjectileType.ICE) {
+                zombie.chill(plant.getChillDurationTicks());
+            }
+        }
     }
 
     private void initializeSpecialLevel() {
@@ -601,7 +850,8 @@ public class Game {
         }
         if (currentLevel.getSpecialType() == SpecialLevelType.SAVE_OUR_SEEDS) {
             for (int row : List.of(0, 2, 4)) {
-                Plant protectedPlant = plantFactory.createPlant("Wall-nut");
+                Plant protectedPlant = plantFactory.createPlant("Wall-nut",
+                    plantLevels.getOrDefault("wallnut", 1));
                 board.placePlant(protectedPlant, row, 2);
                 endangeredPositions.add(new GridPosition(row, 2));
             }
@@ -731,7 +981,11 @@ public class Game {
             return;
         }
         int amount = plant instanceof Sunflower sunflower
-            ? sunflower.getProductionAmount() : inferSunProduction(plant);
+            ? sunflower.getProductionAmount() : inferSunProduction(plant)
+                + plant.getSunProductionBonus();
+        if (plant.hasDoubleSunChance() && random.nextBoolean()) {
+            amount *= 2;
+        }
         Sun sun = new Sun(amount, position);
         board.addSun(sun);
         waitingSunProducers.add(position);
@@ -760,7 +1014,8 @@ public class Game {
             double startColumn = position.getColumn() + 0.25 - index * 0.03;
             Projectile projectile = new Projectile(plant.getAttackPower(), PROJECTILE_SPEED,
                 new BoardPosition(position.getRow(), startColumn),
-                plant.getProjectileElementType(), plant.isPiercing());
+                plant.getProjectileElementType(), plant.isPiercing(),
+                plant.getChillDurationTicks());
             board.addProjectile(projectile);
         }
         addEvent("Plant " + plant.getName() + " fired " + projectileCount
@@ -889,9 +1144,43 @@ public class Game {
                 continue;
             }
             BoardPosition position = zombie.getPosition();
+            handleZombieRewards(zombie);
             board.removeZombie(zombie);
             zombieKillCount++;
             addEvent("Zombie of type " + zombie.getName() + " is dead at " + position + ".");
+        }
+    }
+
+    private void handleZombieRewards(Zombie zombie) {
+        if (zombie.isRewardDropped()) {
+            return;
+        }
+        zombie.dropReward();
+        if (zombie.isGlowing()) {
+            if (inventory.getPlantFoodCapacityLeft() > 0) {
+                inventory.addPlantFood(1);
+                addEvent("The glowing zombie dropped a plant food; you have "
+                    + inventory.getPlantFoods() + " plant foods now.");
+            } else {
+                addEvent("The glowing zombie dropped plant food, but storage is full.");
+            }
+        }
+        if (random.nextInt(100) >= 10) {
+            return;
+        }
+        int rewardType = random.nextInt(3);
+        if (rewardType == 0) {
+            wallet.addCoins(50);
+            addEvent("A zombie dropped 50 coins; you have " + wallet.getCoins()
+                + " coins now.");
+        } else if (rewardType == 1) {
+            wallet.addGems(1);
+            addEvent("A zombie dropped a diamond; you have " + wallet.getGems()
+                + " diamonds now.");
+        } else {
+            inventory.addPot();
+            addEvent("A zombie dropped a pot; you have " + inventory.getPots()
+                + " pots now.");
         }
     }
 
@@ -945,9 +1234,14 @@ public class Game {
     }
 
     private void detonatePlant(Plant plant) {
+        detonatePlant(plant, 1);
+    }
+
+    private void detonatePlant(Plant plant, int damageMultiplier) {
         GridPosition center = plant.getPosition();
         int damage = plant.getDefinition().isInstantKill()
-            ? Integer.MAX_VALUE / 4 : Math.max(1, plant.getAttackPower());
+            ? Integer.MAX_VALUE / 4 : Math.max(1, plant.getAttackPower())
+                * Math.max(1, damageMultiplier);
         boolean wholeRow = plant.getDefinition().getNormalizedName().contains("jalapeno");
         for (Zombie zombie : new ArrayList<>(board.getZombies())) {
             if (zombie.getPosition() == null) {
@@ -992,7 +1286,8 @@ public class Game {
 
     private int calculateSkySunIntervalTicks() {
         double seconds = elapsedTicks / (double) TICKS_PER_SECOND;
-        double intervalSeconds = Math.min(12.0, 6.0 + 0.05 * seconds);
+        double baseInterval = Math.min(12.0, 6.0 + 0.05 * seconds);
+        double intervalSeconds = baseInterval * difficultyLevel / 3.0;
         return Math.max(1, (int) Math.round(intervalSeconds * TICKS_PER_SECOND));
     }
 
