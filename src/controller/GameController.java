@@ -65,7 +65,9 @@ public class GameController {
             || !user.getProgress().isLevelUnlocked(level.getLevelId())) {
             return ActionResult.failure("This level is locked.");
         }
-        game = new Game(gameData.getPlantFactory(), gameData.getZombieFactory());
+        game = new Game(gameData.getPlantFactory(), gameData.getZombieFactory(),
+            user.getDifficultyLevel(), user.getCollectionBook().getPlantLevels(),
+            user.getInventory(), user.getWallet());
         game.prepareLevel(chapter, level);
         resultRecorded = false;
         syncedSun = 0;
@@ -106,18 +108,32 @@ public class GameController {
         if (user == null) {
             return ActionResult.failure("Login is required.");
         }
+        if (game == null) {
+            return ActionResult.failure("First choose a chapter and level.");
+        }
         Optional<PlantDefinition> definition = gameData.getPlantFactory().findDefinition(plantType);
         if (definition.isEmpty()
             || !user.getCollectionBook().getOwnedPlants().contains(definition.get().getName())) {
             return ActionResult.failure("Plant is not owned.");
         }
+        String canonicalName = definition.get().getName();
+        if (!game.getSelectedPlants().contains(canonicalName)) {
+            return ActionResult.failure("Select the plant before boosting it.");
+        }
+        if (game.isLevelBoosted(canonicalName)) {
+            return ActionResult.failure("Plant is already boosted for this level.");
+        }
         if (!user.getWallet().spendGems(2)) {
             return ActionResult.failure("Boosting a plant costs 2 gems.");
         }
-        user.getInventory().addStoredBoost(definition.get().getName());
+        ActionResult boostResult = perform(() -> game.boostSelectedPlant(canonicalName),
+            canonicalName + " will receive plant food whenever it is planted in this level.");
+        if (!boostResult.isSuccessful()) {
+            user.getWallet().addGems(2);
+            return boostResult;
+        }
         ActionResult save = authController.saveCurrentState();
-        return save.isSuccessful()
-            ? ActionResult.success("Boost stored for " + definition.get().getName() + ".") : save;
+        return save.isSuccessful() ? boostResult : save;
     }
 
     public ActionResult plantPlant(String plantType, int col, int row) {
@@ -128,6 +144,7 @@ public class GameController {
         }, "Planting completed.");
         if (result.isSuccessful()) {
             synchronizeQuestProgress();
+            authController.saveCurrentState();
         }
         return result;
     }
@@ -145,6 +162,32 @@ public class GameController {
         return result;
     }
 
+    public ActionResult feedPlant(int col, int row) {
+        ActionResult result = perform(() -> game.feedPlant(toRow(row), toColumn(col)),
+            "Plant food used.");
+        if (result.isSuccessful()) {
+            synchronizeQuestProgress();
+            authController.saveCurrentState();
+        }
+        return result;
+    }
+
+    public ActionResult addPlantFoodCheat() {
+        ActionResult result = perform(() -> game.addPlantFoodCheat(),
+            "Plant food cheat applied.");
+        if (result.isSuccessful()) {
+            authController.saveCurrentState();
+        }
+        return result;
+    }
+
+    public String plantFoodAmount() {
+        if (game == null) {
+            return "No level is prepared.";
+        }
+        return "Plant foods: " + game.getPlantFoodCount();
+    }
+
     public ActionResult advanceTime(int ticks) {
         ActionResult result = perform(() -> game.advanceTime(ticks),
             "Advanced time by " + ticks + " tick(s).");
@@ -152,6 +195,7 @@ public class GameController {
             synchronizeSeenZombies();
             synchronizeQuestProgress();
             recordGameResultIfNeeded();
+            authController.saveCurrentState();
         }
         return result;
     }
@@ -169,6 +213,7 @@ public class GameController {
         if (result.isSuccessful()) {
             synchronizeQuestProgress();
             recordGameResultIfNeeded();
+            authController.saveCurrentState();
         }
         return result;
     }
