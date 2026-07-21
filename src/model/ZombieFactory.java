@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public final class ZombieFactory {
     private final LinkedHashMap<String, ZombieDefinition> definitions;
@@ -65,8 +66,43 @@ public final class ZombieFactory {
         return List.copyOf(definitions.values());
     }
 
+    public List<ZombieDefinition> getDefinitionsForSeason(SeasonType season) {
+        Set<String> allowedAliases = allowedAliasesForSeason(season);
+        ArrayList<ZombieDefinition> result = new ArrayList<>();
+        for (ZombieDefinition definition : definitions.values()) {
+            if (allowedAliases.contains(definition.getAlias())) {
+                result.add(definition);
+            }
+        }
+        return List.copyOf(result);
+    }
+
     public Map<String, ZombieDefinition> getDefinitionMap() {
         return Collections.unmodifiableMap(definitions);
+    }
+
+
+    private Set<String> allowedAliasesForSeason(SeasonType season) {
+        java.util.LinkedHashSet<String> aliases = new java.util.LinkedHashSet<>(List.of(
+            "ZombieDefault", "ZombieArmor1", "ZombieArmor2", "ZombieArmor4",
+            "ZombieDarkArmor3", "ZombieGargantuar", "ZombieImp",
+            "ZombieModernAllStar", "ZombieLostCityJane", "ZombieCrystalSkull",
+            "ZombieProspector", "ZombiePiano", "ZombieNewspaper", "ZombieArcade"
+        ));
+        SeasonType actualSeason = season == null ? SeasonType.ANCIENT_EGYPT : season;
+        switch (actualSeason) {
+            case ANCIENT_EGYPT -> aliases.addAll(List.of(
+                "ZombieRa", "ZombieExplorer", "ZombieTombRaiser"));
+            case FROSTBITE_CAVES -> aliases.addAll(List.of(
+                "ZombieIceAgeDodo", "ZombieIceAgeHunter", "ZombieIceAgeTroglobite"));
+            case BIG_WAVE_BEACH -> aliases.addAll(List.of(
+                "ZombieBeachFisherman", "ZombieBeachOctopus", "ZombieBeachSnorkel"));
+            case DARK_AGES -> aliases.addAll(List.of(
+                "ZombieDarkJuggler", "ZombieWizard", "ZombieDarkKing",
+                "ZombieDarkImpDragon"));
+            default -> { }
+        }
+        return Set.copyOf(aliases);
     }
 
     private Zombie createSpecializedZombie(ZombieDefinition definition, List<Armor> armors) {

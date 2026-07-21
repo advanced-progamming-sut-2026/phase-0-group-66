@@ -17,6 +17,8 @@ public abstract class Zombie {
     private int chilledTicks;
     private boolean iceImmune;
     private boolean rewardDropped;
+    private boolean glowing;
+    private boolean difficultyApplied;
     private int specialAbilityUses;
 
     protected Zombie(ZombieDefinition definition, List<Armor> armors) {
@@ -34,6 +36,29 @@ public abstract class Zombie {
             this.armors.addAll(armors);
         }
     }
+
+
+    public void applyDifficulty(int difficultyLevel) {
+        if (difficultyApplied) {
+            return;
+        }
+        if (difficultyLevel < 1 || difficultyLevel > 5) {
+            throw new IllegalArgumentException("Difficulty level must be between 1 and 5.");
+        }
+        double factor = difficultyLevel / 3.0;
+        health = Math.max(1, (int) Math.round(health * factor));
+        if (damage > 0) {
+            damage = Math.max(1, (int) Math.round(damage * factor));
+        }
+        speed *= factor;
+        for (Armor armor : armors) {
+            armor.scaleHealth(factor);
+        }
+        difficultyApplied = true;
+    }
+
+    public boolean isGlowing() { return glowing; }
+    public void setGlowing(boolean glowing) { this.glowing = glowing; }
 
     public void move() {
         moveOneTick();
