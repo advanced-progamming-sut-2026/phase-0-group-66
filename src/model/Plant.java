@@ -34,6 +34,7 @@ public abstract class Plant {
     }
 
     public void attack() {
+        actionTicksRemaining = 0;
     }
 
     public void takeDamage(int amount) {

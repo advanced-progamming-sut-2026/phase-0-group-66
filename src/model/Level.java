@@ -79,6 +79,7 @@ public class Level {
     }
 
     public void loadLevel() {
+        completed = false;
     }
 
     public void startLevel() {
