@@ -1,10 +1,16 @@
 import controller.AppController;
+import controller.AuthController;
 import controller.CollectionController;
 import controller.GameController;
-import controller.AuthController;
+import controller.GreenhouseController;
+import controller.LeaderboardController;
+import controller.MiniGameController;
+import controller.NewsController;
 import controller.ProfileController;
 import controller.QuestController;
 import controller.SettingsController;
+import controller.ShopController;
+import menu.BattleMenu;
 import menu.CollectionMenu;
 import menu.GameMenu;
 import menu.GreenhouseMenu;
@@ -15,6 +21,7 @@ import menu.Menu;
 import menu.MenuManager;
 import menu.MiniGameMenu;
 import menu.NewsMenu;
+import menu.PlantSelectionMenu;
 import menu.ProfileMenu;
 import menu.QuestMenu;
 import menu.RegisterMenu;
@@ -24,15 +31,19 @@ import model.GameData;
 import model.UserRepository;
 import view.CollectionView;
 import view.GameView;
+import view.GreenhouseView;
+import view.LeaderboardView;
 import view.LoginView;
+import view.MiniGameView;
+import view.NewsView;
 import view.ProfileView;
 import view.QuestView;
 import view.RegisterView;
 import view.SettingsView;
+import view.ShopView;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -64,28 +75,39 @@ public class Main {
                                        GameData gameData) {
         ProfileController profileController = new ProfileController(authController);
         SettingsController settingsController = new SettingsController(authController);
-        CollectionController collectionController = new CollectionController(
-                authController, gameData.getPlantFactory(), gameData.getZombieFactory(),
-                gameData.getArmorFactory());
-        QuestController questController = new QuestController(gameData.getQuestFactory());
-        GameController gameController = new GameController(authController, gameData, new GameView());
-        RegisterMenu registerMenu = new RegisterMenu(manager, authController, new RegisterView());
-        LoginMenu loginMenu = new LoginMenu(manager, authController, new LoginView());
-        MainMenu mainMenu = new MainMenu(manager, authController);
-        GameMenu gameMenu = new GameMenu(manager, gameController);
-        CollectionMenu collectionMenu = new CollectionMenu(manager, collectionController,
-                new CollectionView());
-        GreenhouseMenu greenhouseMenu = new GreenhouseMenu(manager);
-        ShopMenu shopMenu = new ShopMenu(manager);
-        SettingsMenu settingsMenu = new SettingsMenu(manager, settingsController, new SettingsView());
-        NewsMenu newsMenu = new NewsMenu(manager);
-        ProfileMenu profileMenu = new ProfileMenu(manager, profileController, new ProfileView());
-        QuestMenu questMenu = new QuestMenu(manager, questController, new QuestView());
-        LeaderboardMenu leaderboardMenu = new LeaderboardMenu(manager);
-        MiniGameMenu miniGameMenu = new MiniGameMenu(manager);
-        return new MenuSet(registerMenu, loginMenu, mainMenu, gameMenu, collectionMenu,
-                greenhouseMenu, shopMenu, settingsMenu, newsMenu, profileMenu, questMenu,
-                leaderboardMenu, miniGameMenu);
+        QuestController questController = new QuestController(authController,
+                gameData.getQuestFactory(), gameData.getPlantFactory());
+        GameController gameController = new GameController(authController, gameData,
+                new GameView(), questController);
+        CollectionController collectionController = new CollectionController(authController,
+                gameData.getPlantFactory(), gameData.getZombieFactory(), gameData.getArmorFactory());
+        GreenhouseController greenhouseController = new GreenhouseController(authController,
+                gameData.getPlantFactory());
+        ShopController shopController = new ShopController(authController,
+                gameData.getPlantFactory());
+        NewsController newsController = new NewsController(authController);
+        LeaderboardController leaderboardController = new LeaderboardController(
+                authController.getUserRepository());
+        MiniGameController miniGameController = new MiniGameController(authController,
+                questController);
+
+        return new MenuSet(
+                new RegisterMenu(manager, authController, new RegisterView()),
+                new LoginMenu(manager, authController, new LoginView()),
+                new MainMenu(manager, authController, newsController),
+                new GameMenu(manager, gameController),
+                new PlantSelectionMenu(manager, gameController),
+                new BattleMenu(manager, gameController),
+                new CollectionMenu(manager, collectionController, new CollectionView()),
+                new GreenhouseMenu(manager, greenhouseController, new GreenhouseView()),
+                new ShopMenu(manager, shopController, new ShopView()),
+                new SettingsMenu(manager, settingsController, new SettingsView()),
+                new NewsMenu(manager, newsController, new NewsView()),
+                new ProfileMenu(manager, profileController, new ProfileView()),
+                new QuestMenu(manager, questController, new QuestView()),
+                new LeaderboardMenu(manager, leaderboardController, new LeaderboardView()),
+                new MiniGameMenu(manager, miniGameController, new MiniGameView())
+        );
     }
 
     private static void configureParents(MenuSet menus) {
@@ -95,6 +117,8 @@ public class Main {
         menus.newsMenu.setParentMenu(menus.mainMenu);
         menus.profileMenu.setParentMenu(menus.mainMenu);
         menus.leaderboardMenu.setParentMenu(menus.mainMenu);
+        menus.plantSelectionMenu.setParentMenu(menus.gameMenu);
+        menus.battleMenu.setParentMenu(menus.plantSelectionMenu);
         menus.collectionMenu.setParentMenu(menus.gameMenu);
         menus.greenhouseMenu.setParentMenu(menus.gameMenu);
         menus.questMenu.setParentMenu(menus.gameMenu);
@@ -103,12 +127,7 @@ public class Main {
     }
 
     private static void registerMenus(MenuManager manager, MenuSet menus) {
-        List<Menu> allMenus = Arrays.asList(
-                menus.registerMenu, menus.loginMenu, menus.mainMenu, menus.gameMenu,
-                menus.collectionMenu, menus.greenhouseMenu, menus.shopMenu, menus.settingsMenu,
-                menus.newsMenu, menus.profileMenu, menus.questMenu, menus.leaderboardMenu,
-                menus.miniGameMenu);
-        for (Menu menu : allMenus) {
+        for (Menu menu : menus.allMenus()) {
             manager.registerMenu(menu);
         }
     }
@@ -124,40 +143,17 @@ public class Main {
         }
     }
 
-    private static final class MenuSet {
-        private final RegisterMenu registerMenu;
-        private final LoginMenu loginMenu;
-        private final MainMenu mainMenu;
-        private final GameMenu gameMenu;
-        private final CollectionMenu collectionMenu;
-        private final GreenhouseMenu greenhouseMenu;
-        private final ShopMenu shopMenu;
-        private final SettingsMenu settingsMenu;
-        private final NewsMenu newsMenu;
-        private final ProfileMenu profileMenu;
-        private final QuestMenu questMenu;
-        private final LeaderboardMenu leaderboardMenu;
-        private final MiniGameMenu miniGameMenu;
-
-        private MenuSet(RegisterMenu registerMenu, LoginMenu loginMenu, MainMenu mainMenu,
-                        GameMenu gameMenu, CollectionMenu collectionMenu,
-                        GreenhouseMenu greenhouseMenu, ShopMenu shopMenu,
-                        SettingsMenu settingsMenu, NewsMenu newsMenu, ProfileMenu profileMenu,
-                        QuestMenu questMenu, LeaderboardMenu leaderboardMenu,
-                        MiniGameMenu miniGameMenu) {
-            this.registerMenu = registerMenu;
-            this.loginMenu = loginMenu;
-            this.mainMenu = mainMenu;
-            this.gameMenu = gameMenu;
-            this.collectionMenu = collectionMenu;
-            this.greenhouseMenu = greenhouseMenu;
-            this.shopMenu = shopMenu;
-            this.settingsMenu = settingsMenu;
-            this.newsMenu = newsMenu;
-            this.profileMenu = profileMenu;
-            this.questMenu = questMenu;
-            this.leaderboardMenu = leaderboardMenu;
-            this.miniGameMenu = miniGameMenu;
+    private record MenuSet(RegisterMenu registerMenu, LoginMenu loginMenu, MainMenu mainMenu,
+                           GameMenu gameMenu, PlantSelectionMenu plantSelectionMenu,
+                           BattleMenu battleMenu, CollectionMenu collectionMenu,
+                           GreenhouseMenu greenhouseMenu, ShopMenu shopMenu,
+                           SettingsMenu settingsMenu, NewsMenu newsMenu,
+                           ProfileMenu profileMenu, QuestMenu questMenu,
+                           LeaderboardMenu leaderboardMenu, MiniGameMenu miniGameMenu) {
+        private List<Menu> allMenus() {
+            return List.of(registerMenu, loginMenu, mainMenu, gameMenu, plantSelectionMenu,
+                    battleMenu, collectionMenu, greenhouseMenu, shopMenu, settingsMenu,
+                    newsMenu, profileMenu, questMenu, leaderboardMenu, miniGameMenu);
         }
     }
 }
