@@ -13,7 +13,9 @@ import model.Zombie;
 import view.GameView;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class GameController {
@@ -28,6 +30,9 @@ public class GameController {
     private int syncedKills;
     private int syncedExplosives;
     private int syncedMowerKills;
+    private int syncedQuickKills;
+    private int syncedFirstColumnKills;
+    private final LinkedHashMap<String, Integer> syncedPlantKills = new LinkedHashMap<>();
 
     public GameController(AuthController authController, GameData gameData, GameView view,
                           QuestController questController) {
@@ -65,18 +70,24 @@ public class GameController {
             || !user.getProgress().isLevelUnlocked(level.getLevelId())) {
             return ActionResult.failure("This level is locked.");
         }
+        Level playLevel = level.copyForPlay();
+        restrictConveyorPoolToOwnedPlants(playLevel, user);
         game = new Game(gameData.getPlantFactory(), gameData.getZombieFactory(),
             user.getDifficultyLevel(), user.getCollectionBook().getPlantLevels(),
             user.getInventory(), user.getWallet());
-        game.prepareLevel(chapter, level);
+        game.prepareLevel(chapter, playLevel);
         resultRecorded = false;
         syncedSun = 0;
         syncedKills = 0;
         syncedExplosives = 0;
         syncedMowerKills = 0;
+        syncedQuickKills = 0;
+        syncedFirstColumnKills = 0;
+        syncedPlantKills.clear();
         flushEvents();
         return ActionResult.success("Choose up to " + level.getAllowedPlantCount()
-            + " plants, then use 'start game'.");
+            + " plants, then use 'start game'. Special rule: "
+            + level.getSpecialRuleSummary());
     }
 
     public ActionResult selectPlant(String plantType) {
@@ -101,6 +112,14 @@ public class GameController {
 
     public ActionResult startGame() {
         return perform(() -> game.startGame(), "Game started.");
+    }
+
+    public ActionResult startZombieWaves() {
+        return perform(() -> game.startZombieWaves(), "Zombie waves started.");
+    }
+
+    public String specialStatus() {
+        return game == null ? "No level is prepared." : game.specialStatus();
     }
 
     public ActionResult boostPlant(String plantType) {
@@ -158,6 +177,8 @@ public class GameController {
             "Sun collected.");
         if (result.isSuccessful()) {
             synchronizeQuestProgress();
+            recordGameResultIfNeeded();
+            authController.saveCurrentState();
         }
         return result;
     }
@@ -298,7 +319,12 @@ public class GameController {
             return List.of();
         }
         user.ensureStarterContent();
-        return List.copyOf(user.getCollectionBook().getOwnedPlants());
+        if (game == null) {
+            return List.copyOf(user.getCollectionBook().getOwnedPlants());
+        }
+        return user.getCollectionBook().getOwnedPlants().stream()
+            .filter(game::isPlantAvailableForSelection)
+            .toList();
     }
 
     public List<String> getSelectedPlants() {
@@ -354,6 +380,22 @@ public class GameController {
             || game.getGameState() == GameState.LOST);
     }
 
+    private void restrictConveyorPoolToOwnedPlants(Level level, User user) {
+        if (level.getSpecialType() != model.SpecialLevelType.CONVEYOR_BELT) {
+            return;
+        }
+        List<String> owned = level.getConveyorPlants().stream()
+            .filter(user.getCollectionBook().getOwnedPlants()::contains)
+            .toList();
+        if (owned.isEmpty()) {
+            owned = user.getCollectionBook().getOwnedPlants().stream()
+                .filter(name -> gameData.getPlantFactory().findDefinition(name).isPresent())
+                .limit(level.getAllowedPlantCount())
+                .toList();
+        }
+        level.configureConveyorPlants(owned);
+    }
+
     private void synchronizeQuestProgress() {
         if (game == null) {
             return;
@@ -362,12 +404,30 @@ public class GameController {
         int killDelta = game.getZombieKillCount() - syncedKills;
         int explosiveDelta = game.getExplosivePlantsUsed() - syncedExplosives;
         int mowerDelta = game.getLawnMowerKills() - syncedMowerKills;
+        int quickKillDelta = game.getKillsWithinThirtySeconds() - syncedQuickKills;
+        int firstColumnDelta = game.getFirstColumnNoMowerKills() - syncedFirstColumnKills;
+        Map<String, Integer> plantKillDeltas = plantKillDeltas();
         questController.recordCombatProgress(game, sunDelta, killDelta,
-            explosiveDelta, mowerDelta);
+            explosiveDelta, mowerDelta, plantKillDeltas, quickKillDelta, firstColumnDelta);
         syncedSun = game.getTotalSunCollected();
         syncedKills = game.getZombieKillCount();
         syncedExplosives = game.getExplosivePlantsUsed();
         syncedMowerKills = game.getLawnMowerKills();
+        syncedQuickKills = game.getKillsWithinThirtySeconds();
+        syncedFirstColumnKills = game.getFirstColumnNoMowerKills();
+        syncedPlantKills.clear();
+        syncedPlantKills.putAll(game.getPlantKillCounts());
+    }
+
+    private Map<String, Integer> plantKillDeltas() {
+        LinkedHashMap<String, Integer> result = new LinkedHashMap<>();
+        for (Map.Entry<String, Integer> entry : game.getPlantKillCounts().entrySet()) {
+            int delta = entry.getValue() - syncedPlantKills.getOrDefault(entry.getKey(), 0);
+            if (delta > 0) {
+                result.put(entry.getKey(), delta);
+            }
+        }
+        return result;
     }
 
     private ActionResult perform(GameAction action, String successMessage) {
@@ -416,7 +476,9 @@ public class GameController {
         }
         resultRecorded = true;
         user.getProgress().recordGamePlayed();
-        if (state == GameState.WON) {
+        boolean won = state == GameState.WON;
+        questController.recordLevelResult(game, user.getDifficultyLevel(), won);
+        if (won) {
             Level level = game.getCurrentLevel();
             Chapter chapter = game.getCurrentChapter();
             user.getProgress().completeLevel(level);
@@ -424,7 +486,6 @@ public class GameController {
                 user.getProgress().recordCompletedLevel(chapter.getChapterNumber(),
                     level.getLevelNumber());
             }
-            questController.recordLevelWin(game, user.getDifficultyLevel());
             unlockFollowingContent(user, chapter, level);
         }
         ActionResult saveResult = authController.saveCurrentState();
