@@ -2,10 +2,12 @@ package controller;
 
 import model.MiniGameDefinition;
 import model.MiniGameSession;
+import model.MiniGameSessionFactory;
 import model.MiniGameType;
 import model.QuestEventType;
 import model.User;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +17,7 @@ public class MiniGameController {
     private final QuestController questController;
     private final Map<MiniGameType, MiniGameDefinition> definitions = new LinkedHashMap<>();
     private MiniGameSession currentSession;
+    private boolean rewardRecorded;
 
     public MiniGameController(AuthController authController, QuestController questController) {
         this.authController = authController;
@@ -33,24 +36,45 @@ public class MiniGameController {
         try {
             MiniGameType type = MiniGameType.fromText(miniGameName);
             MiniGameDefinition definition = definitions.get(type);
-            currentSession = new MiniGameSession(definition, level);
-            return ActionResult.success("Started " + type + " level " + level
-                + ". Use action: " + definition.actionName() + ".");
+            currentSession = MiniGameSessionFactory.create(definition, level);
+            rewardRecorded = false;
+            return ActionResult.success("Started " + type + " level " + level + ". "
+                + commandHelp(type));
         } catch (IllegalArgumentException exception) {
             return ActionResult.failure(exception.getMessage());
         }
     }
 
+    public ActionResult executeCommand(String commandLine) {
+        if (currentSession == null) {
+            return ActionResult.failure("Start a mini-game first.");
+        }
+        if (commandLine == null || commandLine.isBlank()) {
+            return ActionResult.failure("Mini-game command cannot be empty.");
+        }
+        try {
+            List<String> tokens = tokenize(commandLine.trim());
+            String command = tokens.get(0);
+            currentSession.execute(command, tokens.subList(1, tokens.size()));
+            finishCurrentSessionIfNeeded();
+            return ActionResult.success(currentSession.status());
+        } catch (IllegalArgumentException | IllegalStateException exception) {
+            return ActionResult.failure(exception.getMessage());
+        }
+    }
+
+    public ActionResult advanceTime(int ticks) {
+        return executeCommand("advance " + ticks);
+    }
+
+    /** Backward-compatible API, now dispatching to real mini-game commands. */
     public ActionResult performAction(String action, int amount) {
         if (currentSession == null) {
             return ActionResult.failure("Start a mini-game first.");
         }
         try {
-            boolean wasWon = currentSession.isWon();
             currentSession.perform(action, amount);
-            if (!wasWon && currentSession.isWon()) {
-                finishCurrentSession();
-            }
+            finishCurrentSessionIfNeeded();
             return ActionResult.success(currentSession.status());
         } catch (IllegalArgumentException | IllegalStateException exception) {
             return ActionResult.failure(exception.getMessage());
@@ -61,11 +85,29 @@ public class MiniGameController {
         return currentSession == null ? "No mini-game is running." : currentSession.status();
     }
 
-    private void finishCurrentSession() {
+    public String currentBoard() {
+        return currentSession == null ? "No mini-game is running." : currentSession.boardView();
+    }
+
+    public String currentHelp() {
+        return currentSession == null ? "Start a mini-game first."
+            : commandHelp(currentSession.getDefinition().type());
+    }
+
+    public MiniGameSession getCurrentSession() { return currentSession; }
+
+    private void finishCurrentSessionIfNeeded() {
+        if (currentSession == null || rewardRecorded || !currentSession.isFinished()) {
+            return;
+        }
+        rewardRecorded = true;
+        if (!currentSession.isWon()) {
+            authController.saveCurrentState();
+            return;
+        }
         User user = authController.getCurrentUser();
         int score = currentSession.getScore();
         user.getProgress().recordCompletedMiniGame(score);
-        user.getProgress().updateBestMeowPoints(score);
         user.getWallet().addCoins(250 * currentSession.getLevel());
         questController.recordEvent(QuestEventType.MINI_GAME_WON, 1);
         user.addNews(new model.News("Mini-game completed",
@@ -76,18 +118,40 @@ public class MiniGameController {
 
     private void registerDefaults() {
         register(MiniGameType.VASEBREAKER, false,
-            "Break every vase while surviving the released zombies.", "break-vase");
+            "Break every vase, use temporary plant packets, and survive released zombies.",
+            "break");
         register(MiniGameType.WALLNUT_BOWLING, false,
-            "Defeat zombies with normal, explosive, and giant wall-nuts.", "roll-wallnut");
+            "Use conveyor-delivered normal, explosive, and giant wall-nuts.", "bowl");
         register(MiniGameType.I_ZOMBIE, false,
-            "Use zombies to eat all five brains with limited sun.", "eat-brain");
+            "Spend sun on zombies and eat all five brains.", "deploy");
         register(MiniGameType.BEGHOULD, true,
-            "Create enough three-or-more plant matches.", "make-match");
+            "Swap adjacent plants to create matches while zombies attack.", "swap");
         register(MiniGameType.ZOMBOTANY, true,
-            "Defeat plant-powered zombies in an endless-wave battle.", "defeat-zombie");
+            "Defeat zombies carrying Peashooter, Wall-nut, Jalapeno, and Squash powers.",
+            "plant");
     }
 
     private void register(MiniGameType type, boolean bonus, String objective, String action) {
         definitions.put(type, new MiniGameDefinition(type, bonus, objective, action));
+    }
+
+    private String commandHelp(MiniGameType type) {
+        return switch (type) {
+            case VASEBREAKER -> "Commands: break <x> <y>; plant <packetId> <x> <y>; advance <ticks>.";
+            case WALLNUT_BOWLING -> "Commands: bowl <normal|explosive|giant> <row>; advance <ticks>.";
+            case I_ZOMBIE -> "Commands: deploy <basic|cone|bucket|imp|allstar> <row>; advance <ticks>.";
+            case BEGHOULD -> "Commands: swap <x1> <y1> <x2> <y2>; upgrade <plant>; advance <ticks>.";
+            case ZOMBOTANY -> "Commands: plant <type> <x> <y>; advance <ticks>.";
+        };
+    }
+
+    private List<String> tokenize(String commandLine) {
+        ArrayList<String> tokens = new ArrayList<>();
+        for (String token : commandLine.split("\\s+")) {
+            if (!token.isBlank()) {
+                tokens.add(token);
+            }
+        }
+        return tokens;
     }
 }
