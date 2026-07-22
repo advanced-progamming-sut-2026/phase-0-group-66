@@ -3,17 +3,30 @@ package model;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class QuestDataLoader {
     public List<QuestDefinition> load(Path path) throws IOException {
         Object root = SimpleJsonParser.parse(path);
         List<Object> entries = requireList(root, "quest root");
         ArrayList<QuestDefinition> definitions = new ArrayList<>();
+        Set<Integer> ids = new HashSet<>();
+        Set<String> titles = new HashSet<>();
         for (int index = 0; index < entries.size(); index++) {
             try {
-                definitions.add(parseDefinition(requireMap(entries.get(index), "quest entry")));
+                QuestDefinition definition = parseDefinition(
+                    requireMap(entries.get(index), "quest entry"));
+                if (!ids.add(definition.getId())) {
+                    throw new IllegalArgumentException("duplicate quest id: " + definition.getId());
+                }
+                if (!titles.add(definition.getNormalizedTitle())) {
+                    throw new IllegalArgumentException("duplicate quest title: "
+                        + definition.getTitle());
+                }
+                definitions.add(definition);
             } catch (IllegalArgumentException exception) {
                 throw new IOException("Invalid quest data at item " + (index + 1)
                     + ": " + exception.getMessage(), exception);

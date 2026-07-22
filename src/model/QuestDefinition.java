@@ -22,13 +22,13 @@ public final class QuestDefinition {
         }
         this.id = id;
         this.title = requireText(title, "Quest title");
-        this.category = category;
+        this.category = requireValue(category, "Quest category");
         this.description = requireText(description, "Quest description");
-        this.eventType = eventType;
+        this.eventType = requireValue(eventType, "Quest event type");
         this.target = target;
-        this.rewardType = rewardType;
+        this.rewardType = requireValue(rewardType, "Reward type");
         this.rewardAmount = rewardAmount;
-        this.priority = priority;
+        this.priority = requireValue(priority, "Quest priority");
         this.parameter = parameter == null ? "" : parameter.trim();
     }
 
@@ -53,6 +53,13 @@ public final class QuestDefinition {
     private static String normalize(String value) {
         return value == null ? "" : value.trim().toLowerCase(Locale.ROOT)
             .replace(" ", "").replace("-", "").replace("_", "");
+    }
+
+    private static <T> T requireValue(T value, String fieldName) {
+        if (value == null) {
+            throw new IllegalArgumentException(fieldName + " cannot be null.");
+        }
+        return value;
     }
 
     private static String requireText(String value, String fieldName) {

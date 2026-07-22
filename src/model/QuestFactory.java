@@ -21,6 +21,12 @@ public final class QuestFactory {
         if (definition == null) {
             throw new IllegalArgumentException("Quest definition cannot be null.");
         }
+        if (byId.containsKey(definition.getId())) {
+            throw new IllegalArgumentException("Duplicate quest id: " + definition.getId());
+        }
+        if (byTitle.containsKey(definition.getNormalizedTitle())) {
+            throw new IllegalArgumentException("Duplicate quest title: " + definition.getTitle());
+        }
         byId.put(definition.getId(), definition);
         byTitle.put(definition.getNormalizedTitle(), definition);
     }
