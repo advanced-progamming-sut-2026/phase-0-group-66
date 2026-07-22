@@ -193,7 +193,7 @@
       "amount": 300
     },
     "priority": "MEDIUM",
-    "parameter": ""
+    "parameter": "FIRST_COLUMN_NO_MOWER"
   },
   {
     "id": 15,
