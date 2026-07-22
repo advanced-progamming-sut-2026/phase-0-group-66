@@ -20,7 +20,7 @@ public class BattleMenu extends Menu {
         System.out.println("feed plant -l (<x>, <y>) | show plant-food amount");
         System.out.println("advance time -t <count> ticks | start zombie waves");
         System.out.println("show special status");
-        System.out.println("show map | show sun amount | show plants status");
+        System.out.println("show map | show sun amount | show plants status | show score status");
         System.out.println("show tile status -l (<x>, <y>) | zombies info");
         System.out.println("cheat add -n <count> suns | cheat remove-cooldown");
         System.out.println("cheat add-plant-food");
@@ -56,6 +56,8 @@ public class BattleMenu extends Menu {
             show(controller.startZombieWaves());
         } else if (command.equals("show special status")) {
             System.out.println(controller.specialStatus());
+        } else if (command.equals("show score status")) {
+            System.out.println(controller.scoreStatus());
         } else if (command.equals("show map")) {
             controller.printMap();
         } else if (command.equals("show sun amount")) {

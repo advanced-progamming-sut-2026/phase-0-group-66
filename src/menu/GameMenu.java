@@ -45,6 +45,7 @@ public class GameMenu extends Menu {
         System.out.println("show chapters");
         System.out.println("show levels -c <chapter_name>");
         System.out.println("menu enter chapter -c <chapter_name> -l <1-4>");
+        System.out.println("start scored game | show score status");
         System.out.println("menu enter Collection Menu");
         System.out.println("menu greenhouse | menu travel-log | menu leaderboard");
         System.out.println("menu coin-wallet | menu gem-wallet");
@@ -56,7 +57,15 @@ public class GameMenu extends Menu {
         Matcher levels = getMatcher(command, "show levels -c (?<chapter>.+)");
         Matcher wallet = getMatcher(command,
             "menu cheat add (?<count>\\d+) (?<type>coin|diamond)");
-        if (command.equals("show chapters")) {
+        if (command.equals("start scored game")) {
+            ActionResult result = controller.startScoredGame();
+            System.out.println(result.getMessage());
+            if (result.isSuccessful()) {
+                menuManager.enterMenu("Plant Selection Menu");
+            }
+        } else if (command.equals("show score status")) {
+            System.out.println(controller.scoreStatus());
+        } else if (command.equals("show chapters")) {
             showLines(controller.getChapterDescriptions());
         } else if (levels != null) {
             showLines(controller.getLevelDescriptions(levels.group("chapter").trim()));
