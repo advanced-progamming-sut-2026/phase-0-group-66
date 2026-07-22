@@ -12,6 +12,6 @@ public class MiniGame {
     }
 
     public MiniGameSession start(int level) {
-        return new MiniGameSession(definition, level);
+        return MiniGameSessionFactory.create(definition, level);
     }
 }

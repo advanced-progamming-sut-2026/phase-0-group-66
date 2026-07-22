@@ -1,58 +1,88 @@
 package model;
 
-public class MiniGameSession {
+import java.util.List;
+
+/** Base class for a playable mini-game session. */
+public abstract class MiniGameSession {
     private final MiniGameDefinition definition;
     private final int level;
     private final int target;
-    private int progress;
     private int score;
-    private int sun;
+    private int elapsedTicks;
     private boolean won;
+    private boolean lost;
 
-    public MiniGameSession(MiniGameDefinition definition, int level) {
+    protected MiniGameSession(MiniGameDefinition definition, int level) {
+        if (definition == null) {
+            throw new IllegalArgumentException("Mini-game definition is required.");
+        }
+        if (level < 1 || level > 3) {
+            throw new IllegalArgumentException("Mini-game level must be between 1 and 3.");
+        }
         this.definition = definition;
         this.level = level;
         this.target = definition.targetForLevel(level);
-        this.sun = definition.type() == MiniGameType.I_ZOMBIE ? 150 : 0;
     }
 
+    public abstract void execute(String command, List<String> arguments);
+
+    public abstract String boardView();
+
+    protected abstract String progressText();
+
+    public final void advanceTime(int ticks) {
+        ensureRunning();
+        if (ticks <= 0) {
+            throw new IllegalArgumentException("Tick count must be positive.");
+        }
+        for (int index = 0; index < ticks && !isFinished(); index++) {
+            elapsedTicks++;
+            onTick();
+        }
+    }
+
+    protected abstract void onTick();
+
+    /** Compatibility bridge for the former counter-only implementation. */
     public void perform(String action, int amount) {
-        if (won) {
-            throw new IllegalStateException("Mini-game is already completed.");
-        }
-        if (amount <= 0) {
-            throw new IllegalArgumentException("Action amount must be positive.");
-        }
-        String expected = definition.actionName();
-        if (!expected.equalsIgnoreCase(action)) {
-            throw new IllegalArgumentException("Expected action: " + expected + ".");
-        }
-        int applied = Math.min(amount, target - progress);
-        if (definition.type() == MiniGameType.I_ZOMBIE) {
-            int cost = applied * 25;
-            if (sun < cost) {
-                throw new IllegalStateException("Not enough sun for this zombie action.");
-            }
-            sun -= cost;
-        }
-        progress += applied;
-        score += applied * (100 + level * 25);
-        if (definition.type() == MiniGameType.BEGHOULD) {
-            sun += applied * 50;
-        }
-        won = progress >= target;
+        execute(action, List.of(Integer.toString(amount)));
     }
 
-    public MiniGameDefinition getDefinition() { return definition; }
-    public int getLevel() { return level; }
-    public int getTarget() { return target; }
-    public int getProgress() { return progress; }
-    public int getScore() { return score; }
-    public int getSun() { return sun; }
-    public boolean isWon() { return won; }
+    protected final void addScore(int amount) {
+        score = Math.max(0, score + amount);
+    }
 
-    public String status() {
-        return definition.type() + " level " + level + ": " + progress + "/" + target
-            + ", score=" + score + ", sun=" + sun + ", state=" + (won ? "WON" : "RUNNING");
+    protected final void win() {
+        won = true;
+        lost = false;
+    }
+
+    protected final void lose() {
+        lost = true;
+        won = false;
+    }
+
+    protected final void ensureRunning() {
+        if (won) {
+            throw new IllegalStateException("Mini-game is already won.");
+        }
+        if (lost) {
+            throw new IllegalStateException("Mini-game is already lost.");
+        }
+    }
+
+    public final MiniGameDefinition getDefinition() { return definition; }
+    public final int getLevel() { return level; }
+    public final int getTarget() { return target; }
+    public final int getScore() { return score; }
+    public final int getElapsedTicks() { return elapsedTicks; }
+    public final boolean isWon() { return won; }
+    public final boolean isLost() { return lost; }
+    public final boolean isFinished() { return won || lost; }
+
+    public final String status() {
+        String state = won ? "WON" : lost ? "LOST" : "RUNNING";
+        return definition.type() + " level " + level + ": " + progressText()
+            + ", score=" + score + ", time=" + elapsedTicks + " ticks, state=" + state;
     }
 }
