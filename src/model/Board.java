@@ -353,37 +353,47 @@ public class Board {
 
     public boolean hasEmptyRow() {
         for (int row = 0; row < rows; row++) {
-            boolean empty = true;
-            for (int col = 0; col < cols; col++) {
-                if (tiles[row][col].getPlant() != null) {
-                    empty = false;
-                    break;
-                }
-            }
-            if (empty) {
+            if (isRowEmpty(row)) {
                 return true;
             }
         }
         return false;
+    }
+
+    public boolean isRowEmpty(int row) {
+        validateRow(row);
+        for (int col = 0; col < cols; col++) {
+            if (tiles[row][col].getPlant() != null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public boolean hasEmptyColumn() {
         for (int col = 0; col < cols; col++) {
-            boolean empty = true;
-            for (int row = 0; row < rows; row++) {
-                if (tiles[row][col].getPlant() != null) {
-                    empty = false;
-                    break;
-                }
-            }
-            if (empty) {
+            if (isColumnEmpty(col)) {
                 return true;
             }
         }
         return false;
     }
 
+    public boolean isColumnEmpty(int col) {
+        validateColumn(col);
+        for (int row = 0; row < rows; row++) {
+            if (tiles[row][col].getPlant() != null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public boolean hasEmptyCross() { return hasEmptyRow() && hasEmptyColumn(); }
+
+    public boolean isCrossEmpty(int row, int col) {
+        return isRowEmpty(row) && isColumnEmpty(col);
+    }
 
     private String plantNameAt(int row, int col) {
         Plant plant = tiles[row][col].getPlant();
@@ -441,6 +451,12 @@ public class Board {
     private void validateRow(int row) {
         if (row < 0 || row >= rows) {
             throw new IndexOutOfBoundsException("Row is outside the board.");
+        }
+    }
+
+    private void validateColumn(int col) {
+        if (col < 0 || col >= cols) {
+            throw new IndexOutOfBoundsException("Column is outside the board.");
         }
     }
 }

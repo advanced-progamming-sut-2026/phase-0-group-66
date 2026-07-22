@@ -66,7 +66,7 @@ public class Projectile {
         }
         int actualDamage = Math.max(0, damage * Math.max(1, damageMultiplier));
         boolean affected = target.takeProjectileDamage(actualDamage, type,
-            chillDurationTicks, lobbed);
+            chillDurationTicks, lobbed, sourcePlant);
         if (affected) {
             remainingHits--;
         }

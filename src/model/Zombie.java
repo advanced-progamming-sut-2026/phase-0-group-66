@@ -24,6 +24,8 @@ public abstract class Zombie {
     private int stunnedTicks;
     private int poisonTicks;
     private int poisonDamagePerSecond;
+    private String poisonSourcePlant = "";
+    private String lastDamageSourcePlant = "";
     private int ageTicks;
     private int abilityCooldownTicks;
     private int stolenSun;
@@ -118,7 +120,7 @@ public abstract class Zombie {
         if (poisonTicks > 0) {
             poisonTicks--;
             if (ageTicks % Game.TICKS_PER_SECOND == 0) {
-                takeDirectDamage(poisonDamagePerSecond);
+                takeDirectDamage(poisonDamagePerSecond, poisonSourcePlant);
             }
         }
         updateNewspaperEnrage();
@@ -135,8 +137,13 @@ public abstract class Zombie {
     }
 
     public void poison(int ticks, int damagePerSecond) {
+        poison(ticks, damagePerSecond, "");
+    }
+
+    public void poison(int ticks, int damagePerSecond, String sourcePlant) {
         poisonTicks = Math.max(poisonTicks, Math.max(0, ticks));
         poisonDamagePerSecond = Math.max(poisonDamagePerSecond, Math.max(0, damagePerSecond));
+        poisonSourcePlant = normalizeSource(sourcePlant);
     }
 
     public void clearChill() {
@@ -152,9 +159,14 @@ public abstract class Zombie {
     }
 
     public void takeDamage(int amount) {
+        takeDamage(amount, "");
+    }
+
+    public void takeDamage(int amount, String sourcePlant) {
         if (amount < 0) {
             throw new IllegalArgumentException("Damage cannot be negative.");
         }
+        rememberDamageSource(sourcePlant);
         int remainingDamage = absorbBonusArmor(amount);
         remainingDamage = applyArmorDamage(remainingDamage);
         health = Math.max(0, health - remainingDamage);
@@ -162,14 +174,24 @@ public abstract class Zombie {
     }
 
     public void takeDirectDamage(int amount) {
+        takeDirectDamage(amount, "");
+    }
+
+    public void takeDirectDamage(int amount, String sourcePlant) {
         if (amount < 0) {
             throw new IllegalArgumentException("Damage cannot be negative.");
         }
+        rememberDamageSource(sourcePlant);
         health = Math.max(0, health - amount);
     }
 
     public boolean takeProjectileDamage(int amount, ProjectileType type, int chillTicks,
                                         boolean lobbed) {
+        return takeProjectileDamage(amount, type, chillTicks, lobbed, "");
+    }
+
+    public boolean takeProjectileDamage(int amount, ProjectileType type, int chillTicks,
+                                        boolean lobbed, String sourcePlant) {
         ProjectileType actualType = type == null ? ProjectileType.NORMAL : type;
         if (ability == ZombieAbility.DRAGON_IMP && actualType == ProjectileType.FIRE) {
             return false;
@@ -191,13 +213,13 @@ public abstract class Zombie {
             specialDisabled = true;
         }
         if (actualType == ProjectileType.POISON) {
-            takeDirectDamage(amount);
-            poison(5 * Game.TICKS_PER_SECOND, Math.max(1, amount / 4));
+            takeDirectDamage(amount, sourcePlant);
+            poison(5 * Game.TICKS_PER_SECOND, Math.max(1, amount / 4), sourcePlant);
         } else if (actualType == ProjectileType.FIRE) {
             clearChill();
-            takeDamage(amount);
+            takeDamage(amount, sourcePlant);
         } else {
-            takeDamage(amount);
+            takeDamage(amount, sourcePlant);
             if (actualType == ProjectileType.ICE) {
                 chill(chillTicks);
             }
@@ -206,6 +228,11 @@ public abstract class Zombie {
     }
 
     public void kill() {
+        kill("");
+    }
+
+    public void kill(String sourcePlant) {
+        rememberDamageSource(sourcePlant);
         health = 0;
         armors.clear();
         bonusArmorHealth = 0;
@@ -320,6 +347,7 @@ public abstract class Zombie {
     public boolean isChargeUsed() { return chargeUsed; }
     public boolean isMachineActive() { return machineActive; }
     public int getSpecialAbilityUses() { return specialAbilityUses; }
+    public String getLastDamageSourcePlant() { return lastDamageSourcePlant; }
 
     public void setPosition(BoardPosition position) { this.position = position; }
     public void setIceImmune(boolean iceImmune) { this.iceImmune = iceImmune; }
@@ -338,6 +366,14 @@ public abstract class Zombie {
     public void markImpThrown() { impThrown = true; }
     public void markChargeUsed() { chargeUsed = true; }
     public void breakMachine() { machineActive = false; }
+
+    private void rememberDamageSource(String sourcePlant) {
+        lastDamageSourcePlant = normalizeSource(sourcePlant);
+    }
+
+    private String normalizeSource(String sourcePlant) {
+        return sourcePlant == null ? "" : sourcePlant.trim();
+    }
 
     private int applyArmorDamage(int damageAmount) {
         int remainingDamage = damageAmount;
