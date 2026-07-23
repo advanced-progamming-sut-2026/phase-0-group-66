@@ -7,10 +7,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
+/** Creates zombies from explicit data-file abilities and season availability. */
 public final class ZombieFactory {
-    private final LinkedHashMap<String, ZombieDefinition> definitions;
+    private final LinkedHashMap<String, ZombieDefinition> definitionsByLookup;
+    private final ArrayList<ZombieDefinition> orderedDefinitions;
     private final ArmorFactory armorFactory;
 
     public ZombieFactory(Collection<ZombieDefinition> definitions, ArmorFactory armorFactory) {
@@ -18,7 +19,8 @@ public final class ZombieFactory {
             throw new IllegalArgumentException("Armor factory cannot be null.");
         }
         this.armorFactory = armorFactory;
-        this.definitions = new LinkedHashMap<>();
+        definitionsByLookup = new LinkedHashMap<>();
+        orderedDefinitions = new ArrayList<>();
         if (definitions != null) {
             for (ZombieDefinition definition : definitions) {
                 registerZombie(definition);
@@ -34,43 +36,40 @@ public final class ZombieFactory {
     }
 
     public Optional<ZombieDefinition> findDefinition(String type) {
-        String key = PlantDefinition.normalizeKey(type);
-        ZombieDefinition byAlias = definitions.get(key);
-        if (byAlias != null) {
-            return Optional.of(byAlias);
-        }
-        for (ZombieDefinition definition : definitions.values()) {
-            if (PlantDefinition.normalizeKey(definition.getDisplayName()).equals(key)) {
-                return Optional.of(definition);
-            }
-        }
-        return Optional.empty();
+        return Optional.ofNullable(definitionsByLookup.get(PlantDefinition.normalizeKey(type)));
     }
 
     public void registerZombie(ZombieDefinition definition) {
         if (definition == null) {
             throw new IllegalArgumentException("Zombie definition cannot be null.");
         }
-        definitions.put(definition.getNormalizedAlias(), definition);
+        for (String lookup : List.of(definition.getKey(), definition.getAlias(),
+            definition.getDisplayName())) {
+            String normalized = PlantDefinition.normalizeKey(lookup);
+            ZombieDefinition existing = definitionsByLookup.get(normalized);
+            if (existing != null && existing != definition) {
+                throw new IllegalArgumentException("Duplicate zombie lookup key: " + lookup);
+            }
+            definitionsByLookup.put(normalized, definition);
+        }
+        orderedDefinitions.add(definition);
     }
 
     public List<String> getAllZombies() {
         ArrayList<String> names = new ArrayList<>();
-        for (ZombieDefinition definition : definitions.values()) {
+        for (ZombieDefinition definition : orderedDefinitions) {
             names.add(definition.getDisplayName());
         }
         return Collections.unmodifiableList(names);
     }
 
-    public List<ZombieDefinition> getAllDefinitions() {
-        return List.copyOf(definitions.values());
-    }
+    public List<ZombieDefinition> getAllDefinitions() { return List.copyOf(orderedDefinitions); }
 
     public List<ZombieDefinition> getDefinitionsForSeason(SeasonType season) {
-        Set<String> allowedAliases = allowedAliasesForSeason(season);
+        SeasonType actualSeason = season == null ? SeasonType.ANCIENT_EGYPT : season;
         ArrayList<ZombieDefinition> result = new ArrayList<>();
-        for (ZombieDefinition definition : definitions.values()) {
-            if (allowedAliases.contains(definition.getAlias())) {
+        for (ZombieDefinition definition : orderedDefinitions) {
+            if (definition.isAvailableIn(actualSeason)) {
                 result.add(definition);
             }
         }
@@ -78,38 +77,18 @@ public final class ZombieFactory {
     }
 
     public Map<String, ZombieDefinition> getDefinitionMap() {
-        return Collections.unmodifiableMap(definitions);
-    }
-
-
-    private Set<String> allowedAliasesForSeason(SeasonType season) {
-        java.util.LinkedHashSet<String> aliases = new java.util.LinkedHashSet<>(List.of(
-            "ZombieDefault", "ZombieArmor1", "ZombieArmor2", "ZombieArmor4",
-            "ZombieDarkArmor3", "ZombieGargantuar", "ZombieImp",
-            "ZombieModernAllStar", "ZombieLostCityJane", "ZombieCrystalSkull",
-            "ZombieProspector", "ZombiePiano", "ZombieNewspaper", "ZombieArcade"
-        ));
-        SeasonType actualSeason = season == null ? SeasonType.ANCIENT_EGYPT : season;
-        switch (actualSeason) {
-            case ANCIENT_EGYPT -> aliases.addAll(List.of(
-                "ZombieRa", "ZombieExplorer", "ZombieTombRaiser"));
-            case FROSTBITE_CAVES -> aliases.addAll(List.of(
-                "ZombieIceAgeDodo", "ZombieIceAgeHunter", "ZombieIceAgeTroglobite"));
-            case BIG_WAVE_BEACH -> aliases.addAll(List.of(
-                "ZombieBeachFisherman", "ZombieBeachOctopus", "ZombieBeachSnorkel"));
-            case DARK_AGES -> aliases.addAll(List.of(
-                "ZombieDarkJuggler", "ZombieWizard", "ZombieDarkKing",
-                "ZombieDarkImpDragon"));
-            default -> { }
+        LinkedHashMap<String, ZombieDefinition> result = new LinkedHashMap<>();
+        for (ZombieDefinition definition : orderedDefinitions) {
+            result.put(definition.getKey(), definition);
         }
-        return Set.copyOf(aliases);
+        return Collections.unmodifiableMap(result);
     }
 
     private Zombie createSpecializedZombie(ZombieDefinition definition, List<Armor> armors) {
-        return switch (definition.getAlias()) {
-            case "ZombieDefault" -> new BasicZombie(definition, armors);
-            case "ZombieArmor1" -> new ConeheadZombie(definition, armors);
-            case "ZombieGargantuar" -> new Gargantuar(definition, armors);
+        return switch (definition.getAbility()) {
+            case BASIC -> new BasicZombie(definition, armors);
+            case ARMORED -> new ConeheadZombie(definition, armors);
+            case GARGANTUAR -> new Gargantuar(definition, armors);
             default -> new GenericZombie(definition, armors);
         };
     }

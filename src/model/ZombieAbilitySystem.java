@@ -40,21 +40,7 @@ final class ZombieAbilitySystem {
         }
     }
     static void performZombieSpecialAbility(Game engine, Zombie zombie) {
-        switch (zombie.getAbility()) {
-            case GARGANTUAR -> engine.throwGargantuarImp(zombie);
-            case RA -> engine.stealSunWithRa(zombie);
-            case TOMB_RAISER -> engine.raiseTombs(zombie);
-            case HUNTER -> engine.throwHunterSnowball(zombie);
-            case TROGLOBITE -> engine.pushTroglobiteIce(zombie);
-            case FISHERMAN -> engine.hookPlantWithFisherman(zombie);
-            case OCTOPUS -> engine.throwOctopus(zombie);
-            case WIZARD -> engine.transformPlantWithWizard(zombie);
-            case KING -> engine.knightNearbyZombie(zombie);
-            case TURQUOISE_SKULL -> engine.useTurquoiseSkull(zombie);
-            case PROSPECTOR -> engine.launchProspectorDynamite(zombie);
-            case PIANIST -> engine.playPiano(zombie);
-            default -> { }
-        }
+        ZombieBehaviorFactory.create(zombie.getAbility()).perform(engine, zombie);
     }
     static void throwGargantuarImp(Game engine, Zombie gargantuar) {
         if (gargantuar.isImpThrown()

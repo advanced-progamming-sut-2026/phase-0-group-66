@@ -6,7 +6,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/** Structured zombie definition loaded from zombies.json. */
 public final class ZombieDefinition {
+    private final String key;
     private final String alias;
     private final String displayName;
     private final int hitpoints;
@@ -15,13 +17,17 @@ public final class ZombieDefinition {
     private final int wavePointCost;
     private final int weight;
     private final boolean canSpawnPlantFood;
+    private final ZombieAbility ability;
+    private final List<SeasonType> seasons;
     private final List<String> armorAliases;
     private final Map<String, Object> specialProperties;
 
-    public ZombieDefinition(String alias, String displayName, int hitpoints,
+    public ZombieDefinition(String key, String alias, String displayName, int hitpoints,
                             int eatDamagePerSecond, double speed, int wavePointCost, int weight,
-                            boolean canSpawnPlantFood, List<String> armorAliases,
+                            boolean canSpawnPlantFood, ZombieAbility ability,
+                            List<SeasonType> seasons, List<String> armorAliases,
                             Map<String, Object> specialProperties) {
+        this.key = requireText(key, "Zombie key");
         this.alias = requireText(alias, "Zombie alias");
         this.displayName = requireText(displayName, "Zombie display name");
         this.hitpoints = requireNonNegative(hitpoints, "Zombie hitpoints");
@@ -33,62 +39,36 @@ public final class ZombieDefinition {
         this.wavePointCost = requireNonNegative(wavePointCost, "Zombie wave cost");
         this.weight = requireNonNegative(weight, "Zombie weight");
         this.canSpawnPlantFood = canSpawnPlantFood;
+        this.ability = ability == null ? ZombieAbility.GENERIC : ability;
+        this.seasons = seasons == null ? List.of() : List.copyOf(seasons);
         this.armorAliases = immutableStrings(armorAliases);
-        this.specialProperties = Collections.unmodifiableMap(new LinkedHashMap<>(specialProperties));
+        this.specialProperties = Collections.unmodifiableMap(
+            new LinkedHashMap<>(specialProperties == null ? Map.of() : specialProperties));
     }
 
-    public String getAlias() {
-        return alias;
-    }
-
-    public String getDisplayName() {
-        return displayName;
-    }
-
-    public int getHitpoints() {
-        return hitpoints;
-    }
-
-    public int getEatDamagePerSecond() {
-        return eatDamagePerSecond;
-    }
-
-    public double getSpeed() {
-        return speed;
-    }
-
-    public int getWavePointCost() {
-        return wavePointCost;
-    }
-
-    public int getWeight() {
-        return weight;
-    }
-
-    public boolean canSpawnPlantFood() {
-        return canSpawnPlantFood;
-    }
-
-    public List<String> getArmorAliases() {
-        return armorAliases;
-    }
-
-    public Map<String, Object> getSpecialProperties() {
-        return specialProperties;
-    }
-
-    public Object getSpecialProperty(String key) {
-        return specialProperties.get(key);
-    }
-
-    public String getNormalizedAlias() {
-        return PlantDefinition.normalizeKey(alias);
-    }
+    public String getKey() { return key; }
+    public String getAlias() { return alias; }
+    public String getDisplayName() { return displayName; }
+    public int getHitpoints() { return hitpoints; }
+    public int getEatDamagePerSecond() { return eatDamagePerSecond; }
+    public double getSpeed() { return speed; }
+    public int getWavePointCost() { return wavePointCost; }
+    public int getWeight() { return weight; }
+    public boolean canSpawnPlantFood() { return canSpawnPlantFood; }
+    public ZombieAbility getAbility() { return ability; }
+    public List<SeasonType> getSeasons() { return seasons; }
+    public boolean isAvailableIn(SeasonType season) { return seasons.contains(season); }
+    public List<String> getArmorAliases() { return armorAliases; }
+    public Map<String, Object> getSpecialProperties() { return specialProperties; }
+    public Object getSpecialProperty(String propertyKey) { return specialProperties.get(propertyKey); }
+    public String getNormalizedAlias() { return PlantDefinition.normalizeKey(alias); }
+    public String getNormalizedKey() { return PlantDefinition.normalizeKey(key); }
 
     @Override
     public String toString() {
         return displayName + " [health=" + hitpoints + ", damage=" + eatDamagePerSecond
-            + ", speed=" + speed + ", waveCost=" + wavePointCost + "]";
+            + ", speed=" + speed + ", waveCost=" + wavePointCost
+            + ", ability=" + ability + "]";
     }
 
     private static String requireText(String value, String fieldName) {
