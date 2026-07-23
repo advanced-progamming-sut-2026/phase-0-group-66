@@ -1,282 +1,202 @@
 [
   {
     "id": 1,
-    "title": "آفتاب گیر روزانه",
+    "key": "daily-sun-collector",
+    "title": "Daily Sun Collector",
     "category": "DAILY",
-    "description": "جمع آوری 3000 واحد خورشید در طول یک روز",
-    "eventType": "SUN_COLLECTED",
-    "target": 3000,
-    "reward": {
-      "type": "COINS",
-      "amount": 30
-    },
-    "priority": "MEDIUM",
-    "parameter": ""
+    "description": "Collect 3000 sun during one day.",
+    "condition": { "event": "SUN_COLLECTED", "target": 3000, "qualifier": "" },
+    "reward": { "kind": "COINS", "amount": 30 },
+    "priority": "MEDIUM"
   },
   {
     "id": 2,
-    "title": "شکارچی chapter",
+    "key": "chapter-hunter",
+    "title": "Chapter Hunter",
     "category": "MAIN",
-    "description": "شکست دادن 50 زامبی از یک فصل بازی",
-    "eventType": "ZOMBIE_KILLED",
-    "target": 50,
-    "reward": {
-      "type": "SEED_PACKETS",
-      "amount": 10
-    },
-    "priority": "HIGH",
-    "parameter": "ANY_CHAPTER"
+    "description": "Defeat 50 zombies from one adventure chapter.",
+    "condition": { "event": "ZOMBIE_KILLED", "target": 50, "qualifier": "ANY_CHAPTER" },
+    "reward": { "kind": "SEED_PACKETS", "amount": 10 },
+    "priority": "HIGH"
   },
   {
     "id": 3,
-    "title": "plant باز حرفه‌ای",
+    "key": "single-plant-specialist",
+    "title": "Single Plant Specialist",
     "category": "DAILY",
-    "description": "ده زامبی را فقط با یک گیاه مهاجم شکست بده",
-    "eventType": "ZOMBIE_KILLED",
-    "target": 10,
-    "reward": {
-      "type": "RANDOM_PLANT",
-      "amount": 1
-    },
-    "priority": "HIGH",
-    "parameter": "ANY_PLANT"
+    "description": "Defeat 10 zombies using only one attacking plant type.",
+    "condition": { "event": "ZOMBIE_KILLED", "target": 10, "qualifier": "ANY_PLANT" },
+    "reward": { "kind": "RANDOM_PLANT", "amount": 1 },
+    "priority": "HIGH"
   },
   {
     "id": 4,
-    "title": "only cactus",
+    "key": "cactus-only",
+    "title": "Cactus Only",
     "category": "DAILY",
-    "description": "ده زامبی را فقط با Cactus شکست بده",
-    "eventType": "ZOMBIE_KILLED",
-    "target": 10,
-    "reward": {
-      "type": "GEMS",
-      "amount": 20
-    },
-    "priority": "HIGH",
-    "parameter": "CACTUS"
+    "description": "Defeat 10 zombies using only Cactus.",
+    "condition": { "event": "ZOMBIE_KILLED", "target": 10, "qualifier": "CACTUS" },
+    "reward": { "kind": "GEMS", "amount": 20 },
+    "priority": "HIGH"
   },
   {
     "id": 5,
-    "title": "گیاه خوار اقتصادی",
+    "key": "careful-gardener",
+    "title": "Careful Gardener",
     "category": "MAIN",
-    "description": "یک مرحله را بدون از دست دادن بیش از 5 گیاه به پایان برسان",
-    "eventType": "LEVEL_WON",
-    "target": 1,
-    "reward": {
-      "type": "SEED_PACKETS",
-      "amount": 15
-    },
-    "priority": "HIGH",
-    "parameter": "MAX_LOSSES_5"
+    "description": "Win a level while losing no more than five plants.",
+    "condition": { "event": "LEVEL_WON", "target": 1, "qualifier": "MAX_LOSSES_5" },
+    "reward": { "kind": "SEED_PACKETS", "amount": 15 },
+    "priority": "HIGH"
   },
   {
     "id": 6,
-    "title": "استاد دفاع",
+    "key": "perfect-budget",
+    "title": "Perfect Budget",
     "category": "EPIC",
-    "description": "یک مرحله را دقیقا با صفر خورشید به پایان برسان",
-    "eventType": "LEVEL_WON",
-    "target": 1,
-    "reward": {
-      "type": "GEMS",
-      "amount": 200
-    },
-    "priority": "CRITICAL",
-    "parameter": "FINAL_SUN_0"
+    "description": "Finish a level with exactly zero sun remaining.",
+    "condition": { "event": "LEVEL_WON", "target": 1, "qualifier": "FINAL_SUN_0" },
+    "reward": { "kind": "GEMS", "amount": 200 },
+    "priority": "CRITICAL"
   },
   {
     "id": 7,
-    "title": "سرعت عمل",
+    "key": "rapid-response",
+    "title": "Rapid Response",
     "category": "MAIN",
-    "description": "ده زامبی را در کمتر از 30 ثانیه از شروع موج اول شکست بده",
-    "eventType": "ZOMBIE_KILLED",
-    "target": 10,
-    "reward": {
-      "type": "COINS",
-      "amount": 500
-    },
-    "priority": "MEDIUM",
-    "parameter": "TIME_LIMIT_30_SECONDS"
+    "description": "Defeat 10 zombies within 30 seconds of the first wave.",
+    "condition": { "event": "ZOMBIE_KILLED", "target": 10, "qualifier": "TIME_LIMIT_30_SECONDS" },
+    "reward": { "kind": "COINS", "amount": 500 },
+    "priority": "MEDIUM"
   },
   {
     "id": 8,
-    "title": "تخریب گر حرفه ای",
+    "key": "demolition-expert",
+    "title": "Demolition Expert",
     "category": "DAILY",
-    "description": "در یک مرحله از سه گیاه انفجاری استفاده کن",
-    "eventType": "EXPLOSIVE_PLANT_USED",
-    "target": 3,
-    "reward": {
-      "type": "COINS",
-      "amount": 100
-    },
-    "priority": "LOW",
-    "parameter": ""
+    "description": "Use three explosive plants in one level.",
+    "condition": { "event": "EXPLOSIVE_PLANT_USED", "target": 3, "qualifier": "" },
+    "reward": { "kind": "COINS", "amount": 100 },
+    "priority": "LOW"
   },
   {
     "id": 9,
-    "title": "تقارن",
+    "key": "perfect-symmetry",
+    "title": "Perfect Symmetry",
     "category": "DAILY",
-    "description": "مرحله را با باغچه متقارن به پایان برسان",
-    "eventType": "LEVEL_WON",
-    "target": 1,
-    "reward": {
-      "type": "COINS",
-      "amount": 500
-    },
-    "priority": "HIGH",
-    "parameter": "SYMMETRIC_GARDEN"
+    "description": "Win a level with a symmetric garden.",
+    "condition": { "event": "LEVEL_WON", "target": 1, "qualifier": "SYMMETRIC_GARDEN" },
+    "reward": { "kind": "COINS", "amount": 500 },
+    "priority": "HIGH"
   },
   {
     "id": 10,
-    "title": "کشتار خانوادگی",
+    "key": "one-family-army",
+    "title": "One Family Army",
     "category": "DAILY",
-    "description": "مرحله را تنها با گیاهان یک خانواده به پایان برسان",
-    "eventType": "LEVEL_WON",
-    "target": 1,
-    "reward": {
-      "type": "COINS",
-      "amount": 1000
-    },
-    "priority": "MEDIUM",
-    "parameter": "SINGLE_FAMILY"
+    "description": "Win a level using plants from only one family.",
+    "condition": { "event": "LEVEL_WON", "target": 1, "qualifier": "SINGLE_FAMILY" },
+    "reward": { "kind": "COINS", "amount": 1000 },
+    "priority": "MEDIUM"
   },
   {
     "id": 11,
-    "title": "شکوفایی در محدودیت‌ها",
+    "key": "restricted-bloom",
+    "title": "Restricted Bloom",
     "category": "DAILY",
-    "description": "مرحله را بدون استفاده از خانواده ممنوع شده گیاهان به پایان برسان",
-    "eventType": "LEVEL_WON",
-    "target": 1,
-    "reward": {
-      "type": "GEMS",
-      "amount": 100
-    },
-    "priority": "HIGH",
-    "parameter": "BANNED_FAMILY"
+    "description": "Win without using the daily banned plant family.",
+    "condition": { "event": "LEVEL_WON", "target": 1, "qualifier": "BANNED_FAMILY" },
+    "reward": { "kind": "GEMS", "amount": 100 },
+    "priority": "HIGH"
   },
   {
     "id": 12,
-    "title": "شب یا صبح",
+    "key": "mushrooms-in-daylight",
+    "title": "Mushrooms in Daylight",
     "category": "EPIC",
-    "description": "یک مرحله روز را فقط با گیاهان قارچی به پایان برسان",
-    "eventType": "LEVEL_WON",
-    "target": 1,
-    "reward": {
-      "type": "GEMS",
-      "amount": 20
-    },
-    "priority": "HIGH",
-    "parameter": "MUSHROOMS_ONLY"
+    "description": "Win a daytime level using only mushroom plants.",
+    "condition": { "event": "LEVEL_WON", "target": 1, "qualifier": "MUSHROOMS_ONLY" },
+    "reward": { "kind": "GEMS", "amount": 20 },
+    "priority": "HIGH"
   },
   {
     "id": 13,
-    "title": "برد پشت برد",
+    "key": "difficulty-five-streak",
+    "title": "Difficulty Five Streak",
     "category": "DAILY",
-    "description": "پنج مرحله را با درجه سختی 5 برنده شو",
-    "eventType": "LEVEL_WON",
-    "target": 5,
-    "reward": {
-      "type": "COINS",
-      "amount": 5000
-    },
-    "priority": "MEDIUM",
-    "parameter": "DIFFICULTY_5"
+    "description": "Win five levels at difficulty 5.",
+    "condition": { "event": "LEVEL_WON", "target": 5, "qualifier": "DIFFICULTY_5" },
+    "reward": { "kind": "COINS", "amount": 5000 },
+    "priority": "MEDIUM"
   },
   {
     "id": 14,
-    "title": "تقریبا پیروز",
+    "key": "last-line-defense",
+    "title": "Last-Line Defense",
     "category": "DAILY",
-    "description": "ده زامبی را در ستون اول ردیفی شکست بده که چمن زن ندارد",
-    "eventType": "ZOMBIE_KILLED",
-    "target": 10,
-    "reward": {
-      "type": "COINS",
-      "amount": 300
-    },
-    "priority": "MEDIUM",
-    "parameter": "FIRST_COLUMN_NO_MOWER"
+    "description": "Defeat 10 zombies in the first column of a lane with no lawn mower.",
+    "condition": { "event": "ZOMBIE_KILLED", "target": 10, "qualifier": "FIRST_COLUMN_NO_MOWER" },
+    "reward": { "kind": "COINS", "amount": 300 },
+    "priority": "MEDIUM"
   },
   {
     "id": 15,
-    "title": "OCD نَمَنَ",
+    "key": "embrace-asymmetry",
+    "title": "Embrace Asymmetry",
     "category": "DAILY",
-    "description": "مرحله را با باغچه نامتقارن به پایان برسان",
-    "eventType": "LEVEL_WON",
-    "target": 1,
-    "reward": {
-      "type": "COINS",
-      "amount": 800
-    },
-    "priority": "MEDIUM",
-    "parameter": "ASYMMETRIC_GARDEN"
+    "description": "Win a level with an asymmetric garden.",
+    "condition": { "event": "LEVEL_WON", "target": 1, "qualifier": "ASYMMETRIC_GARDEN" },
+    "reward": { "kind": "COINS", "amount": 800 },
+    "priority": "MEDIUM"
   },
   {
     "id": 16,
-    "title": "روز ابری",
+    "key": "cloudy-day",
+    "title": "Cloudy Day",
     "category": "DAILY",
-    "description": "یک مرحله را تنها با حداکثر سه گیاه تولیدکننده خورشید به پایان برسان",
-    "eventType": "LEVEL_WON",
-    "target": 1,
-    "reward": {
-      "type": "GEMS",
-      "amount": 10
-    },
-    "priority": "HIGH",
-    "parameter": "MAX_SUN_PRODUCERS_3"
+    "description": "Win while planting no more than three sun producers.",
+    "condition": { "event": "LEVEL_WON", "target": 1, "qualifier": "MAX_SUN_PRODUCERS_3" },
+    "reward": { "kind": "GEMS", "amount": 10 },
+    "priority": "HIGH"
   },
   {
     "id": 17,
-    "title": "یه ستون کمتر",
+    "key": "empty-column",
+    "title": "Leave One Column Empty",
     "category": "DAILY",
-    "description": "مرحله را با حداقل یک ستون کاملا خالی به پایان برسان",
-    "eventType": "LEVEL_WON",
-    "target": 1,
-    "reward": {
-      "type": "GEMS",
-      "amount": 10
-    },
-    "priority": "HIGH",
-    "parameter": "EMPTY_COLUMN"
+    "description": "Win with at least one completely empty column.",
+    "condition": { "event": "LEVEL_WON", "target": 1, "qualifier": "EMPTY_COLUMN" },
+    "reward": { "kind": "GEMS", "amount": 10 },
+    "priority": "HIGH"
   },
   {
     "id": 18,
-    "title": "سطر بی دفاع",
+    "key": "empty-row",
+    "title": "Leave One Row Empty",
     "category": "DAILY",
-    "description": "مرحله را با حداقل یک ردیف کاملا خالی به پایان برسان",
-    "eventType": "LEVEL_WON",
-    "target": 1,
-    "reward": {
-      "type": "GEMS",
-      "amount": 20
-    },
-    "priority": "HIGH",
-    "parameter": "EMPTY_ROW"
+    "description": "Win with at least one completely empty row.",
+    "condition": { "event": "LEVEL_WON", "target": 1, "qualifier": "EMPTY_ROW" },
+    "reward": { "kind": "GEMS", "amount": 20 },
+    "priority": "HIGH"
   },
   {
     "id": 19,
-    "title": "صلیب بی دفاع",
+    "key": "empty-cross",
+    "title": "Empty Cross",
     "category": "DAILY",
-    "description": "مرحله را با یک ردیف و یک ستون کاملا خالی به پایان برسان",
-    "eventType": "LEVEL_WON",
-    "target": 1,
-    "reward": {
-      "type": "GEMS",
-      "amount": 25
-    },
-    "priority": "HIGH",
-    "parameter": "EMPTY_CROSS"
+    "description": "Win with one empty row and one empty column.",
+    "condition": { "event": "LEVEL_WON", "target": 1, "qualifier": "EMPTY_CROSS" },
+    "reward": { "kind": "GEMS", "amount": 25 },
+    "priority": "HIGH"
   },
   {
     "id": 20,
-    "title": "وقت چمن‌زنی",
+    "key": "mower-time",
+    "title": "Mower Time",
     "category": "EPIC",
-    "description": "حداقل ده زامبی را با چمن زن شکست بده",
-    "eventType": "LAWN_MOWER_KILL",
-    "target": 10,
-    "reward": {
-      "type": "GEMS",
-      "amount": 10
-    },
-    "priority": "MEDIUM",
-    "parameter": ""
+    "description": "Defeat at least 10 zombies with lawn mowers.",
+    "condition": { "event": "LAWN_MOWER_KILL", "target": 10, "qualifier": "" },
+    "reward": { "kind": "GEMS", "amount": 10 },
+    "priority": "MEDIUM"
   }
 ]

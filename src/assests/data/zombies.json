@@ -1,388 +1,161 @@
 [
   {
-    "aliases": [
-      "ZombieDefault"
-    ],
-    "objclass": "ZombiePropertySheet",
-    "objdata": {
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
+    "key": "basic-zombie",
+    "alias": "ZombieDefault",
+    "displayName": "Basic Zombie",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 100,
+      "selectionWeight": 1000
+    },
+    "ability": "BASIC",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "Cost": 150,
-      "EatDPS": 100,
-      "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 190,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 5,
-        "y": 0,
-        "z": 1.4
-      },
-      "Speed": 0.185,
-      "WavePointCost": 100,
-      "Weight": 1000,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness1"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed2"
-        }
-      ]
-    }
+      "GroundTrackName": "ground_swatch"
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieArmor1"
+    "key": "conehead-zombie",
+    "alias": "ZombieArmor1",
+    "displayName": "Conehead Zombie",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 200,
+      "selectionWeight": 3000
+    },
+    "ability": "ARMORED",
+    "canDropPlantFood": true,
+    "armors": [
+      "ConeDefault"
     ],
-    "objclass": "ZombiePropertySheet",
-    "objdata": {
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
+    "properties": {
       "Cost": 150,
-      "EatDPS": 100,
-      "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 190,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 0,
-        "y": 0,
-        "z": 1.2
-      },
-      "Speed": 0.185,
-      "WavePointCost": 200,
-      "Weight": 3000,
-      "ZombieArmorProps": [
-        "RTID(ConeDefault@ArmorTypes)"
-      ],
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness3"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed2"
-        }
-      ]
-    }
+      "GroundTrackName": "ground_swatch"
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieArmor2"
+    "key": "buckethead-zombie",
+    "alias": "ZombieArmor2",
+    "displayName": "Buckethead Zombie",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 400,
+      "selectionWeight": 4000
+    },
+    "ability": "ARMORED",
+    "canDropPlantFood": true,
+    "armors": [
+      "BucketDefault"
     ],
-    "objclass": "ZombiePropertySheet",
-    "objdata": {
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
+    "properties": {
       "Cost": 150,
-      "EatDPS": 100,
-      "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 190,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 0,
-        "y": 0,
-        "z": 1.2
-      },
-      "Speed": 0.185,
-      "WavePointCost": 400,
-      "Weight": 4000,
-      "ZombieArmorProps": [
-        "RTID(BucketDefault@ArmorTypes)"
-      ],
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness5"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed2"
-        }
-      ]
-    }
+      "GroundTrackName": "ground_swatch"
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieArmor4"
+    "key": "brickhead-zombie",
+    "alias": "ZombieArmor4",
+    "displayName": "Brickhead Zombie",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 700,
+      "selectionWeight": 3000
+    },
+    "ability": "ARMORED",
+    "canDropPlantFood": true,
+    "armors": [
+      "BrickDefault"
     ],
-    "objclass": "ZombiePropertySheet",
-    "objdata": {
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
+    "properties": {
       "Cost": 150,
-      "EatDPS": 100,
-      "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 190,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 0,
-        "y": 0,
-        "z": 1.2
-      },
-      "Speed": 0.185,
-      "WavePointCost": 700,
-      "Weight": 3000,
-      "ZombieArmorProps": [
-        "RTID(BrickDefault@ArmorTypes)"
-      ],
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness6"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed2"
-        }
-      ]
-    }
+      "GroundTrackName": "ground_swatch"
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieDarkArmor3"
+    "key": "knight-zombie",
+    "alias": "ZombieDarkArmor3",
+    "displayName": "Knight Zombie",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 550,
+      "selectionWeight": 4500
+    },
+    "ability": "ARMORED",
+    "canDropPlantFood": true,
+    "armors": [
+      "ShoulderArmorDefault",
+      "CrownDefault"
     ],
-    "objclass": "ZombiePropertySheet",
-    "objdata": {
-      "ArtCenter": {
-        "x": 100,
-        "y": 130
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
+    "properties": {
       "Cost": 150,
-      "EatDPS": 100,
-      "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 190,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 0,
-        "y": 0,
-        "z": 1.2
-      },
-      "Speed": 0.185,
-      "WavePointCost": 550,
-      "Weight": 4500,
-      "ZombieArmorProps": [
-        "RTID(ShoulderArmorDefault@ArmorTypes)",
-        "RTID(CrownDefault@ArmorTypes)"
-      ],
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness6"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed2"
-        }
-      ]
-    }
+      "GroundTrackName": "ground_swatch"
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieGargantuar"
-    ],
-    "objclass": "ZombieGargantuarProps",
-    "objdata": {
+    "key": "gargantuar",
+    "alias": "ZombieGargantuar",
+    "displayName": "Gargantuar",
+    "stats": {
+      "health": 3600,
+      "eatDamagePerSecond": 0,
+      "speed": 0.24,
+      "waveCost": 1500,
+      "selectionWeight": 3000
+    },
+    "ability": "GARGANTUAR",
+    "canDropPlantFood": false,
+    "armors": [],
+    "properties": {
       "AlmanacOffset": {
         "x": -10,
         "y": 40
       },
       "AlmanacScale": 1,
       "ArmDropFraction": -1,
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 30,
-        "mX": 0,
-        "mY": 10
-      },
       "CanBeFlickedOff": false,
-      "CanSpawnPlantFood": false,
       "Cost": 150,
-      "EatDPS": 0,
       "ExplodesWhenMowed": true,
       "FlickIsLaneRestricted": true,
       "GroundTrackName": "ground_swatch",
@@ -415,13 +188,6 @@
           ]
         }
       ],
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 62,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 3600,
       "HypnoshroomEffectOffset": {
         "x": 0,
         "y": 120
@@ -437,39 +203,6 @@
       "ImpType": "egypt_imp",
       "IsValidPinchTarget": false,
       "MinPosXThrowImp": 400,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "SmashDamage"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 5,
-        "y": 0,
-        "z": 1.4
-      },
       "Size": "large",
       "SkipHeadDropState": true,
       "SmashDamage": 1500,
@@ -477,194 +210,86 @@
       "SoundOnAsh": "Play_Zomb_Global_Gargantuar_Mvmt_Death_Ash",
       "SoundOnElectrocute": "Play_Zomb_Global_Gargantuar_Mvmt_Shock",
       "SoundOnIdle": "Play_Zomb_Egypt_Gargantuar_Mvmt_Idle",
-      "Speed": 0.24,
       "StaticArtImageAsset": "IMAGE_GARGANTUAR",
-      "ThrowImpDuration": 1,
-      "WavePointCost": 1500,
-      "Weight": 3000,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness7"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed3"
-        }
-      ]
-    }
+      "ThrowImpDuration": 1
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieImp"
-    ],
-    "objclass": "ZombiePropertySheet",
-    "objdata": {
-      "ArtCenter": {
-        "x": 102,
-        "y": 124
-      },
-      "AttackRect": {
-        "mHeight": 80,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": false,
+    "key": "imp",
+    "alias": "ZombieImp",
+    "displayName": "Imp",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.22,
+      "waveCost": 100,
+      "selectionWeight": 1000
+    },
+    "ability": "IMP",
+    "canDropPlantFood": false,
+    "armors": [],
+    "properties": {
       "Cost": 150,
-      "EatDPS": 100,
       "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 80,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 190,
       "HypnoshroomEffectOffset": {
         "x": -6,
         "y": 36
       },
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 5,
-        "y": 0,
-        "z": 0.8
-      },
-      "Size": "imp",
-      "Speed": 0.22,
-      "WavePointCost": 100,
-      "Weight": 1000,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness1"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed3"
-        }
-      ]
-    }
+      "Size": "imp"
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieRa"
-    ],
-    "objclass": "ZombieRaProps",
-    "objdata": {
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
+    "key": "ra-zombie",
+    "alias": "ZombieRa",
+    "displayName": "Ra Zombie",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.2,
+      "waveCost": 100,
+      "selectionWeight": 700
+    },
+    "ability": "RA",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "Cost": 150,
-      "EatDPS": 100,
       "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 190,
-      "MaxClaimedSunCurrency": 250,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 10,
-        "y": 0,
-        "z": 1.2
-      },
-      "Speed": 0.2,
-      "WavePointCost": 100,
-      "Weight": 700,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness1"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed2"
-        }
-      ]
-    }
+      "MaxClaimedSunCurrency": 250
+    },
+    "seasons": [
+      "ANCIENT_EGYPT"
+    ]
   },
   {
-    "aliases": [
-      "ZombieExplorer"
-    ],
-    "objclass": "ZombieExplorerProps",
-    "objdata": {
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 0,
-        "mY": 10
-      },
-      "CanSpawnPlantFood": true,
+    "key": "explorer-zombie",
+    "alias": "ZombieExplorer",
+    "displayName": "Explorer Zombie",
+    "stats": {
+      "health": 250,
+      "eatDamagePerSecond": 100,
+      "speed": 0.25,
+      "waveCost": 250,
+      "selectionWeight": 3000
+    },
+    "ability": "EXPLORER",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "Cost": 150,
-      "EatDPS": 100,
       "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": 5,
-        "mY": 10
-      },
-      "Hitpoints": 250,
       "MaxTorchReach": 37,
       "PlantsToEat": {
         "List": [
@@ -672,147 +297,60 @@
           "blazingknight"
         ],
         "ListType": "includelist"
-      },
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 5,
-        "y": 0,
-        "z": 1.4
-      },
-      "Speed": 0.25,
-      "WavePointCost": 250,
-      "Weight": 3000,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness2"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed3"
-        }
-      ]
-    }
+      }
+    },
+    "seasons": [
+      "ANCIENT_EGYPT"
+    ]
   },
   {
-    "aliases": [
-      "ZombieTombRaiser"
-    ],
-    "objclass": "ZombieTombRaiserProps",
-    "objdata": {
+    "key": "tomb-raiser-zombie",
+    "alias": "ZombieTombRaiser",
+    "displayName": "Tomb Raiser Zombie",
+    "stats": {
+      "health": 380,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 300,
+      "selectionWeight": 2000
+    },
+    "ability": "TOMB_RAISER",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "# TombRaiser specific properties ": 0,
       "Ammo": 5,
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
       "Cost": 150,
-      "EatDPS": 100,
       "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 380,
       "NumberOfTombsToSpawn": 2,
       "Projectile": "RTID(ZombieBoneDefault@ProjectileTypes)",
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 10,
-        "y": 0,
-        "z": 1.2
-      },
-      "Speed": 0.185,
       "TimeBetweenCasts": 0,
-      "TimeBetweenRaisings": 6,
-      "WavePointCost": 300,
-      "Weight": 2000,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness4"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed2"
-        }
-      ]
-    }
+      "TimeBetweenRaisings": 6
+    },
+    "seasons": [
+      "ANCIENT_EGYPT"
+    ]
   },
   {
-    "aliases": [
-      "ZombieIceAgeDodo"
-    ],
-    "objclass": "ZombieIceAgeDodoProps",
-    "objdata": {
+    "key": "dodo-rider-zombie",
+    "alias": "ZombieIceAgeDodo",
+    "displayName": "Dodo Rider Zombie",
+    "stats": {
+      "health": 490,
+      "eatDamagePerSecond": 100,
+      "speed": 0.3,
+      "waveCost": 600,
+      "selectionWeight": 3500
+    },
+    "ability": "DODO_RIDER",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "AddRandomChanceForJumpPerGridWalked": 0.1,
       "ArmDropFraction": -1,
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 35,
-        "mX": 5,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
       "ChillInsteadOfFreeze": true,
       "CooldownSecondsUntilNextJumpAvailable": 0,
       "Cost": 150,
-      "EatDPS": 100,
       "ElectrocutePAMName": "POPANIM_EFFECTS_ZOMBIE_DODO_SHOCK",
       "GridItemsToFlyOver": {
         "List": [
@@ -827,13 +365,6 @@
         "ListType": "includelist"
       },
       "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 46,
-        "mX": 7,
-        "mY": 10
-      },
-      "Hitpoints": 490,
       "InitialSetRandomChanceForJump": 0,
       "LandedResetRandomChanceForJump": 0.35,
       "MaxRandomGridSquaresToFlyOver": 2,
@@ -858,221 +389,88 @@
         ],
         "ListType": "includelist"
       },
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 10,
-        "y": 0,
-        "z": 1.2
-      },
-      "SkipHeadDropState": true,
-      "Speed": 0.3,
-      "WavePointCost": 600,
-      "Weight": 3500,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness3"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed4"
-        }
-      ]
-    }
+      "SkipHeadDropState": true
+    },
+    "seasons": [
+      "FROSTBITE_CAVES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieIceAgeHunter"
-    ],
-    "objclass": "ZombieIceAgeHunterProps",
-    "objdata": {
+    "key": "hunter-zombie",
+    "alias": "ZombieIceAgeHunter",
+    "displayName": "Hunter Zombie",
+    "stats": {
+      "health": 700,
+      "eatDamagePerSecond": 100,
+      "speed": 0.12,
+      "waveCost": 500,
+      "selectionWeight": 3500
+    },
+    "ability": "HUNTER",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "Actions": [
         "RTID(ZombieIceAgeProjectileAction@ZombieActions)"
       ],
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
       "ChillInsteadOfFreeze": true,
       "Cost": 150,
-      "EatDPS": 100,
       "FarAttackRange": 4,
       "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 700,
       "NearAttackRange": 1,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 10,
-        "y": 0,
-        "z": 1.2
-      },
-      "SnowballsPerBarrage": 3,
-      "Speed": 0.12,
-      "WavePointCost": 500,
-      "Weight": 3500,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness4"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed0"
-        }
-      ]
-    }
+      "SnowballsPerBarrage": 3
+    },
+    "seasons": [
+      "FROSTBITE_CAVES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieIceAgeTroglobite"
-    ],
-    "objclass": "ZombieIceAgeTroglobiteProps",
-    "objdata": {
+    "key": "troglobite",
+    "alias": "ZombieIceAgeTroglobite",
+    "displayName": "Troglobite",
+    "stats": {
+      "health": 470,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 600,
+      "selectionWeight": 3500
+    },
+    "ability": "TROGLOBITE",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "Actions": [
         "RTID(ZombiePushGridItemAction@ZombieActions)"
       ],
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
       "ChillInsteadOfFreeze": true,
       "Cost": 150,
-      "EatDPS": 100,
       "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 470,
       "ImpType": "iceage_imp",
-      "NumberOfIceblocksToSpawnWith": 3,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 10,
-        "y": 0,
-        "z": 1.2
-      },
-      "Speed": 0.185,
-      "WavePointCost": 600,
-      "Weight": 3500,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness4"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed2"
-        }
-      ]
-    }
+      "NumberOfIceblocksToSpawnWith": 3
+    },
+    "seasons": [
+      "FROSTBITE_CAVES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieBeachFisherman"
-    ],
-    "objclass": "ZombieBeachFishermanProps",
-    "objdata": {
+    "key": "fisherman-zombie",
+    "alias": "ZombieBeachFisherman",
+    "displayName": "Fisherman Zombie",
+    "stats": {
+      "health": 1000,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 700,
+      "selectionWeight": 2500
+    },
+    "ability": "FISHERMAN",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "AllowedLowPlants": [],
-      "ArtCenter": {
-        "x": 110,
-        "y": 130
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 5,
-        "mY": 0
-      },
       "CanBeFlicked": false,
       "CanBePlantTossedStrong": false,
       "CanBePlantTossedWeak": false,
-      "CanSpawnPlantFood": true,
       "CanSurrender": true,
       "DiesOutOfWater": true,
       "CastTimePerGridSquare": 0.08,
@@ -1082,15 +480,7 @@
       "Cost": 150,
       "DelayBeforeReeling": 0.3,
       "DelayBetweenCasting": 2.5,
-      "EatDPS": 100,
       "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": -10,
-        "mY": 10
-      },
-      "Hitpoints": 1000,
       "MaxTideLoweredPercent": 0.001,
       "PlantablePlants": [
         "tanglekelp",
@@ -1098,134 +488,52 @@
         "guacodile"
       ],
       "ReelTimePerGridSquare": 0.05,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 10,
-        "y": 0,
-        "z": 1.2
-      },
-      "SkipHeadDropState": true,
-      "Speed": 0.185,
-      "WavePointCost": 700,
-      "Weight": 2500,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness5"
-        }
-      ]
-    }
+      "SkipHeadDropState": true
+    },
+    "seasons": [
+      "BIG_WAVE_BEACH"
+    ]
   },
   {
-    "aliases": [
-      "ZombieBeachOctopus"
-    ],
-    "objclass": "ZombieBeachOctopusProps",
-    "objdata": {
+    "key": "octopus-zombie",
+    "alias": "ZombieBeachOctopus",
+    "displayName": "Octopus Zombie",
+    "stats": {
+      "health": 910,
+      "eatDamagePerSecond": 100,
+      "speed": 0.12,
+      "waveCost": 900,
+      "selectionWeight": 3500
+    },
+    "ability": "OCTOPUS",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "Actions": [
         "RTID(ZombieOctopusProjectileAction@ZombieActions)"
       ],
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
       "Cost": 150,
-      "EatDPS": 100,
-      "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 910,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 10,
-        "y": 0,
-        "z": 1.2
-      },
-      "Speed": 0.12,
-      "WavePointCost": 900,
-      "Weight": 3500,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness5"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed0"
-        }
-      ]
-    }
+      "GroundTrackName": "ground_swatch"
+    },
+    "seasons": [
+      "BIG_WAVE_BEACH"
+    ]
   },
   {
-    "aliases": [
-      "ZombieBeachSnorkel"
-    ],
-    "objclass": "ZombieBeachSnorkelProps",
-    "objdata": {
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 105,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
+    "key": "snorkel-zombie",
+    "alias": "ZombieBeachSnorkel",
+    "displayName": "Snorkel Zombie",
+    "stats": {
+      "health": 350,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 200,
+      "selectionWeight": 3000
+    },
+    "ability": "SNORKEL",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "Cost": 150,
       "DamageWhileSubmerged": {
         "List": [
@@ -1317,43 +625,7 @@
         ],
         "ListType": "includelist"
       },
-      "EatDPS": 100,
       "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 105,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 350,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 5,
-        "y": 0,
-        "z": 1.4
-      },
-      "Speed": 0.185,
       "TargetByIncludelist": {
         "List": [
           "ghostpepper",
@@ -1393,55 +665,36 @@
           "devourbloom"
         ],
         "ListType": "includelist"
-      },
-      "WavePointCost": 200,
-      "Weight": 3000,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness3"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed2"
-        }
-      ]
-    }
+      }
+    },
+    "seasons": [
+      "BIG_WAVE_BEACH"
+    ]
   },
   {
-    "aliases": [
-      "ZombieDarkJuggler"
-    ],
-    "objclass": "ZombieDarkJugglerProps",
-    "objdata": {
+    "key": "juggler-zombie",
+    "alias": "ZombieDarkJuggler",
+    "displayName": "Juggler Zombie",
+    "stats": {
+      "health": 420,
+      "eatDamagePerSecond": 100,
+      "speed": 0.2,
+      "waveCost": 450,
+      "selectionWeight": 3500
+    },
+    "ability": "JUGGLER",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "AngleAgnosticProjectiles": [
         "HomingThistleDefault",
         "HomingThistlePlantfood",
         "BuduhBoomDefaultProjectile",
         "ButterDefault"
       ],
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
       "CatchArcDegrees": 120,
       "Cost": 150,
-      "EatDPS": 100,
       "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 420,
       "JuggleLaunchDelay": 2,
       "JuggleableProjectiles": [
         "PeaDefault",
@@ -1547,154 +800,60 @@
       },
       "MaxProjectilesToJuggle": 1000,
       "MoveSpeedMultiplierWhileJuggling": 1.1,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 10,
-        "y": 0,
-        "z": 1.2
-      },
-      "Speed": 0.2,
-      "UnthrowableProjectiles": [],
-      "WavePointCost": 450,
-      "Weight": 3500,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness3"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed2"
-        }
-      ]
-    }
+      "UnthrowableProjectiles": []
+    },
+    "seasons": [
+      "DARK_AGES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieWizard"
-    ],
-    "objclass": "ZombieDarkWizardProps",
-    "objdata": {
+    "key": "wizard-zombie",
+    "alias": "ZombieWizard",
+    "displayName": "Wizard Zombie",
+    "stats": {
+      "health": 490,
+      "eatDamagePerSecond": 100,
+      "speed": 0.12,
+      "waveCost": 800,
+      "selectionWeight": 3500
+    },
+    "ability": "WIZARD",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "Actions": [
         "RTID(ZombieDarkWizardZap@ZombieActions)"
       ],
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
       "Cost": 150,
-      "EatDPS": 100,
-      "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 490,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 10,
-        "y": 0,
-        "z": 1.2
-      },
-      "Speed": 0.12,
-      "WavePointCost": 800,
-      "Weight": 3500,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness4"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed0"
-        }
-      ]
-    }
+      "GroundTrackName": "ground_swatch"
+    },
+    "seasons": [
+      "DARK_AGES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieDarkKing"
-    ],
-    "objclass": "ZombieDarkKingProps",
-    "objdata": {
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
+    "key": "king-zombie",
+    "alias": "ZombieDarkKing",
+    "displayName": "King Zombie",
+    "stats": {
+      "health": 1000,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 750,
+      "selectionWeight": 2000
+    },
+    "ability": "KING",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "CanBeFlicked": false,
       "CanBeFlickedOff": false,
       "CanBePlantTossedStrong": false,
       "CanBePlantTossedWeak": false,
-      "CanSpawnPlantFood": true,
       "CanSurrender": true,
       "Cost": 150,
       "DelayBetweenKnightings": 2.5,
-      "EatDPS": 100,
       "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 1000,
       "KnightHelm": "none",
       "KnightingAreaX": 4,
       "KnightingAreaY": 3,
@@ -1708,219 +867,88 @@
         "goldleaf",
         "grapeshot"
       ],
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 10,
-        "y": 0,
-        "z": 1.2
-      },
       "SkipHeadDropState": true,
-      "Speed": 0.185,
       "ValidKnightTargets": [
         "dark",
         "dark_armor1",
         "dark_armor2",
         "dark_armor3"
-      ],
-      "WavePointCost": 750,
-      "Weight": 2000,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness5"
-        }
       ]
-    }
+    },
+    "seasons": [
+      "DARK_AGES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieDarkImpDragon"
-    ],
-    "objclass": "ZombiePropertySheet",
-    "objdata": {
-      "ArtCenter": {
-        "x": 96,
-        "y": 130
-      },
-      "AttackRect": {
-        "mHeight": 80,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": false,
+    "key": "dragon-imp",
+    "alias": "ZombieDarkImpDragon",
+    "displayName": "Dragon Imp",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 150,
+      "selectionWeight": 2000
+    },
+    "ability": "DRAGON_IMP",
+    "canDropPlantFood": false,
+    "armors": [],
+    "properties": {
       "Cost": 150,
-      "EatDPS": 100,
       "FireDamageMultiplier": 0,
       "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 80,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 190,
       "HypnoshroomEffectOffset": {
         "x": -6,
         "y": 36
       },
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 5,
-        "y": 0,
-        "z": 0.8
-      },
-      "Size": "imp",
-      "Speed": 0.185,
-      "WavePointCost": 150,
-      "Weight": 2000,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness1"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed2"
-        }
-      ]
-    }
+      "Size": "imp"
+    },
+    "seasons": [
+      "DARK_AGES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieModernAllStar"
-    ],
-    "objclass": "ZombieModernAllStarProps",
-    "objdata": {
-      "ArtCenter": {
-        "x": 100,
-        "y": 123
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 30,
-        "mX": 10,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
+    "key": "all-star-zombie",
+    "alias": "ZombieModernAllStar",
+    "displayName": "All-Star Zombie",
+    "stats": {
+      "health": 1100,
+      "eatDamagePerSecond": 100,
+      "speed": 0.16,
+      "waveCost": 1000,
+      "selectionWeight": 3500
+    },
+    "ability": "ALL_STAR",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "Cost": 150,
-      "EatDPS": 100,
       "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 42,
-        "mX": 5,
-        "mY": 10
-      },
-      "Hitpoints": 1100,
       "RunningSpeedScale": 0.5,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "SmashDamage"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 0,
-        "y": 0,
-        "z": 1.2
-      },
-      "SmashDamage": 1500,
-      "Speed": 0.16,
-      "WavePointCost": 1000,
-      "Weight": 3500,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness5"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed5"
-        }
-      ]
-    }
+      "SmashDamage": 1500
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieLostCityJane"
-    ],
-    "objclass": "ZombieLostCityJaneProps",
-    "objdata": {
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
+    "key": "parasol-zombie",
+    "alias": "ZombieLostCityJane",
+    "displayName": "Parasol Zombie",
+    "stats": {
+      "health": 350,
+      "eatDamagePerSecond": 100,
+      "speed": 0.25,
+      "waveCost": 200,
+      "selectionWeight": 3000
+    },
+    "ability": "PARASOL",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "BounceableProjectiles": [
         "RTID(CabbageDefault@ProjectileTypes)",
         "RTID(MegaCabbageDefault@ProjectileTypes)",
@@ -1951,247 +979,100 @@
         "RTID(DragonBruitPlantfoodDefault@ProjectileTypes)",
         "RTID(DragonBabyBruitDefault@ProjectileTypes)"
       ],
-      "CanSpawnPlantFood": true,
       "Cost": 150,
-      "EatDPS": 100,
       "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 115,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 350,
       "ProjectileBounceDistance": 160,
       "ProjectileBounceHeight": 120,
       "ProjectileBounceTime": 0.9,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 20,
-        "y": 0,
-        "z": 1.2
-      },
       "ShadowScaling": {
         "x": 1.4,
         "y": 1
-      },
-      "Speed": 0.25,
-      "WavePointCost": 200,
-      "Weight": 3000,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness3"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed3"
-        }
-      ]
-    }
+      }
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieCrystalSkull"
-    ],
-    "objclass": "ZombieCrystalSkullProps",
-    "objdata": {
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
+    "key": "turquoise-skull-zombie",
+    "alias": "ZombieCrystalSkull",
+    "displayName": "Turquoise Skull Zombie",
+    "stats": {
+      "health": 250,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 500,
+      "selectionWeight": 3000
+    },
+    "ability": "TURQUOISE_SKULL",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "ChargingTime": 5,
       "ChargingTimeDecrementPerFiveSun": 0.2,
       "Cost": 150,
-      "EatDPS": 100,
       "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 250,
       "LaserBeamDamage": 4001,
       "LaserBeamLength": 220,
-      "LaserCooldownTime": 5,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "LaserBeamDamage"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 10,
-        "y": 0,
-        "z": 1.2
-      },
-      "Speed": 0.185,
-      "WavePointCost": 500,
-      "Weight": 3000,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness3"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed2"
-        }
-      ]
-    }
+      "LaserCooldownTime": 5
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieProspector"
-    ],
-    "objclass": "ZombieProspectorProps",
-    "objdata": {
+    "key": "prospector-zombie",
+    "alias": "ZombieProspector",
+    "displayName": "Prospector Zombie",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.16,
+      "waveCost": 200,
+      "selectionWeight": 3000
+    },
+    "ability": "PROSPECTOR",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "Apex": 250,
-      "ArtCenter": {
-        "x": 100,
-        "y": 130
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
       "Cost": 150,
-      "EatDPS": 100,
       "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 190,
       "LaunchCountdown": 10,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 0,
-        "y": 0,
-        "z": 1.2
-      },
-      "Speed": 0.16,
       "StunTime": 2.5,
-      "TimeToTravel": 1.5,
-      "WavePointCost": 200,
-      "Weight": 3000,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness1"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed1"
-        }
-      ]
-    }
+      "TimeToTravel": 1.5
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
   },
   {
-    "aliases": [
-      "ZombiePiano"
-    ],
-    "objclass": "ZombiePianoProps",
-    "objdata": {
-      "ArtCenter": {
-        "x": 100,
-        "y": 130
-      },
-      "AttackRect": {
-        "mHeight": 110,
-        "mWidth": 75,
-        "mX": -20,
-        "mY": 10
-      },
-      "CanSpawnPlantFood": true,
+    "key": "pianist-zombie",
+    "alias": "ZombiePiano",
+    "displayName": "Pianist Zombie",
+    "stats": {
+      "health": 840,
+      "eatDamagePerSecond": 4000,
+      "speed": 0.12,
+      "waveCost": 450,
+      "selectionWeight": 2000
+    },
+    "ability": "PIANIST",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "Cost": 150,
-      "EatDPS": 4000,
       "FastMoveSpeed": 0.4,
       "GroundTrackName": "none",
-      "HitRect": {
-        "mHeight": 110,
-        "mWidth": 75,
-        "mX": -31,
-        "mY": 10
-      },
-      "Hitpoints": 840,
       "NormalDeathWhenMowed": true,
       "PlantsWhichBreakPianoOnCollision": {
         "List": [
@@ -2202,34 +1083,6 @@
         ],
         "ListType": "includelist"
       },
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 0,
-        "y": 0,
-        "z": 1.2
-      },
-      "Speed": 0.12,
       "StreetCriticalSize": {
         "x": 3,
         "y": 1
@@ -2241,166 +1094,71 @@
       "StreetSize": {
         "x": 3,
         "y": 2
-      },
-      "WavePointCost": 450,
-      "Weight": 2000,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness5"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed0"
-        }
-      ]
-    }
+      }
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieNewspaper"
+    "key": "newspaper-zombie",
+    "alias": "ZombieNewspaper",
+    "displayName": "Newspaper Zombie",
+    "stats": {
+      "health": 460,
+      "eatDamagePerSecond": 200,
+      "speed": 0.22,
+      "waveCost": 700,
+      "selectionWeight": 4000
+    },
+    "ability": "NEWSPAPER",
+    "canDropPlantFood": true,
+    "armors": [
+      "NewspaperDefault"
     ],
-    "objclass": "ZombieNewspaperProps",
-    "objdata": {
-      "ArtCenter": {
-        "x": 100,
-        "y": 130
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
+    "properties": {
       "Cost": 150,
-      "EatDPS": 200,
       "EnragedDamageScale": 4,
       "EnragedSpeedScale": 4,
-      "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 460,
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 0,
-        "y": 0,
-        "z": 1.2
-      },
-      "Speed": 0.22,
-      "WavePointCost": 700,
-      "Weight": 4000,
-      "ZombieArmorProps": [
-        "RTID(NewspaperDefault@ArmorTypes)"
-      ],
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness5"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed3"
-        }
-      ]
-    }
+      "GroundTrackName": "ground_swatch"
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
   },
   {
-    "aliases": [
-      "ZombieArcade"
-    ],
-    "objclass": "ZombieArcadeProps",
-    "objdata": {
+    "key": "arcade-zombie",
+    "alias": "ZombieArcade",
+    "displayName": "Arcade Zombie",
+    "stats": {
+      "health": 490,
+      "eatDamagePerSecond": 100,
+      "speed": 0.19,
+      "waveCost": 600,
+      "selectionWeight": 1000
+    },
+    "ability": "ARCADE",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
       "Actions": [
         "RTID(ZombieArcadePushAction@ZombieActions)"
       ],
-      "ArtCenter": {
-        "x": 90,
-        "y": 125
-      },
-      "AttackRect": {
-        "mHeight": 95,
-        "mWidth": 20,
-        "mX": 15,
-        "mY": 0
-      },
-      "CanSpawnPlantFood": true,
       "Cost": 150,
-      "EatDPS": 100,
       "GroundTrackName": "ground_swatch",
-      "HitRect": {
-        "mHeight": 95,
-        "mWidth": 32,
-        "mX": 10,
-        "mY": 10
-      },
-      "Hitpoints": 490,
-      "JamStyle": "jam_8bit",
-      "ScaledProps": [
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "Hitpoints"
-        },
-        {
-          "Arg1": 1.3,
-          "Arg2": 0.05,
-          "Formula": "standard",
-          "Key": "EatDPS"
-        },
-        {
-          "Formula": "constant",
-          "Key": "Speed"
-        },
-        {
-          "Formula": "constant",
-          "Key": "WavePointCost"
-        }
-      ],
-      "ShadowOffset": {
-        "x": 5,
-        "y": 0,
-        "z": 1.4
-      },
-      "Speed": 0.19,
-      "WavePointCost": 600,
-      "Weight": 1000,
-      "ZombieStats": [
-        {
-          "Type": "toughness",
-          "Value": "toughness4"
-        },
-        {
-          "Type": "speed",
-          "Value": "speed3"
-        }
-      ]
-    }
+      "JamStyle": "jam_8bit"
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
   }
 ]
