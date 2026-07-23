@@ -281,7 +281,7 @@ public class QuestController {
 
     private boolean isDayLevel(Game game) {
         return game.getCurrentLevel().getSeason() != SeasonType.DARK_AGES
-            && game.getCurrentLevel().getSpecialType() != model.SpecialLevelType.NIGHT_OPS;
+            && game.getCurrentLevel().getRuleStrategy().allowsSkySun();
     }
 
     private boolean usedPlantsMatch(Game game, String tagOrCategory) {

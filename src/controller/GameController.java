@@ -428,7 +428,7 @@ public class GameController {
     }
 
     private void restrictConveyorPoolToOwnedPlants(Level level, User user) {
-        if (level.getSpecialType() != model.SpecialLevelType.CONVEYOR_BELT) {
+        if (!level.getRuleStrategy().usesConveyor()) {
             return;
         }
         List<String> owned = level.getConveyorPlants().stream()
