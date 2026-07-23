@@ -10,6 +10,7 @@ import java.util.Optional;
 public final class QuestFactory {
     private final LinkedHashMap<Integer, QuestDefinition> byId = new LinkedHashMap<>();
     private final LinkedHashMap<String, QuestDefinition> byTitle = new LinkedHashMap<>();
+    private final LinkedHashMap<String, QuestDefinition> byKey = new LinkedHashMap<>();
 
     public QuestFactory(Collection<QuestDefinition> definitions) {
         if (definitions != null) {
@@ -27,16 +28,22 @@ public final class QuestFactory {
         if (byTitle.containsKey(definition.getNormalizedTitle())) {
             throw new IllegalArgumentException("Duplicate quest title: " + definition.getTitle());
         }
+        if (byKey.containsKey(definition.getNormalizedKey())) {
+            throw new IllegalArgumentException("Duplicate quest key: " + definition.getKey());
+        }
         byId.put(definition.getId(), definition);
         byTitle.put(definition.getNormalizedTitle(), definition);
+        byKey.put(definition.getNormalizedKey(), definition);
     }
 
     public Optional<QuestDefinition> findDefinition(int id) {
         return Optional.ofNullable(byId.get(id));
     }
 
-    public Optional<QuestDefinition> findDefinition(String title) {
-        return Optional.ofNullable(byTitle.get(normalize(title)));
+    public Optional<QuestDefinition> findDefinition(String titleOrKey) {
+        String normalized = normalize(titleOrKey);
+        QuestDefinition byStableKey = byKey.get(normalized);
+        return Optional.ofNullable(byStableKey == null ? byTitle.get(normalized) : byStableKey);
     }
 
     public List<QuestDefinition> getAllDefinitions() {
