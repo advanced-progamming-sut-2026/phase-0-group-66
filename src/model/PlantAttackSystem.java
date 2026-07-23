@@ -85,34 +85,7 @@ final class PlantAttackSystem {
         }
     }
     static void performActivePlantAction(Game engine, Plant plant) {
-        switch (plant.getAbility()) {
-            case THREEPEATER -> engine.fireThreepeater(plant);
-            case ROTOBAGA -> engine.fireRotobaga(plant);
-            case SPLIT_PEA -> engine.fireSplitPea(plant);
-            case STARFRUIT -> engine.fireStarfruit(plant);
-            case BOWLING_BULB -> engine.bowlBulbs(plant);
-            case FUME_SHROOM -> engine.attackFumeShroom(plant);
-            case CABBAGE_PULT, KERNEL_PULT, MELON_PULT,
-                 WINTER_MELON, PEPPER_PULT -> engine.attackLobber(plant);
-            case CAULIPOWER -> engine.hypnotizeWithCaulipower(plant);
-            case ELECTRIC_BLUEBERRY -> engine.strikeWithBlueberry(plant);
-            case MAGNET_SHROOM -> engine.useMagnetShroom(plant);
-            case CHOMPER -> engine.chompZombie(plant);
-            case CAT_TAIL -> engine.attackHoming(plant);
-            case BONK_CHOY, PHAT_BEET, WASABI_WHIP, KIWIBEAST -> engine.attackMelee(plant);
-            case TORCHWOOD, WALL_NUT, TALL_NUT, ENDURIAN, GARLIC,
-                 SWEET_POTATO, EXPLODE_O_NUT, PUMPKIN, SUN_BEAN,
-                 HYPNO_SHROOM, LILY_PAD, IMITATER, GENERIC -> { }
-            default -> {
-                if (plant.isHoming()) {
-                    engine.attackHoming(plant);
-                } else if (plant.isMelee()) {
-                    engine.attackMelee(plant);
-                } else if (plant.isShooter()) {
-                    engine.shootProjectiles(plant);
-                }
-            }
-        }
+        PlantBehaviorFactory.create(plant.getAbility()).perform(engine, plant);
     }
     static void fireThreepeater(Game engine, Plant plant) {
         int centerRow = plant.getPosition().getRow();

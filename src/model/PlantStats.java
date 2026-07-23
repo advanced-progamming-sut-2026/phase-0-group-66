@@ -1,15 +1,7 @@
 package model;
 
-import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-/**
- * Effective, level-aware plant statistics calculated from the data-file upgrade descriptions.
- */
+/** Effective, level-aware plant statistics calculated from typed upgrades. */
 public final class PlantStats {
-    private static final Pattern NUMBER = Pattern.compile("[-+]?\\d+(?:\\.\\d+)?");
-
     private final int level;
     private int maxHealth;
     private int damage;
@@ -22,15 +14,16 @@ public final class PlantStats {
     private int pierceBonus;
 
     private PlantStats(PlantDefinition definition, int requestedLevel) {
-        level = Math.max(1, Math.min(requestedLevel,
-            definition.getLevelUpgrades().size() + 1));
+        level = Math.max(1, Math.min(requestedLevel, definition.getUpgrades().size() + 1));
         maxHealth = Math.max(1, definition.getBaseHealth());
         damage = Math.max(0, definition.getBaseDamage());
         cost = definition.getCost();
         actionIntervalSeconds = definition.getActionIntervalSeconds().orElse(1.0);
         rechargeSeconds = definition.getRechargeSeconds().orElse(0.0);
-        for (int index = 0; index < level - 1; index++) {
-            applyUpgrade(definition.getLevelUpgrades().get(index));
+        for (PlantUpgrade upgrade : definition.getUpgrades()) {
+            if (upgrade.getLevel() <= level) {
+                applyUpgrade(upgrade);
+            }
         }
         actionIntervalSeconds = Math.max(0.1, actionIntervalSeconds);
         rechargeSeconds = Math.max(0.0, rechargeSeconds);
@@ -55,60 +48,26 @@ public final class PlantStats {
     public int getChillBonusTicks() { return chillBonusTicks; }
     public int getPierceBonus() { return pierceBonus; }
 
-    private void applyUpgrade(String upgrade) {
-        if (upgrade == null || upgrade.isBlank()) {
-            return;
+    private void applyUpgrade(PlantUpgrade upgrade) {
+        double amount = upgrade.getAmount();
+        switch (upgrade.getEffect()) {
+            case MAX_HEALTH_DELTA -> maxHealth += (int) Math.round(amount);
+            case DAMAGE_DELTA -> damage += (int) Math.round(amount);
+            case SUN_COST_DELTA -> cost += (int) Math.round(amount);
+            case ACTION_INTERVAL_DELTA -> actionIntervalSeconds += amount;
+            case ACTION_SPEED_PERCENT -> actionIntervalSeconds /= 1.0 + Math.abs(amount) / 100.0;
+            case RECHARGE_DELTA -> rechargeSeconds += amount;
+            case SUN_OUTPUT_DELTA -> sunProductionBonus += (int) Math.round(amount);
+            case CHILL_DURATION_DELTA -> chillBonusTicks += (int) Math.round(
+                amount * Game.TICKS_PER_SECOND);
+            case PIERCE_DELTA -> pierceBonus += (int) Math.round(amount);
+            case ENABLE_TRAIT -> applyTrait(upgrade.getTrait());
         }
-        String normalized = upgrade.trim().toLowerCase(Locale.ROOT);
-        double value = firstNumber(normalized);
-        if (normalized.startsWith("hp +")) {
-            maxHealth += (int) Math.round(value);
-        } else if (isDamageUpgrade(normalized)) {
-            damage += (int) Math.round(value);
-        } else if (normalized.startsWith("cost -")) {
-            cost -= (int) Math.round(Math.abs(value));
-        } else if (normalized.startsWith("cooldown -")) {
-            rechargeSeconds -= Math.abs(value);
-        } else if (isActionTimeReduction(normalized)) {
-            actionIntervalSeconds -= Math.abs(value);
-        } else if (normalized.startsWith("atk speed +")) {
-            actionIntervalSeconds /= 1.0 + Math.abs(value) / 100.0;
-        } else if (normalized.startsWith("sun +")
-            || normalized.startsWith("sun drop +")) {
-            sunProductionBonus += (int) Math.round(value);
-        } else if (normalized.contains("double sun chance")) {
+    }
+
+    private void applyTrait(String trait) {
+        if ("DOUBLE_SUN_CHANCE".equalsIgnoreCase(trait)) {
             doubleSunChance = true;
-        } else if (normalized.startsWith("chill time +")
-            || normalized.startsWith("freeze time +")) {
-            chillBonusTicks += (int) Math.round(Math.abs(value) * Game.TICKS_PER_SECOND);
-        } else if (normalized.startsWith("pierce +")) {
-            pierceBonus += (int) Math.round(value);
         }
-    }
-
-    private boolean isDamageUpgrade(String normalized) {
-        return normalized.startsWith("dmg +")
-            || normalized.startsWith("dmg/tick +")
-            || normalized.startsWith("aoe dmg +")
-            || normalized.startsWith("explode dmg +")
-            || normalized.startsWith("reflect dmg +");
-    }
-
-    private boolean isActionTimeReduction(String normalized) {
-        return normalized.startsWith("prod. time -")
-            || normalized.startsWith("grow time -")
-            || normalized.startsWith("charge time -")
-            || normalized.startsWith("arm time -")
-            || normalized.startsWith("regen -")
-            || normalized.startsWith("digest -")
-            || normalized.startsWith("eat time -");
-    }
-
-    private double firstNumber(String text) {
-        Matcher matcher = NUMBER.matcher(text);
-        if (!matcher.find()) {
-            return 0.0;
-        }
-        return Double.parseDouble(matcher.group());
     }
 }

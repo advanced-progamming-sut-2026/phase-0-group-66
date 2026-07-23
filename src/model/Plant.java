@@ -1,11 +1,8 @@
 package model;
 
 import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public abstract class Plant {
-    private static final Pattern MULTIPLIER = Pattern.compile("[x×](\\d+)", Pattern.CASE_INSENSITIVE);
     private static final int PUFF_LIFETIME_TICKS = 60 * Game.TICKS_PER_SECOND;
 
     protected final PlantDefinition definition;
@@ -212,11 +209,7 @@ public abstract class Plant {
         if (ability == PlantAbility.PEA_POD) {
             return stackCount;
         }
-        Matcher matcher = MULTIPLIER.matcher(definition.getDamage());
-        if (matcher.find()) {
-            return Math.max(1, Integer.parseInt(matcher.group(1)));
-        }
-        return 1;
+        return definition.getProjectileCount();
     }
 
     public ProjectileType getProjectileElementType() {

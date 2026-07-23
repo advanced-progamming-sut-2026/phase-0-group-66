@@ -1,0 +1,15 @@
+package model;
+
+/** Machine-readable upgrade operations. */
+public enum PlantUpgradeType {
+    MAX_HEALTH_DELTA,
+    DAMAGE_DELTA,
+    SUN_COST_DELTA,
+    ACTION_INTERVAL_DELTA,
+    ACTION_SPEED_PERCENT,
+    RECHARGE_DELTA,
+    SUN_OUTPUT_DELTA,
+    CHILL_DURATION_DELTA,
+    PIERCE_DELTA,
+    ENABLE_TRAIT
+}

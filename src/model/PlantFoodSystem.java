@@ -15,25 +15,7 @@ final class PlantFoodSystem {
         if (engine.currentLevel == null) {
             return "no level";
         }
-        return switch (engine.currentLevel.getSpecialType()) {
-            case NORMAL -> "normal";
-            case CONVEYOR_BELT -> "cards=" + engine.conveyorCards;
-            case LOCKED_PLANTS -> "forced=" + engine.currentLevel.getForcedPlants()
-                + ", locked=" + engine.currentLevel.getLockedPlants() + ", representatives="
-                + engine.currentLevel.getFamilyRepresentativePlants();
-            case SAVE_OUR_SEEDS -> "protected remaining=" + engine.protectedPlantsRemaining()
-                + "/" + engine.endangeredPositions.size();
-            case TIMED_WAR -> "progress=" + engine.timedWarProgress() + "/"
-                + engine.currentLevel.getTimedWarTarget() + ", time="
-                + engine.formatSeconds(Math.max(0, engine.currentLevel.getTimeLimitSeconds()
-                * Game.TICKS_PER_SECOND - engine.elapsedTicks)) + "s";
-            case NIGHT_OPS -> "sky sun disabled";
-            case DEAD_LINE -> "line column=" + (engine.currentLevel.getDeadLineColumn() + 1);
-            case LOVE_YOUR_PLANTS -> "lost plants=" + engine.lostPlantsCount + "/"
-                + engine.currentLevel.getAllowedPlantLosses();
-            case PLANT_WHAT_YOU_GET -> "waves started=" + engine.zombieWavesStarted
-                + ", remaining sun=" + engine.sunAmount;
-        };
+        return engine.currentLevel.getRuleStrategy().status(engine);
     }
     static int protectedPlantsRemaining(Game engine) {
         int count = 0;
@@ -48,9 +30,10 @@ final class PlantFoodSystem {
     static void handleImmediatePlant(Game engine, Plant plant) {
         PlantAbility ability = plant.getAbility();
         if (ability == PlantAbility.GOLD_BLOOM) {
-            engine.sunAmount += 375;
+            int amount = Math.max(0, (int) Math.round(plant.getDefinition().getAbilityPower()));
+            engine.sunAmount += amount;
             engine.removeInstantPlant(plant);
-            engine.addEvent("Gold Bloom produced 375 suns and disappeared.");
+            engine.addEvent("Gold Bloom produced " + amount + " suns and disappeared.");
         } else if (ability.isMint()) {
             engine.activateMint(plant);
         } else if (ability == PlantAbility.ICE_SHROOM) {
