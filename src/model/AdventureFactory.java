@@ -10,8 +10,10 @@ import java.util.Optional;
 public final class AdventureFactory {
     private final List<Chapter> chapters;
     private final Map<String, Chapter> chaptersByName;
+    private final LevelFactory levelFactory;
 
     public AdventureFactory() {
+        levelFactory = new LevelFactory();
         chapters = createChapters();
         LinkedHashMap<String, Chapter> index = new LinkedHashMap<>();
         for (Chapter chapter : chapters) {
@@ -48,12 +50,8 @@ public final class AdventureFactory {
         int[] firstWaveCosts = {1000, 1250, 1500, 1750};
         for (int levelNumber = 1; levelNumber <= 4; levelNumber++) {
             SpecialLevelType type = specialTypeFor(levelNumber, secondType, thirdType);
-            int startingSun = type == SpecialLevelType.PLANT_WHAT_YOU_GET ? 800 : 50;
-            Level level = new Level(
-                season.name().toLowerCase().replace('_', '-') + "-" + levelNumber,
-                season, levelNumber, type, 8, startingSun);
-            configureSpecialLevel(level);
-            addWaves(level, waveCounts[levelNumber - 1], firstWaveCosts[levelNumber - 1]);
+            Level level = levelFactory.createAdventureLevel(season, levelNumber, type,
+                waveCounts[levelNumber - 1], firstWaveCosts[levelNumber - 1]);
             chapter.addLevel(level);
         }
         return chapter;
@@ -68,47 +66,5 @@ public final class AdventureFactory {
             return third;
         }
         return SpecialLevelType.NORMAL;
-    }
-
-    private void configureSpecialLevel(Level level) {
-        switch (level.getSpecialType()) {
-            case CONVEYOR_BELT -> level.configureConveyorPlants(List.of(
-                "Peashooter", "Cabbage-pult", "Wall-nut", "Potato Mine"));
-            case LOCKED_PLANTS -> level.configureLockedPlants(
-                List.of("Peashooter", "Wall-nut"),
-                List.of("Sunflower", "Cherry Bomb"),
-                List.of("Mint")).configureFamilyRepresentativeLocks(Map.of(
-                    "Shooter", "Peashooter",
-                    "Wall-nut", "Wall-nut"));
-            case SAVE_OUR_SEEDS -> level.configureProtectedPlants("Wall-nut", List.of(
-                new GridPosition(0, 2), new GridPosition(2, 2), new GridPosition(4, 2)));
-            case TIMED_WAR -> level.configureTimedWar(TimedWarObjective.KILLS, 60, 12);
-            case DEAD_LINE -> level.configureDeadLine(2);
-            case LOVE_YOUR_PLANTS -> level.configureAllowedPlantLosses(5);
-            case PLANT_WHAT_YOU_GET -> level.configureWaitForZombieWaves(true);
-            case NORMAL, NIGHT_OPS -> {
-                // No extra numeric configuration is required.
-            }
-        }
-    }
-
-    private void addWaves(Level level, int waveCount, int firstWaveCost) {
-        int previousCost = firstWaveCost;
-        for (int waveNumber = 1; waveNumber <= waveCount; waveNumber++) {
-            int cost;
-            if (waveNumber == 1) {
-                cost = previousCost;
-            } else if (waveNumber == waveCount) {
-                cost = roundToNearestFifty(previousCost * 2.0);
-            } else {
-                cost = roundToNearestFifty(previousCost * 1.25);
-            }
-            level.addWave(new Wave(waveNumber, cost, 0));
-            previousCost = cost;
-        }
-    }
-
-    private int roundToNearestFifty(double value) {
-        return Math.max(1000, (int) Math.round(value / 50.0) * 50);
     }
 }

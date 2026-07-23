@@ -50,11 +50,11 @@ final class BattleQuerySystem {
         if (engine.currentLevel == null || engine.board == null) {
             return false;
         }
-        if (engine.currentLevel.getSpecialType() == SpecialLevelType.TIMED_WAR) {
-            return engine.timedWarProgress() >= engine.currentLevel.getTimedWarTarget();
+        SpecialLevelRule rule = engine.currentLevel.getRuleStrategy();
+        if (rule.hasSpecialWin(engine)) {
+            return true;
         }
-        if (engine.currentLevel.getSpecialType() == SpecialLevelType.PLANT_WHAT_YOU_GET
-            && !engine.zombieWavesStarted) {
+        if (rule.blocksNormalWin(engine)) {
             return false;
         }
         return engine.nextWaveIndex >= engine.currentLevel.getWaves().size() && engine.board.getZombies().isEmpty();
@@ -75,8 +75,9 @@ final class BattleQuerySystem {
         if (definition == null || engine.currentLevel == null) {
             return false;
         }
-        if (engine.currentLevel.getSpecialType() == SpecialLevelType.CONVEYOR_BELT) {
-            return engine.containsNormalized(engine.currentLevel.getConveyorPlants(), definition.getName());
+        if (engine.currentLevel.getRuleStrategy().usesConveyor()) {
+            return engine.containsNormalized(engine.currentLevel.getConveyorPlants(),
+                definition.getName());
         }
         try {
             engine.validatePlantSelectionRule(definition);

@@ -125,27 +125,7 @@ final class BattleRuleSystem {
         if (engine.currentLevel == null) {
             return;
         }
-        if (engine.containsNormalized(engine.currentLevel.getLockedPlants(), definition.getName())) {
-            throw new IllegalStateException("This plant is locked in the current level.");
-        }
-        for (String family : engine.currentLevel.getBannedPlantFamilies()) {
-            if (engine.matchesPlantFamily(definition, family)) {
-                throw new IllegalStateException("The " + family
-                    + " plant family is locked in this level.");
-            }
-        }
-        for (Map.Entry<String, String> entry
-            : engine.currentLevel.getFamilyRepresentativePlants().entrySet()) {
-            if (engine.matchesPlantFamily(definition, entry.getKey())
-                && !definition.getName().equalsIgnoreCase(entry.getValue())) {
-                throw new IllegalStateException("Only " + entry.getValue()
-                    + " is available from the " + entry.getKey() + " family.");
-            }
-        }
-        if (engine.currentLevel.getSpecialType() == SpecialLevelType.PLANT_WHAT_YOU_GET
-            && engine.isSunProducerDefinition(definition)) {
-            throw new IllegalStateException("Sun-producing plants are unavailable in this level.");
-        }
+        engine.currentLevel.getRuleStrategy().validatePlantSelection(engine, definition);
     }
     static boolean matchesPlantFamily(Game engine, PlantDefinition definition, String family) {
         if (definition.getCategory().equalsIgnoreCase(family) || definition.hasTag(family)) {
@@ -166,14 +146,11 @@ final class BattleRuleSystem {
         return false;
     }
     static boolean isSunProducerDefinition(Game engine, PlantDefinition definition) {
-        return definition.getCategory().equalsIgnoreCase("Sun Producer")
-            || definition.getCategory().equalsIgnoreCase("SunProducer")
-            || definition.hasTag("Sun");
+        return definition.getFamily() == PlantFamily.SUN_PRODUCER || definition.hasTag("SUN");
     }
     static boolean isPreWaveSetup(Game engine) {
         return engine.currentLevel != null
-            && engine.currentLevel.getSpecialType() == SpecialLevelType.PLANT_WHAT_YOU_GET
-            && !engine.zombieWavesStarted;
+            && engine.currentLevel.getRuleStrategy().isPreWaveSetup(engine);
     }
     static void recordPlantUsage(Game engine, Plant plant) {
         if (plant == null) {

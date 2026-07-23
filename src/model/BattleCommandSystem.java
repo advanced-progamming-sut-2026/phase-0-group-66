@@ -55,8 +55,9 @@ final class BattleCommandSystem {
     }
     static void selectPlant(Game engine, String plantType) {
         engine.requirePlantSelection();
-        if (engine.currentLevel != null && engine.currentLevel.getSpecialType() == SpecialLevelType.CONVEYOR_BELT) {
-            throw new IllegalStateException("Plant selection is automatic in Conveyor Belt levels.");
+        if (engine.currentLevel != null
+            && !engine.currentLevel.getRuleStrategy().allowsManualPlantSelection()) {
+            throw new IllegalStateException("Plant selection is automatic in this level.");
         }
         PlantDefinition definition = engine.plantFactory.findDefinition(plantType)
             .orElseThrow(() -> new IllegalArgumentException("Plant does not exist: " + plantType));
@@ -127,7 +128,7 @@ final class BattleCommandSystem {
     }
     static void startGame(Game engine, Level level) {
         engine.prepareLevel(null, level);
-        if (engine.currentLevel.getSpecialType() == SpecialLevelType.CONVEYOR_BELT) {
+        if (engine.currentLevel.getRuleStrategy().usesConveyor()) {
             engine.autoSelectStarterPlantsForConveyor();
         } else if (engine.selectedPlants.isEmpty()) {
             engine.autoSelectStarterPlants();
@@ -137,7 +138,7 @@ final class BattleCommandSystem {
     static void startGame(Game engine) {
         engine.requirePlantSelection();
         if (engine.selectedPlants.isEmpty()
-            && engine.currentLevel.getSpecialType() == SpecialLevelType.CONVEYOR_BELT) {
+            && engine.currentLevel.getRuleStrategy().usesConveyor()) {
             engine.autoSelectStarterPlantsForConveyor();
         }
         if (engine.selectedPlants.isEmpty()) {
@@ -153,7 +154,8 @@ final class BattleCommandSystem {
         engine.gameState = GameState.RUNNING;
         engine.initializeSeasonTerrain();
         engine.initializeSpecialLevel();
-        engine.zombieWavesStarted = !engine.currentLevel.isWaitForZombieWaves();
+        engine.zombieWavesStarted = !engine.currentLevel.isWaitForZombieWaves()
+            && !engine.currentLevel.getRuleStrategy().requiresManualWaveStart();
         engine.addEvent("Game started with " + engine.sunAmount + " suns.");
         if (engine.zombieWavesStarted) {
             engine.startNextWave();
@@ -163,7 +165,7 @@ final class BattleCommandSystem {
     }
     static void startZombieWaves(Game engine) {
         engine.requireRunning();
-        if (engine.currentLevel.getSpecialType() != SpecialLevelType.PLANT_WHAT_YOU_GET) {
+        if (!engine.currentLevel.getRuleStrategy().requiresManualWaveStart()) {
             throw new IllegalStateException("This level does not have a manual wave start.");
         }
         if (engine.zombieWavesStarted) {
@@ -238,7 +240,7 @@ final class BattleCommandSystem {
             throw new IllegalStateException("Plant was not selected for this level.");
         }
         String key = definition.getNormalizedName();
-        boolean conveyor = engine.currentLevel.getSpecialType() == SpecialLevelType.CONVEYOR_BELT;
+        boolean conveyor = engine.currentLevel.getRuleStrategy().usesConveyor();
         boolean cooldownDisabled = conveyor || engine.isPreWaveSetup();
         int remainingCooldown = engine.cooldownTicks.getOrDefault(key, 0);
         if (!cooldownDisabled && remainingCooldown > 0) {

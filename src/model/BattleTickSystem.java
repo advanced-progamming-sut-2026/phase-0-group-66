@@ -12,12 +12,12 @@ final class BattleTickSystem {
     private BattleTickSystem() { }
 
     static void tickConveyor(Game engine) {
-        if (engine.currentLevel.getSpecialType() != SpecialLevelType.CONVEYOR_BELT
+        if (!engine.currentLevel.getRuleStrategy().usesConveyor()
             || engine.elapsedTicks < engine.nextConveyorTick) {
             return;
         }
         engine.addConveyorCard();
-        engine.nextConveyorTick += 120;
+        engine.nextConveyorTick += 12 * Game.TICKS_PER_SECOND;
     }
     static void addConveyorCard(Game engine) {
         if (engine.selectedPlants.isEmpty()) {
@@ -84,10 +84,8 @@ final class BattleTickSystem {
         engine.nextSkySunTick = engine.elapsedTicks + engine.calculateSkySunIntervalTicks();
     }
     static boolean skySunEnabled(Game engine) {
-        SpecialLevelType type = engine.currentLevel.getSpecialType();
         return engine.currentLevel.getSeason() != SeasonType.DARK_AGES
-            && type != SpecialLevelType.NIGHT_OPS
-            && type != SpecialLevelType.PLANT_WHAT_YOU_GET;
+            && engine.currentLevel.getRuleStrategy().allowsSkySun();
     }
     static void performPlantActions(Game engine) {
         for (Plant plant : new ArrayList<>(engine.board.getPlants())) {
@@ -428,28 +426,10 @@ final class BattleTickSystem {
         }
     }
     static boolean specialWinConditionReached(Game engine) {
-        if (engine.currentLevel.getSpecialType() != SpecialLevelType.TIMED_WAR) {
-            return false;
-        }
-        return engine.timedWarProgress() >= engine.currentLevel.getTimedWarTarget();
+        return engine.currentLevel.getRuleStrategy().hasSpecialWin(engine);
     }
     static boolean specialLoseConditionReached(Game engine) {
-        SpecialLevelType type = engine.currentLevel.getSpecialType();
-        if (type == SpecialLevelType.DEAD_LINE) {
-            return engine.board.hasZombiesCrossedColumn(engine.currentLevel.getDeadLineColumn());
-        }
-        if (type == SpecialLevelType.SAVE_OUR_SEEDS) {
-            return engine.board.areEndangeredPlantsEaten();
-        }
-        if (type == SpecialLevelType.LOVE_YOUR_PLANTS) {
-            return engine.lostPlantsCount >= engine.currentLevel.getAllowedPlantLosses();
-        }
-        if (type == SpecialLevelType.TIMED_WAR) {
-            int limitTicks = engine.currentLevel.getTimeLimitSeconds() * Game.TICKS_PER_SECOND;
-            return engine.elapsedTicks >= limitTicks
-                && engine.timedWarProgress() < engine.currentLevel.getTimedWarTarget();
-        }
-        return false;
+        return engine.currentLevel.getRuleStrategy().hasSpecialLoss(engine);
     }
     static int timedWarProgress(Game engine) {
         if (engine.currentLevel.getTimedWarObjective() == TimedWarObjective.SUN) {
