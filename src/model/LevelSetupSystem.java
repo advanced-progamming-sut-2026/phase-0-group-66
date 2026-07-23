@@ -209,50 +209,42 @@ final class LevelSetupSystem {
             throw new IllegalStateException("Plant food cannot be applied to this plant.");
         }
         plant.usePlantFood();
-        PlantAbility ability = plant.getAbility();
-        if (plant.isSunProducer()) {
-            engine.activateSunProducerFood(plant);
-        } else {
-            switch (ability) {
-                case POTATO_MINE, PRIMAL_POTATO_MINE -> engine.armMineWithPlantFood(plant);
-                case CHERRY_BOMB, GRAPESHOT, JALAPENO, DOOM_SHROOM -> {
-                    engine.explosivePlantsUsed++;
-                    engine.detonatePlant(plant, 2);
-                }
-                case SQUASH -> engine.squashMultipleZombies(plant, 2);
-                case TANGLE_KELP -> engine.drownMultipleZombies(plant, 3);
-                case ICEBERG_LETTUCE, ICE_SHROOM -> engine.freezeAllZombies(plant, false);
-                case WALL_NUT, TALL_NUT, ENDURIAN, EXPLODE_O_NUT, PUMPKIN,
-                     SUN_BEAN -> engine.addEvent(plant.getName() + " received reinforced armor.");
-                case GARLIC -> engine.redirectWholeLane(plant);
-                case SWEET_POTATO -> {
-                    plant.healToFull();
-                    engine.pullZombiesTowardSweetPotato(plant);
-                }
-                case TORCHWOOD -> engine.addEvent("Torchwood ignited a blue triple-damage flame.");
-                case MAGNET_SHROOM -> engine.magnetizeAllZombies(plant);
-                case LILY_PAD -> engine.cloneLilyPads(plant);
-                case SHORT_RANGE_SHROOM -> engine.resetShortRangeShrooms();
-                case CAULIPOWER -> engine.hypnotizeRandomZombies(3);
-                case ELECTRIC_BLUEBERRY -> engine.killRandomZombies(3, plant.getName());
-                case CITRON -> engine.clearPlantLane(plant);
-                case CHOMPER -> engine.killRandomZombies(3, plant.getName());
-                case FUME_SHROOM -> engine.fumePlantFoodPush(plant);
-                default -> engine.activateGeneralOffensiveFood(plant);
+        PlantFoodType foodType = plant.getDefinition().getPlantFoodType();
+        int power = Math.max(0, (int) Math.round(plant.getDefinition().getPlantFoodPower()));
+        switch (foodType) {
+            case NONE -> engine.addEvent(plant.getName() + " has no plant-food effect.");
+            case SUN_BURST -> engine.activateSunProducerFood(plant);
+            case ARM_AND_CLONE -> engine.armMineWithPlantFood(plant);
+            case EXPLOSIVE_BLAST -> {
+                engine.explosivePlantsUsed++;
+                engine.detonatePlant(plant, Math.max(1, power));
             }
+            case MULTI_SMASH -> engine.squashMultipleZombies(plant, Math.max(1, power));
+            case DROWN_TARGETS -> engine.drownMultipleZombies(plant, Math.max(1, power));
+            case MAP_FREEZE -> engine.freezeAllZombies(plant, false);
+            case REINFORCE -> engine.addEvent(plant.getName() + " received reinforced armor.");
+            case REDIRECT_LANE -> engine.redirectWholeLane(plant);
+            case PULL_TO_DEFENDER -> {
+                plant.healToFull();
+                engine.pullZombiesTowardSweetPotato(plant);
+            }
+            case TORCHWOOD_FLAME -> engine.addEvent(
+                "Torchwood ignited a blue triple-damage flame.");
+            case REMOVE_ARMOR -> engine.magnetizeAllZombies(plant);
+            case CLONE_SUPPORTS -> engine.cloneLilyPads(plant);
+            case RESET_LIFETIME -> engine.resetShortRangeShrooms();
+            case HYPNOTIZE_RANDOM -> engine.hypnotizeRandomZombies(Math.max(1, power));
+            case ELIMINATE_RANDOM -> engine.killRandomZombies(Math.max(1, power), plant.getName());
+            case CLEAR_LANE -> engine.clearPlantLane(plant);
+            case KNOCKBACK_BLAST -> engine.fumePlantFoodPush(plant);
+            case OFFENSIVE_BURST -> engine.activateGeneralOffensiveFood(plant);
         }
         engine.cleanupDestroyedEntities();
         engine.addEvent("Plant food activated on " + plant.getName() + " from " + source + ".");
     }
     static int plantFoodSunAmount(Game engine, Plant plant) {
-        String normalized = plant.getDefinition().getNormalizedName();
-        if (normalized.equals("twinsunflower")) {
-            return 250 + plant.getSunProductionBonus();
-        }
-        if (normalized.equals("sunshroom") || normalized.equals("primalsunflower")) {
-            return 225 + plant.getSunProductionBonus();
-        }
-        return 150 + plant.getSunProductionBonus();
+        int configured = (int) Math.round(plant.getDefinition().getPlantFoodPower());
+        return Math.max(0, configured) + plant.getSunProductionBonus();
     }
     static void plantFoodShooterVolley(Game engine, Plant plant) {
         GridPosition position = plant.getPosition();
@@ -317,17 +309,7 @@ final class LevelSetupSystem {
         }
     }
     static void initializeSpecialLevel(Game engine) {
-        SpecialLevelType type = engine.currentLevel.getSpecialType();
-        if (type == SpecialLevelType.CONVEYOR_BELT) {
-            if (engine.selectedPlants.isEmpty()) {
-                engine.autoSelectStarterPlantsForConveyor();
-            }
-            engine.addConveyorCard();
-            engine.nextConveyorTick = 120;
-        }
-        if (type == SpecialLevelType.SAVE_OUR_SEEDS) {
-            engine.initializeProtectedPlants();
-        }
+        engine.currentLevel.getRuleStrategy().initializeBattle(engine);
         engine.addEvent("Special rule: " + engine.currentLevel.getSpecialRuleSummary());
     }
     static void initializeProtectedPlants(Game engine) {

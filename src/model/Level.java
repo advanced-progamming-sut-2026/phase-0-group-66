@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class Level {
     private String levelId;
-    private String levelType;
+    private final SpecialLevelRule specialRule;
     private SeasonType season;
     private int levelNumber;
     private int allowedPlantCount;
@@ -45,7 +45,7 @@ public class Level {
         this.levelId = levelId.trim();
         this.season = season == null ? SeasonType.ANCIENT_EGYPT : season;
         this.levelNumber = levelNumber;
-        this.levelType = (specialType == null ? SpecialLevelType.NORMAL : specialType).name();
+        this.specialRule = SpecialLevelRuleFactory.create(specialType);
         this.allowedPlantCount = allowedPlantCount;
         this.startingSunAmount = startingSunAmount;
         this.waves = new ArrayList<>();
@@ -62,8 +62,9 @@ public class Level {
     }
 
     public String getLevelId() { return levelId; }
-    public String getLevelType() { return levelType; }
-    public SpecialLevelType getSpecialType() { return SpecialLevelType.valueOf(levelType); }
+    public String getLevelType() { return specialRule.getType().name(); }
+    public SpecialLevelType getSpecialType() { return specialRule.getType(); }
+    public SpecialLevelRule getRuleStrategy() { return specialRule; }
     public SeasonType getSeason() { return season; }
     public int getLevelNumber() { return levelNumber; }
     public int getAllowedPlantCount() { return allowedPlantCount; }
@@ -173,21 +174,7 @@ public class Level {
     }
 
     public String getSpecialRuleSummary() {
-        return switch (getSpecialType()) {
-            case NORMAL -> "Normal battle rules.";
-            case CONVEYOR_BELT -> "Plants arrive on the conveyor every 12 seconds.";
-            case LOCKED_PLANTS -> "Forced plants=" + forcedPlants + ", locked="
-                + lockedPlants + ", family representatives=" + familyRepresentativePlants
-                + ", banned families=" + bannedPlantFamilies + ".";
-            case SAVE_OUR_SEEDS -> "Protect every marked " + protectedPlantType + ".";
-            case TIMED_WAR -> "Reach " + timedWarTarget + " "
-                + timedWarObjective.name().toLowerCase() + " within " + timeLimitSeconds
-                + " seconds.";
-            case NIGHT_OPS -> "No sky sun will fall.";
-            case DEAD_LINE -> "Do not let zombies cross column " + (deadLineColumn + 1) + ".";
-            case LOVE_YOUR_PLANTS -> "Lose fewer than " + allowedPlantLosses + " plants.";
-            case PLANT_WHAT_YOU_GET -> "Use only the starting sun, then start zombie waves.";
-        };
+        return specialRule.summary(this);
     }
 
     public void loadLevel() { completed = false; }
@@ -216,7 +203,7 @@ public class Level {
     @Override
     public String toString() {
         return levelId + " [season=" + season + ", level=" + levelNumber
-            + ", type=" + levelType + ", waves=" + waves.size() + "]";
+            + ", type=" + getSpecialType() + ", waves=" + waves.size() + "]";
     }
 
     private void replaceCleanNames(List<String> target, List<String> source) {
