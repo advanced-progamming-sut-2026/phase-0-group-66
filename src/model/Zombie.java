@@ -42,6 +42,11 @@ public abstract class Zombie {
     private boolean impThrown;
     private boolean chargeUsed;
     private boolean machineActive;
+    private boolean surfacedForCombat;
+    private boolean prospectorDynamiteLaunched;
+    private boolean companionsInitialized;
+    private int jugglingTicks;
+    private double flightDistanceRemaining;
     private int specialAbilityUses;
 
     protected Zombie(ZombieDefinition definition, List<Armor> armors) {
@@ -61,10 +66,7 @@ public abstract class Zombie {
         }
         this.ability = ZombieAbility.fromDefinition(definition);
         this.runtimeId = definition.getAlias() + "-" + NEXT_ID.getAndIncrement();
-        this.machineActive = ability == ZombieAbility.ARCADE;
-        if (machineActive) {
-            this.bonusArmorHealth = 1100;
-        }
+        this.machineActive = false;
     }
 
     public void applyDifficulty(int difficultyLevel) {
@@ -102,8 +104,16 @@ public abstract class Zombie {
         if (enraged) {
             actualSpeed *= 2.0;
         }
+        if (ability == ZombieAbility.JUGGLER && jugglingTicks > 0) {
+            actualSpeed *= definition.getSpecialPropertyDouble(
+                "MoveSpeedMultiplierWhileJuggling", 1.1);
+        }
         double direction = hypnotized || reversed ? 1.0 : -1.0;
-        position = position.moveHorizontal(direction * actualSpeed / Game.TICKS_PER_SECOND);
+        double movement = direction * actualSpeed / Game.TICKS_PER_SECOND;
+        position = position.moveHorizontal(movement);
+        if (flightDistanceRemaining > 0) {
+            flightDistanceRemaining = Math.max(0, flightDistanceRemaining - Math.abs(movement));
+        }
     }
 
     public void tickEffects() {
@@ -116,6 +126,9 @@ public abstract class Zombie {
         }
         if (abilityCooldownTicks > 0) {
             abilityCooldownTicks--;
+        }
+        if (jugglingTicks > 0) {
+            jugglingTicks--;
         }
         if (poisonTicks > 0) {
             poisonTicks--;
@@ -208,7 +221,8 @@ public abstract class Zombie {
         if (ability == ZombieAbility.PARASOL && lobbed) {
             return false;
         }
-        if (ability == ZombieAbility.SNORKEL && submerged && !lobbed) {
+        if (ability == ZombieAbility.SNORKEL && submerged
+            && !surfacedForCombat && !lobbed) {
             return false;
         }
         if (ability == ZombieAbility.EXPLORER) {
@@ -316,9 +330,6 @@ public abstract class Zombie {
     private int absorbBonusArmor(int amount) {
         int absorbed = Math.min(bonusArmorHealth, amount);
         bonusArmorHealth -= absorbed;
-        if (ability == ZombieAbility.ARCADE && bonusArmorHealth <= 0) {
-            machineActive = false;
-        }
         return amount - absorbed;
     }
 
@@ -372,6 +383,13 @@ public abstract class Zombie {
     public boolean isImpThrown() { return impThrown; }
     public boolean isChargeUsed() { return chargeUsed; }
     public boolean isMachineActive() { return machineActive; }
+    public boolean isSurfacedForCombat() { return surfacedForCombat; }
+    public boolean isProspectorDynamiteLaunched() { return prospectorDynamiteLaunched; }
+    public boolean areCompanionsInitialized() { return companionsInitialized; }
+    public boolean isJuggling() { return jugglingTicks > 0; }
+    public int getJugglingTicks() { return jugglingTicks; }
+    public boolean isFlying() { return flightDistanceRemaining > 0; }
+    public double getFlightDistanceRemaining() { return flightDistanceRemaining; }
     public int getSpecialAbilityUses() { return specialAbilityUses; }
     public String getLastDamageSourcePlant() { return lastDamageSourcePlant; }
 
@@ -388,10 +406,23 @@ public abstract class Zombie {
         return amount;
     }
     public void setSubmerged(boolean submerged) { this.submerged = submerged; }
+    public void setSurfacedForCombat(boolean surfaced) {
+        surfacedForCombat = surfaced;
+        if (surfaced) {
+            submerged = false;
+        }
+    }
     public void setSpecialDisabled(boolean disabled) { specialDisabled = disabled; }
     public void markImpThrown() { impThrown = true; }
     public void markChargeUsed() { chargeUsed = true; }
+    public void activateMachine() { machineActive = true; }
     public void breakMachine() { machineActive = false; }
+    public void markProspectorDynamiteLaunched() { prospectorDynamiteLaunched = true; }
+    public void markCompanionsInitialized() { companionsInitialized = true; }
+    public void startJuggling(int ticks) { jugglingTicks = Math.max(jugglingTicks, ticks); }
+    public void startFlight(double distance) {
+        flightDistanceRemaining = Math.max(flightDistanceRemaining, Math.max(0, distance));
+    }
 
     private void rememberDamageSource(String sourcePlant) {
         lastDamageSourcePlant = normalizeSource(sourcePlant);

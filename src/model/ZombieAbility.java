@@ -26,6 +26,7 @@ public enum ZombieAbility {
     PIANIST,
     NEWSPAPER,
     ARCADE,
+    BARREL_ROLLER,
     GENERIC;
 
     public static ZombieAbility fromDefinition(ZombieDefinition definition) {

@@ -52,6 +52,7 @@ public final class ZombieDataLoader {
             enumValue(ZombieAbility.class, entry.get("ability"), "ability"),
             enumList(SeasonType.class, entry.get("seasons"), "seasons"),
             stringList(entry.get("armors"), "armors"),
+            optionalStringList(entry.get("lookupAliases"), "lookupAliases"),
             requireMap(entry.get("properties"), "properties")
         );
     }
@@ -98,6 +99,13 @@ public final class ZombieDataLoader {
             result.add(requireString(item, fieldName + " item"));
         }
         return List.copyOf(result);
+    }
+
+    private List<String> optionalStringList(Object value, String fieldName) {
+        if (value == null) {
+            return List.of();
+        }
+        return stringList(value, fieldName);
     }
 
     private String requireString(Object value, String fieldName) {

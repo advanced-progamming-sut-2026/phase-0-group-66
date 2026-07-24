@@ -43,8 +43,10 @@ public final class ZombieFactory {
         if (definition == null) {
             throw new IllegalArgumentException("Zombie definition cannot be null.");
         }
-        for (String lookup : List.of(definition.getKey(), definition.getAlias(),
-            definition.getDisplayName())) {
+        ArrayList<String> lookups = new ArrayList<>(List.of(definition.getKey(),
+            definition.getAlias(), definition.getDisplayName()));
+        lookups.addAll(definition.getLookupAliases());
+        for (String lookup : lookups) {
             String normalized = PlantDefinition.normalizeKey(lookup);
             ZombieDefinition existing = definitionsByLookup.get(normalized);
             if (existing != null && existing != definition) {

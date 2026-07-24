@@ -20,12 +20,14 @@ public final class ZombieDefinition {
     private final ZombieAbility ability;
     private final List<SeasonType> seasons;
     private final List<String> armorAliases;
+    private final List<String> lookupAliases;
     private final Map<String, Object> specialProperties;
 
     public ZombieDefinition(String key, String alias, String displayName, int hitpoints,
                             int eatDamagePerSecond, double speed, int wavePointCost, int weight,
                             boolean canSpawnPlantFood, ZombieAbility ability,
                             List<SeasonType> seasons, List<String> armorAliases,
+                            List<String> lookupAliases,
                             Map<String, Object> specialProperties) {
         this.key = requireText(key, "Zombie key");
         this.alias = requireText(alias, "Zombie alias");
@@ -42,6 +44,7 @@ public final class ZombieDefinition {
         this.ability = ability == null ? ZombieAbility.GENERIC : ability;
         this.seasons = seasons == null ? List.of() : List.copyOf(seasons);
         this.armorAliases = immutableStrings(armorAliases);
+        this.lookupAliases = immutableStrings(lookupAliases);
         this.specialProperties = Collections.unmodifiableMap(
             new LinkedHashMap<>(specialProperties == null ? Map.of() : specialProperties));
     }
@@ -59,8 +62,34 @@ public final class ZombieDefinition {
     public List<SeasonType> getSeasons() { return seasons; }
     public boolean isAvailableIn(SeasonType season) { return seasons.contains(season); }
     public List<String> getArmorAliases() { return armorAliases; }
+    public List<String> getLookupAliases() { return lookupAliases; }
     public Map<String, Object> getSpecialProperties() { return specialProperties; }
     public Object getSpecialProperty(String propertyKey) { return specialProperties.get(propertyKey); }
+
+    public int getSpecialPropertyInt(String propertyKey, int fallback) {
+        Object value = specialProperties.get(propertyKey);
+        return value instanceof Number number ? number.intValue() : fallback;
+    }
+
+    public double getSpecialPropertyDouble(String propertyKey, double fallback) {
+        Object value = specialProperties.get(propertyKey);
+        return value instanceof Number number ? number.doubleValue() : fallback;
+    }
+
+    public List<String> getSpecialPropertyStrings(String propertyKey) {
+        Object value = specialProperties.get(propertyKey);
+        if (!(value instanceof List<?> list)) {
+            return List.of();
+        }
+        ArrayList<String> result = new ArrayList<>();
+        for (Object item : list) {
+            if (item instanceof String text && !text.isBlank()) {
+                result.add(text.trim());
+            }
+        }
+        return List.copyOf(result);
+    }
+
     public String getNormalizedAlias() { return PlantDefinition.normalizeKey(alias); }
     public String getNormalizedKey() { return PlantDefinition.normalizeKey(key); }
 

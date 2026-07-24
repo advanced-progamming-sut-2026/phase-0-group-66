@@ -30,6 +30,18 @@ final class ZombieAbilitySystem {
         }
         return 1;
     }
+    static void refreshSnorkelStates(Game engine) {
+        for (Zombie zombie : engine.board.getZombies()) {
+            if (zombie.getAbility() != ZombieAbility.SNORKEL
+                || zombie.isDead() || zombie.getPosition() == null) {
+                continue;
+            }
+            Plant blockingPlant = engine.board.findBlockingPlant(zombie);
+            updateSnorkelCombatState(zombie, blockingPlant != null);
+            updateZombieEnvironmentState(engine, zombie);
+        }
+    }
+
     static void updateZombieEnvironmentState(Game engine, Zombie zombie) {
         if (zombie.getPosition() == null) {
             return;
@@ -38,7 +50,8 @@ final class ZombieAbilitySystem {
         if (zombie.getAbility() == ZombieAbility.SNORKEL
             && engine.board.isInside(zombie.getPosition().getRow(), col)) {
             TileType type = engine.board.getTile(zombie.getPosition().getRow(), col).getType();
-            zombie.setSubmerged(type == TileType.WATER || type == TileType.LOW_TIDE);
+            boolean inWater = type == TileType.WATER || type == TileType.LOW_TIDE;
+            zombie.setSubmerged(inWater && !zombie.isSurfacedForCombat());
         }
     }
     static void performZombieSpecialAbility(Game engine, Zombie zombie) {
@@ -228,11 +241,22 @@ final class ZombieAbilitySystem {
         engine.addEvent("Turquoise Skull fired its laser and destroyed " + destroyed + " plant(s).");
     }
     static void launchProspectorDynamite(Game engine, Zombie zombie) {
-        if (!zombie.isReversed() && !zombie.isSpecialDisabled()
-            && zombie.getAgeTicks() >= 10 * Game.TICKS_PER_SECOND) {
-            zombie.reverseDirection();
-            engine.addEvent("Prospector's dynamite launched it toward the house from the other side.");
+        int countdown = zombie.getDefinition().getSpecialPropertyInt("LaunchCountdown", 10);
+        if (zombie.isProspectorDynamiteLaunched() || zombie.isSpecialDisabled()
+            || zombie.getAgeTicks() < countdown * Game.TICKS_PER_SECOND
+            || zombie.getPosition() == null) {
+            return;
         }
+        double startColumn = zombie.getDefinition().getSpecialPropertyDouble(
+            "projectDynamiteStartColumn", 0.0);
+        double speed = zombie.getDefinition().getSpecialPropertyDouble(
+            "projectDynamiteSpeed", zombie.getSpeed());
+        ProspectorDynamite dynamite = new ProspectorDynamite(zombie.getRuntimeId(),
+            new BoardPosition(zombie.getPosition().getRow(), startColumn),
+            zombie.getDamage(), speed);
+        engine.board.addProspectorDynamite(dynamite);
+        zombie.markProspectorDynamiteLaunched();
+        engine.addEvent("Prospector launched an independent dynamite threat from the house side.");
     }
     static void playPiano(Game engine, Zombie pianist) {
         if (pianist.getAbilityCooldownTicks() > 0) {
@@ -288,29 +312,36 @@ final class ZombieAbilitySystem {
         if (zombie.getAbility() != ZombieAbility.DODO_RIDER) {
             return false;
         }
-        return plant.getAbility() != PlantAbility.TALL_NUT;
+        if (plant.getAbility() == PlantAbility.TALL_NUT) {
+            return false;
+        }
+        if (zombie.isFlying()) {
+            return true;
+        }
+        List<String> allowed = zombie.getDefinition().getSpecialPropertyStrings(
+            "projectPlantAbilitiesToFlyOver");
+        if (!allowed.contains(plant.getAbility().name())) {
+            return false;
+        }
+        double distance = zombie.getDefinition().getSpecialPropertyDouble(
+            "projectFlightDistanceTiles", 2.0);
+        zombie.startFlight(distance);
+        engine.addEvent("Dodo Rider flew over " + plant.getName() + ".");
+        return true;
     }
     static boolean isStationaryZombie(Game engine, Zombie zombie) {
         return zombie.getAbility() == ZombieAbility.FISHERMAN
             || zombie.getAbility() == ZombieAbility.KING;
     }
+    static void updateSnorkelCombatState(Zombie zombie, boolean attackingPlant) {
+        if (zombie.getAbility() == ZombieAbility.SNORKEL) {
+            zombie.setSurfacedForCombat(attackingPlant);
+        }
+    }
+
     static void resolveZombiePlantCombat(Game engine, Zombie zombie, Plant plant) {
-        if (zombie.getAbility() == ZombieAbility.WIZARD) {
-            plant.transformByWizard(zombie.getRuntimeId());
-            return;
-        }
-        if (zombie.getAbility() == ZombieAbility.GARGANTUAR
-            || zombie.getAbility() == ZombieAbility.PIANIST
-            || (zombie.getAbility() == ZombieAbility.ARCADE && zombie.isMachineActive())
-            || (zombie.getAbility() == ZombieAbility.ALL_STAR && !zombie.isChargeUsed())) {
-            plant.takeDamage(Math.max(plant.getHealth(), 1));
-            zombie.markChargeUsed();
-            engine.addEvent(zombie.getName() + " destroyed " + plant.getName() + " on contact.");
-            return;
-        }
-        if (zombie.getAbility() == ZombieAbility.EXPLORER && !zombie.isSpecialDisabled()) {
-            plant.takeDamage(Math.max(plant.getHealth(), 1));
-            engine.addEvent("Explorer Zombie burned " + plant.getName() + ".");
+        updateSnorkelCombatState(zombie, true);
+        if (resolveImmediateZombieContact(engine, zombie, plant)) {
             return;
         }
         if (engine.elapsedTicks % Game.TICKS_PER_SECOND != 0) {
@@ -345,6 +376,30 @@ final class ZombieAbilitySystem {
         }
         engine.addEvent("Zombie " + zombie.getName() + " attacked " + plant.getName()
             + " at " + plant.getPosition() + ".");
+    }
+
+    private static boolean resolveImmediateZombieContact(Game engine, Zombie zombie,
+                                                          Plant plant) {
+        if (zombie.getAbility() == ZombieAbility.WIZARD) {
+            plant.transformByWizard(zombie.getRuntimeId());
+            return true;
+        }
+        boolean destroysOnContact = zombie.getAbility() == ZombieAbility.GARGANTUAR
+            || zombie.getAbility() == ZombieAbility.PIANIST
+            || (zombie.getAbility() == ZombieAbility.ALL_STAR && !zombie.isChargeUsed());
+        if (destroysOnContact) {
+            plant.takeDamage(Math.max(plant.getHealth(), 1));
+            zombie.markChargeUsed();
+            engine.addEvent(zombie.getName() + " destroyed " + plant.getName()
+                + " on contact.");
+            return true;
+        }
+        if (zombie.getAbility() == ZombieAbility.EXPLORER && !zombie.isSpecialDisabled()) {
+            plant.takeDamage(Math.max(plant.getHealth(), 1));
+            engine.addEvent("Explorer Zombie burned " + plant.getName() + ".");
+            return true;
+        }
+        return false;
     }
 
     private static void replaceWithHypnotizedGargantuar(Game engine, Zombie eater,
