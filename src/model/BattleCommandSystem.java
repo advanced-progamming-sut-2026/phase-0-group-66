@@ -93,10 +93,20 @@ final class BattleCommandSystem {
         if (!engine.selectedPlants.contains(definition.getName())) {
             throw new IllegalStateException("Select the plant before boosting it.");
         }
-        if (!engine.levelBoostedPlants.add(definition.getName())) {
+        if (definition.getPlantFoodType() == PlantFoodType.NONE
+            && definition.getAbility() != PlantAbility.IMITATER) {
+            throw new IllegalStateException(definition.getName()
+                + " has no plant-food effect and cannot be boosted.");
+        }
+        if (engine.levelBoostedPlants.contains(definition.getName())) {
             throw new IllegalStateException("Plant is already boosted for this level.");
         }
-        engine.addEvent("Plant " + definition.getName() + " is boosted for this level.");
+        if (!engine.wallet.spendGems(2)) {
+            throw new IllegalStateException("Boosting a plant requires 2 gems.");
+        }
+        engine.levelBoostedPlants.add(definition.getName());
+        engine.addEvent("Plant " + definition.getName()
+            + " is boosted for this level; 2 gems were spent.");
     }
     static boolean isLevelBoosted(Game engine, String plantType) {
         PlantDefinition definition = engine.plantFactory.findDefinition(plantType).orElse(null);
@@ -107,6 +117,9 @@ final class BattleCommandSystem {
         Plant plant = engine.board.getTile(row, col).getPlant();
         if (plant == null || plant.isDestroyed()) {
             throw new IllegalStateException("There is no living plant on this tile.");
+        }
+        if (plant.getDefinition().getPlantFoodType() == PlantFoodType.NONE) {
+            throw new IllegalStateException(plant.getName() + " has no plant-food effect.");
         }
         if (!engine.inventory.consumePlantFood()) {
             throw new IllegalStateException("No plant food is available.");
@@ -269,7 +282,16 @@ final class BattleCommandSystem {
         engine.recordPlantUsage(plant);
         engine.addEvent("Plant " + plant.getName() + " (level " + plant.getPlantLevel()
             + ") " + detail + " at " + engine.display(row, col) + ".");
-        boolean boosted = engine.applyAutomaticBoostIfPresent(activePlant);
+        boolean boosted = engine.applyAutomaticBoostIfPresent(
+            activePlant, definition.getName());
+        boolean imitaterEntranceFood = definition.getAbility() == PlantAbility.IMITATER
+            && PlantStats.calculate(definition, plantLevel)
+                .hasTrait("PLANT_FOOD_ON_ENTERANCE")
+            && activePlant.getDefinition().getPlantFoodType() != PlantFoodType.NONE;
+        if (!boosted && imitaterEntranceFood) {
+            engine.activatePlantFood(activePlant, "Imitater level-4 entrance effect");
+            boosted = true;
+        }
         if (!boosted || !activePlant.isExplosive()) {
             engine.handleImmediatePlant(activePlant);
         }

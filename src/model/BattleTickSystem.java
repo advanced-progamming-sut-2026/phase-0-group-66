@@ -48,11 +48,22 @@ final class BattleTickSystem {
         engine.spawnSkySunIfNeeded();
         engine.performPlantActions();
         engine.moveProjectilesAndResolveHits();
+        moveGrapeshotFragmentsAndResolveHits(engine);
         engine.moveZombiesAndResolveCombat();
         engine.cleanupDestroyedEntities();
         engine.startNextWaveIfReady();
         engine.board.refreshZombieTiles();
         engine.evaluateGameState();
+    }
+
+    static void moveGrapeshotFragmentsAndResolveHits(Game engine) {
+        for (GrapeshotFragment fragment
+            : new ArrayList<>(engine.board.getGrapeshotFragments())) {
+            fragment.tick(engine.board);
+            if (!fragment.isActive()) {
+                engine.board.removeGrapeshotFragment(fragment);
+            }
+        }
     }
     static void tickCooldowns(Game engine) {
         for (Map.Entry<String, Integer> entry : engine.cooldownTicks.entrySet()) {
@@ -97,6 +108,10 @@ final class BattleTickSystem {
             if (plant.isDestroyed() || !plant.isOperational()) {
                 continue;
             }
+            if (plant.getAbility().isMint()) {
+                engine.performPassivePlantAction(plant);
+                continue;
+            }
             if (plant.isTrap()) {
                 engine.performTrapAction(plant);
                 continue;
@@ -129,7 +144,9 @@ final class BattleTickSystem {
         } else if (plant instanceof Sunflower sunflower) {
             amount = sunflower.getProductionAmount();
         } else {
-            amount = engine.inferSunProduction(plant) + plant.getSunProductionBonus();
+            int configured = plant.getDefinition().getAbilityParameterInt("sun",
+                (int) Math.round(plant.getDefinition().getAbilityPower()));
+            amount = Math.max(0, configured) + plant.getSunProductionBonus();
         }
         if (plant.hasDoubleSunChance() && engine.random.nextBoolean()) {
             amount *= 2;
@@ -141,14 +158,8 @@ final class BattleTickSystem {
             + " sun at " + position + ".");
     }
     static int inferSunProduction(Game engine, Plant plant) {
-        String normalized = plant.getDefinition().getNormalizedName();
-        if (normalized.equals("twinsunflower")) {
-            return 100;
-        }
-        if (normalized.equals("primalsunflower")) {
-            return 75;
-        }
-        return 50;
+        return Math.max(0, plant.getDefinition().getAbilityParameterInt("sun",
+            (int) Math.round(plant.getDefinition().getAbilityPower())));
     }
     static void shootProjectiles(Game engine, Plant plant) {
         GridPosition position = plant.getPosition();
@@ -156,19 +167,31 @@ final class BattleTickSystem {
         if (target == null) {
             return;
         }
+        double shortRange = plant.getEffectiveRange(
+            plant.getDefinition().getAbilityParameter("rangeTiles", 3.0));
         if (plant.getAbility() == PlantAbility.SHORT_RANGE_SHROOM
-            && target.getPosition().getColumn() - position.getColumn() > 3.5) {
+            && target.getPosition().getColumn() - position.getColumn() > shortRange + 0.5) {
             return;
         }
         int projectileCount = plant.getProjectileCount();
-        int maxHits = plant.getAbility() == PlantAbility.CACTUS ? 3
+        int maxHits = plant.getAbility() == PlantAbility.CACTUS
+            ? plant.getDefinition().getAbilityParameterInt("maxHits", 3)
+                + plant.getPierceBonus()
             : plant.isPiercing() ? Integer.MAX_VALUE : 1;
         for (int index = 0; index < projectileCount; index++) {
             double startColumn = position.getColumn() + 0.25 - index * 0.03;
+            int poisonSeconds = plant.getDefinition().getAbilityParameterInt(
+                "poisonSeconds", 5);
+            double poisonFactor = plant.getDefinition().getAbilityParameter(
+                "poisonDamageFactor", 0.25);
+            int poisonDamage = Math.max(0, (int) Math.round(
+                plant.getEffectiveAttackPower() * poisonFactor))
+                + plant.getUpgradeTraitInt("POISON_TICK_BONUS", 0);
             Projectile projectile = new Projectile(plant.getEffectiveAttackPower(),
                 Game.PROJECTILE_SPEED, new BoardPosition(position.getRow(), startColumn),
                 plant.getProjectileElementType(), maxHits > 1,
-                plant.getChillDurationTicks(), plant.isLobber(), plant.getName(), maxHits);
+                plant.getChillDurationTicks(), plant.isLobber(), plant.getName(), maxHits,
+                poisonSeconds * Game.TICKS_PER_SECOND, poisonDamage);
             engine.board.addProjectile(projectile);
         }
         engine.addEvent("Plant " + plant.getName() + " fired " + projectileCount
@@ -191,10 +214,13 @@ final class BattleTickSystem {
             int rowDistance = Math.abs(zombie.getPosition().getRow() - position.getRow());
             double columnDistance = Math.abs(zombie.getPosition().getColumn()
                 - position.getColumn());
-            boolean inRange = plant.getAbility() == PlantAbility.PHAT_BEET
-                || plant.getAbility() == PlantAbility.KIWIBEAST
-                ? rowDistance <= 1 && columnDistance <= 1.5
-                : rowDistance == 0 && columnDistance <= 1.25;
+            int rowRadius = plant.getDefinition().getAbilityParameterInt("rowRadius",
+                plant.getAbility() == PlantAbility.PHAT_BEET
+                    || plant.getAbility() == PlantAbility.KIWIBEAST ? 1 : 0);
+            double baseRange = plant.getDefinition().getAbilityParameter("rangeTiles",
+                rowRadius > 0 ? 1.5 : 1.25);
+            double range = plant.getEffectiveRange(baseRange);
+            boolean inRange = rowDistance <= rowRadius && columnDistance <= range;
             if (inRange) {
                 engine.damageZombieFromPlant(zombie, plant,
                     Math.max(1, plant.getEffectiveAttackPower()), false);
@@ -217,6 +243,9 @@ final class BattleTickSystem {
             }
             double previousColumn = projectile.moveOneTick();
             double currentColumn = projectile.getPosition().getColumn();
+            int crossingMultiplier = engine.torchwoodMultiplier(
+                projectile, previousColumn, currentColumn);
+            projectile.igniteByTorchwood(crossingMultiplier);
             if (!projectile.isLobbed() && engine.hitTomb(projectile, previousColumn, currentColumn)) {
                 engine.board.removeProjectile(projectile);
                 continue;
@@ -228,8 +257,9 @@ final class BattleTickSystem {
                     engine.board.removeProjectile(projectile);
                     continue;
                 }
-                int multiplier = engine.torchwoodMultiplier(projectile, previousColumn, currentColumn);
-                boolean affected = projectile.hitTarget(target, multiplier);
+                int multiplier = projectile.getDamageMultiplier();
+                boolean affected = projectile.hitTarget(target, multiplier,
+                    projectile.getImpactType());
                 if (affected) {
                     if (projectile.isPiercing()) {
                         engine.piercingProjectileHits++;
@@ -321,6 +351,10 @@ final class BattleTickSystem {
             if (plant.getAbility() == PlantAbility.EXPLODE_O_NUT) {
                 engine.explodeDestroyedDefender(plant);
             }
+            if (plant.getAbility() == PlantAbility.TORCHWOOD
+                && plant.hasUpgradeTrait("AOE_ON_DEATH")) {
+                explodeTorchwoodOnDeath(engine, plant);
+            }
             boolean endangered = engine.endangeredPositions.contains(position)
                 && engine.board.getTile(position.getRow(), position.getColumn()).getMainPlant() == plant;
             engine.board.removePlant(plant);
@@ -346,6 +380,22 @@ final class BattleTickSystem {
             engine.addEvent("Zombie of type " + zombie.getName() + " is dead at " + position + ".");
         }
     }
+    private static void explodeTorchwoodOnDeath(Game engine, Plant plant) {
+        int damage = plant.getDefinition().getAbilityParameterInt("deathExplosionDamage", 500);
+        GridPosition center = plant.getPosition();
+        int hits = 0;
+        for (Zombie zombie : engine.hostileZombies()) {
+            if (Math.abs(zombie.getPosition().getRow() - center.getRow()) <= 1
+                && Math.abs(zombie.getPosition().getColumn() - center.getColumn()) <= 1.5) {
+                zombie.takeProjectileDamage(damage, ProjectileType.FIRE, 0, false,
+                    plant.getName());
+                hits++;
+            }
+        }
+        engine.addEvent("Torchwood's level upgrade exploded on death and hit "
+            + hits + " zombie(s).");
+    }
+
     static void recordZombieKillStatistics(Game engine, Zombie zombie, BoardPosition position) {
         if (engine.lastKillTick == engine.elapsedTicks) {
             engine.killsAtLastKillTick++;

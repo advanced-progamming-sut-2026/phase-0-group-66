@@ -7,6 +7,7 @@ import java.util.List;
 public class Tile {
     private final GridPosition position;
     private TileType tileType;
+    private int iceHealth;
     private Plant supportPlant;
     private Plant mainPlant;
     private Plant coverPlant;
@@ -19,6 +20,7 @@ public class Tile {
     public Tile(int row, int col, TileType tileType) {
         this.position = new GridPosition(row, col);
         this.tileType = tileType == null ? TileType.NORMAL : tileType;
+        this.iceHealth = this.tileType == TileType.ICE ? 600 : 0;
         this.zombies = new ArrayList<>();
     }
 
@@ -27,12 +29,25 @@ public class Tile {
     public TileType getType() { return tileType; }
 
     public void setTileType(String tileType) {
-        this.tileType = TileType.fromText(tileType);
+        setTileType(TileType.fromText(tileType));
     }
 
     public void setTileType(TileType tileType) {
         this.tileType = tileType == null ? TileType.NORMAL : tileType;
+        this.iceHealth = this.tileType == TileType.ICE ? 600 : 0;
     }
+
+    public void damageIce(int damage, boolean fire) {
+        if (tileType != TileType.ICE) {
+            return;
+        }
+        iceHealth = fire ? 0 : Math.max(0, iceHealth - Math.max(0, damage));
+        if (iceHealth == 0) {
+            tileType = TileType.NORMAL;
+        }
+    }
+
+    public int getIceHealth() { return iceHealth; }
 
     /** Returns the main interactive plant, falling back to support or cover. */
     public Plant getPlant() {

@@ -15,6 +15,7 @@ public class Board {
     private final List<LawnMower> lawnMowers;
     private final List<Zombie> zombies;
     private final List<Projectile> projectiles;
+    private final List<GrapeshotFragment> grapeshotFragments;
     private final List<Sun> suns;
     private boolean endangeredPlantsEaten;
 
@@ -32,6 +33,7 @@ public class Board {
         this.lawnMowers = new ArrayList<>();
         this.zombies = new ArrayList<>();
         this.projectiles = new ArrayList<>();
+        this.grapeshotFragments = new ArrayList<>();
         this.suns = new ArrayList<>();
         for (int row = 0; row < rows; row++) {
             lawnMowers.add(new LawnMower(row));
@@ -271,6 +273,20 @@ public class Board {
     public void removeProjectile(Projectile projectile) { projectiles.remove(projectile); }
     public List<Projectile> getProjectiles() {
         return Collections.unmodifiableList(projectiles);
+    }
+
+    void addGrapeshotFragment(GrapeshotFragment fragment) {
+        if (fragment != null) {
+            grapeshotFragments.add(fragment);
+        }
+    }
+
+    void removeGrapeshotFragment(GrapeshotFragment fragment) {
+        grapeshotFragments.remove(fragment);
+    }
+
+    List<GrapeshotFragment> getGrapeshotFragments() {
+        return Collections.unmodifiableList(grapeshotFragments);
     }
 
     public void addSun(Sun sun) {

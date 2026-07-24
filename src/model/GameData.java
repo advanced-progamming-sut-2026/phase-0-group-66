@@ -25,6 +25,7 @@ public final class GameData {
         Path questsPath = DataFileLocator.locate("quests.json");
 
         List<PlantDefinition> plants = new PlantDataLoader().load(plantsPath);
+        PlantCatalogValidator.validate(plants);
         List<ArmorDefinition> armors = new ArmorDataLoader().load(armorPath);
         List<ZombieDefinition> zombies = new ZombieDataLoader().load(zombiesPath);
         List<QuestDefinition> quests = new QuestDataLoader().load(questsPath);

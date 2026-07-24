@@ -192,6 +192,15 @@ public abstract class Zombie {
 
     public boolean takeProjectileDamage(int amount, ProjectileType type, int chillTicks,
                                         boolean lobbed, String sourcePlant) {
+        int defaultPoisonTicks = 5 * Game.TICKS_PER_SECOND;
+        int defaultPoisonDamage = Math.max(1, amount / 4);
+        return takeProjectileDamage(amount, type, chillTicks, lobbed, sourcePlant,
+            defaultPoisonTicks, defaultPoisonDamage);
+    }
+
+    public boolean takeProjectileDamage(int amount, ProjectileType type, int chillTicks,
+                                        boolean lobbed, String sourcePlant,
+                                        int poisonDurationTicks, int poisonDamagePerSecond) {
         ProjectileType actualType = type == null ? ProjectileType.NORMAL : type;
         if (ability == ZombieAbility.DRAGON_IMP && actualType == ProjectileType.FIRE) {
             return false;
@@ -214,7 +223,8 @@ public abstract class Zombie {
         }
         if (actualType == ProjectileType.POISON) {
             takeDirectDamage(amount, sourcePlant);
-            poison(5 * Game.TICKS_PER_SECOND, Math.max(1, amount / 4), sourcePlant);
+            poison(Math.max(0, poisonDurationTicks),
+                Math.max(0, poisonDamagePerSecond), sourcePlant);
         } else if (actualType == ProjectileType.FIRE) {
             clearChill();
             takeDamage(amount, sourcePlant);
@@ -254,6 +264,22 @@ public abstract class Zombie {
 
     public void specialAbility() {
         specialAbilityUses++;
+    }
+
+    public void buffHealthPercent(int percent) {
+        if (percent <= 0) {
+            return;
+        }
+        int increase = Math.max(1, (int) Math.round(maximumHealth * percent / 100.0));
+        maximumHealth += increase;
+        health += increase;
+    }
+
+    public void buffDamagePercent(int percent) {
+        if (percent <= 0 || damage <= 0) {
+            return;
+        }
+        damage += Math.max(1, (int) Math.round(damage * percent / 100.0));
     }
 
     public void addBonusArmor(int amount) {

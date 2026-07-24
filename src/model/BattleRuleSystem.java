@@ -44,15 +44,52 @@ final class BattleRuleSystem {
         plant.takeDamage(Math.max(plant.getHealth(), 1));
     }
     static void activateMint(Game engine, Plant mint) {
+        int baseDuration = mint.getDefinition().getAbilityParameterInt("durationSeconds", 3);
+        int duration = Math.max(1, baseDuration
+            + mint.getUpgradeTraitInt("DURATION_1S", 0));
+        mint.startMintAura(duration * Game.TICKS_PER_SECOND);
+        int affected = empowerMintFamily(engine, mint);
+        resetMintFamilyCooldowns(engine, mint);
+        engine.addEvent(mint.getName() + " started a " + duration
+            + " second aura and empowered " + affected + " related plant(s).");
+    }
+
+    static int empowerMintFamily(Game engine, Plant mint) {
+        if (!mint.isMintAuraActive()) {
+            return 0;
+        }
         int affected = 0;
         for (Plant plant : new ArrayList<>(engine.board.getPlants())) {
-            if (plant != mint && engine.plantMatchesMint(plant, mint.getAbility())) {
+            if (plant == mint || plant.isDestroyed()
+                || !engine.plantMatchesMint(plant, mint.getAbility())
+                || !mint.markMintEmpowered(plant)) {
+                continue;
+            }
+            if (plant.getDefinition().getPlantFoodType() != PlantFoodType.NONE) {
                 engine.activatePlantFood(plant, mint.getName());
-                affected++;
+            }
+            affected++;
+        }
+        return affected;
+    }
+
+    private static void resetMintFamilyCooldowns(Game engine, Plant mint) {
+        if (!mint.hasUpgradeTrait("RESET_FAMILY_COOLDOWNS")) {
+            return;
+        }
+        int reset = 0;
+        for (PlantDefinition definition : engine.plantFactory.getAllDefinitions()) {
+            Plant sample = engine.plantFactory.createPlant(definition.getName());
+            if (engine.plantMatchesMint(sample, mint.getAbility())) {
+                String key = definition.getNormalizedName();
+                if (engine.cooldownTicks.containsKey(key)) {
+                    engine.cooldownTicks.put(key, 0);
+                    reset++;
+                }
             }
         }
-        engine.removeInstantPlant(mint);
-        engine.addEvent(mint.getName() + " empowered " + affected + " related plant(s).");
+        engine.addEvent(mint.getName() + " reset " + reset
+            + " related plant cooldown(s).");
     }
     static boolean plantMatchesMint(Game engine, Plant plant, PlantAbility mint) {
         return switch (mint) {
@@ -69,13 +106,17 @@ final class BattleRuleSystem {
         };
     }
     static void freezeAllZombies(Game engine, Plant source, boolean killWeak) {
+        int freezeTicks = source.getDefinition().getAbilityParameterInt("freezeSeconds", 5)
+            * Game.TICKS_PER_SECOND + source.getChillBonusTicks();
+        int chillTicks = source.getDefinition().getAbilityParameterInt("chillSeconds", 10)
+            * Game.TICKS_PER_SECOND;
         int affected = 0;
         for (Zombie zombie : engine.hostileZombies()) {
             if (killWeak && zombie.getEffectiveHealth() <= source.getEffectiveAttackPower() * 5) {
                 zombie.kill(source.getName());
             } else {
-                zombie.stun(5 * Game.TICKS_PER_SECOND);
-                zombie.chill(10 * Game.TICKS_PER_SECOND);
+                zombie.stun(freezeTicks);
+                zombie.chill(chillTicks);
             }
             affected++;
         }
@@ -92,13 +133,25 @@ final class BattleRuleSystem {
         };
     }
     static void launchGrapeshotFragments(Game engine, Plant plant, int multiplier) {
-        ArrayList<Zombie> targets = engine.hostileZombies();
-        int fragments = Math.min(8, targets.size());
-        for (int index = 0; index < fragments; index++) {
-            Zombie target = targets.get(engine.random.nextInt(targets.size()));
-            target.takeDamage(100 * Math.max(1, multiplier), plant.getName());
+        GridPosition center = plant.getPosition();
+        int count = plant.getDefinition().getAbilityParameterInt("fragmentCount", 8);
+        int baseDamage = plant.getDefinition().getAbilityParameterInt("fragmentDamage", 100);
+        int lifetimeSeconds = plant.getDefinition().getAbilityParameterInt(
+            "fragmentLifetimeSeconds", 5);
+        int maximumHits = 1 + plant.getUpgradeTraitInt("BOUNCES_1", 0);
+        double[][] directions = {
+            {-1, -1}, {-1, 0}, {-1, 1}, {0, -1},
+            {0, 1}, {1, -1}, {1, 0}, {1, 1}
+        };
+        for (int index = 0; index < count; index++) {
+            double[] direction = directions[index % directions.length];
+            engine.board.addGrapeshotFragment(new GrapeshotFragment(
+                center.getRow(), center.getColumn(), direction[0], direction[1],
+                baseDamage * Math.max(1, multiplier),
+                lifetimeSeconds * Game.TICKS_PER_SECOND, maximumHits, plant.getName()));
         }
-        engine.addEvent("Grapeshot launched " + fragments + " bouncing fragment(s).");
+        engine.addEvent("Grapeshot launched " + count + " bouncing fragment(s) for "
+            + lifetimeSeconds + " seconds.");
     }
     static int calculateNextSkySunTick(Game engine) {
         return engine.calculateSkySunIntervalTicks();

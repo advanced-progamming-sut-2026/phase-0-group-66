@@ -191,15 +191,17 @@ final class LevelSetupSystem {
         }
         return false;
     }
-    static boolean applyAutomaticBoostIfPresent(Game engine, Plant plant) {
-        String name = plant.getName();
-        if (engine.levelBoostedPlants.contains(name)) {
+    static boolean applyAutomaticBoostIfPresent(Game engine, Plant plant,
+                                                String selectedPlantName) {
+        String activeName = plant.getName();
+        String selectedName = selectedPlantName == null ? activeName : selectedPlantName;
+        if (engine.levelBoostedPlants.contains(selectedName)) {
             engine.activatePlantFood(plant, "level boost");
             return true;
         }
-        if (engine.inventory.consumeStoredBoost(name)) {
+        if (engine.inventory.consumeStoredBoost(activeName)) {
             engine.activatePlantFood(plant, "stored greenhouse boost");
-            engine.addEvent("Stored boost for " + name + " was consumed.");
+            engine.addEvent("Stored boost for " + activeName + " was consumed.");
             return true;
         }
         return false;
@@ -208,105 +210,14 @@ final class LevelSetupSystem {
         if (plant == null || plant.isDestroyed() || plant.getPosition() == null) {
             throw new IllegalStateException("Plant food cannot be applied to this plant.");
         }
-        plant.usePlantFood();
-        PlantFoodType foodType = plant.getDefinition().getPlantFoodType();
-        int power = Math.max(0, (int) Math.round(plant.getDefinition().getPlantFoodPower()));
-        switch (foodType) {
-            case NONE -> engine.addEvent(plant.getName() + " has no plant-food effect.");
-            case SUN_BURST -> engine.activateSunProducerFood(plant);
-            case ARM_AND_CLONE -> engine.armMineWithPlantFood(plant);
-            case EXPLOSIVE_BLAST -> {
-                engine.explosivePlantsUsed++;
-                engine.detonatePlant(plant, Math.max(1, power));
-            }
-            case MULTI_SMASH -> engine.squashMultipleZombies(plant, Math.max(1, power));
-            case DROWN_TARGETS -> engine.drownMultipleZombies(plant, Math.max(1, power));
-            case MAP_FREEZE -> engine.freezeAllZombies(plant, false);
-            case REINFORCE -> engine.addEvent(plant.getName() + " received reinforced armor.");
-            case REDIRECT_LANE -> engine.redirectWholeLane(plant);
-            case PULL_TO_DEFENDER -> {
-                plant.healToFull();
-                engine.pullZombiesTowardSweetPotato(plant);
-            }
-            case TORCHWOOD_FLAME -> engine.addEvent(
-                "Torchwood ignited a blue triple-damage flame.");
-            case REMOVE_ARMOR -> engine.magnetizeAllZombies(plant);
-            case CLONE_SUPPORTS -> engine.cloneLilyPads(plant);
-            case RESET_LIFETIME -> engine.resetShortRangeShrooms();
-            case HYPNOTIZE_RANDOM -> engine.hypnotizeRandomZombies(Math.max(1, power));
-            case ELIMINATE_RANDOM -> engine.killRandomZombies(Math.max(1, power), plant.getName());
-            case CLEAR_LANE -> engine.clearPlantLane(plant);
-            case KNOCKBACK_BLAST -> engine.fumePlantFoodPush(plant);
-            case OFFENSIVE_BURST -> engine.activateGeneralOffensiveFood(plant);
+        if (plant.getDefinition().getPlantFoodType() == PlantFoodType.NONE) {
+            engine.addEvent(plant.getName() + " has no plant-food effect.");
+            return;
         }
+        plant.usePlantFood();
+        PlantFoodBehaviorFactory.activate(engine, plant);
         engine.cleanupDestroyedEntities();
         engine.addEvent("Plant food activated on " + plant.getName() + " from " + source + ".");
-    }
-    static int plantFoodSunAmount(Game engine, Plant plant) {
-        int configured = (int) Math.round(plant.getDefinition().getPlantFoodPower());
-        return Math.max(0, configured) + plant.getSunProductionBonus();
-    }
-    static void plantFoodShooterVolley(Game engine, Plant plant) {
-        GridPosition position = plant.getPosition();
-        int damage = Math.max(1, plant.getAttackPower())
-            * Math.max(5, plant.getProjectileCount() * 3);
-        int hits = 0;
-        for (Zombie zombie : new ArrayList<>(engine.board.getZombiesInRow(position.getRow()))) {
-            if (zombie.getPosition().getColumn() + 0.001 < position.getColumn()) {
-                continue;
-            }
-            engine.applyPlantFoodDamage(zombie, plant, damage);
-            hits++;
-            if (!plant.isPiercing() && hits >= 3) {
-                break;
-            }
-        }
-        engine.addEvent(plant.getName() + " fired a plant-food volley and hit " + hits
-            + " zombie(s).");
-    }
-    static void plantFoodHomingStrike(Game engine, Plant plant) {
-        ArrayList<Zombie> targets = new ArrayList<>(engine.board.getZombies());
-        targets.removeIf(Zombie::isDead);
-        targets.sort((first, second) -> Integer.compare(
-            second.getEffectiveHealth(), first.getEffectiveHealth()));
-        int limit = Math.min(5, targets.size());
-        for (int index = 0; index < limit; index++) {
-            engine.applyPlantFoodDamage(targets.get(index), plant,
-                Math.max(1, plant.getAttackPower()) * 5);
-        }
-        engine.addEvent(plant.getName() + " launched " + limit + " homing plant-food strike(s).");
-    }
-    static void plantFoodMeleeStrike(Game engine, Plant plant) {
-        GridPosition center = plant.getPosition();
-        int hits = 0;
-        for (Zombie zombie : new ArrayList<>(engine.board.getZombies())) {
-            if (zombie.getPosition() == null) {
-                continue;
-            }
-            int rowDistance = Math.abs(zombie.getPosition().getRow() - center.getRow());
-            double columnDistance = Math.abs(zombie.getPosition().getColumn()
-                - center.getColumn());
-            if (rowDistance <= 1 && columnDistance <= 1.5) {
-                zombie.takeDamage(Math.max(1, plant.getAttackPower()) * 5, plant.getName());
-                hits++;
-            }
-        }
-        engine.addEvent(plant.getName() + " used a plant-food area strike on " + hits
-            + " zombie(s).");
-    }
-    static void applyPlantFoodDamage(Game engine, Zombie zombie, Plant plant, int damage) {
-        ProjectileType type = plant.getProjectileElementType();
-        if (type == ProjectileType.POISON) {
-            zombie.takeDirectDamage(damage, plant.getName());
-        } else if (type == ProjectileType.FIRE) {
-            zombie.clearChill();
-            zombie.takeDamage(damage, plant.getName());
-        } else {
-            zombie.takeDamage(damage, plant.getName());
-            if (type == ProjectileType.ICE) {
-                zombie.chill(plant.getChillDurationTicks());
-            }
-        }
     }
     static void initializeSpecialLevel(Game engine) {
         engine.currentLevel.getRuleStrategy().initializeBattle(engine);

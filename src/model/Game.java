@@ -191,16 +191,13 @@ public class Game {
         return LevelSetupSystem.hitTomb(this, projectile, fromColumn, toColumn);
     }
     boolean applyAutomaticBoostIfPresent(Plant plant) {
-        return LevelSetupSystem.applyAutomaticBoostIfPresent(this, plant);
+        return LevelSetupSystem.applyAutomaticBoostIfPresent(this, plant, plant.getName());
+    }
+    boolean applyAutomaticBoostIfPresent(Plant plant, String selectedPlantName) {
+        return LevelSetupSystem.applyAutomaticBoostIfPresent(
+            this, plant, selectedPlantName);
     }
     void activatePlantFood(Plant plant, String source) { LevelSetupSystem.activatePlantFood(this, plant, source); }
-    int plantFoodSunAmount(Plant plant) { return LevelSetupSystem.plantFoodSunAmount(this, plant); }
-    void plantFoodShooterVolley(Plant plant) { LevelSetupSystem.plantFoodShooterVolley(this, plant); }
-    void plantFoodHomingStrike(Plant plant) { LevelSetupSystem.plantFoodHomingStrike(this, plant); }
-    void plantFoodMeleeStrike(Plant plant) { LevelSetupSystem.plantFoodMeleeStrike(this, plant); }
-    void applyPlantFoodDamage(Zombie zombie, Plant plant, int damage) {
-        LevelSetupSystem.applyPlantFoodDamage(this, zombie, plant, damage);
-    }
     void initializeSpecialLevel() { LevelSetupSystem.initializeSpecialLevel(this); }
     void initializeProtectedPlants() { LevelSetupSystem.initializeProtectedPlants(this); }
     void tickConveyor() { BattleTickSystem.tickConveyor(this); }
@@ -241,7 +238,6 @@ public class Game {
         PlantFoodSystem.detonatePlant(this, plant, damageMultiplier);
     }
     void explodeRadioactiveSun(Sun sun) { PlantFoodSystem.explodeRadioactiveSun(this, sun); }
-    void activateSunProducerFood(Plant plant) { PlantFoodSystem.activateSunProducerFood(this, plant); }
     void armMineWithPlantFood(Plant plant) { PlantFoodSystem.armMineWithPlantFood(this, plant); }
     void squashMultipleZombies(Plant plant, int count) { PlantFoodSystem.squashMultipleZombies(this, plant, count); }
     void drownMultipleZombies(Plant plant, int count) { PlantFoodSystem.drownMultipleZombies(this, plant, count); }
@@ -253,7 +249,6 @@ public class Game {
     void killRandomZombies(int count, String sourceName) { PlantFoodSystem.killRandomZombies(this, count, sourceName); }
     void clearPlantLane(Plant plant) { PlantFoodSystem.clearPlantLane(this, plant); }
     void fumePlantFoodPush(Plant plant) { PlantFoodSystem.fumePlantFoodPush(this, plant); }
-    void activateGeneralOffensiveFood(Plant plant) { PlantFoodSystem.activateGeneralOffensiveFood(this, plant); }
     void ensureConveyorCardAvailable(PlantDefinition definition, boolean conveyor) {
         PlantFoodSystem.ensureConveyorCardAvailable(this, definition, conveyor);
     }

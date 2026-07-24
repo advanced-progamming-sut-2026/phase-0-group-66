@@ -8,7 +8,11 @@ public class Projectile {
     private final int chillDurationTicks;
     private final boolean lobbed;
     private final String sourcePlant;
+    private final int poisonDurationTicks;
+    private final int poisonDamagePerSecond;
     private BoardPosition position;
+    private ProjectileType impactType;
+    private int damageMultiplier;
     private boolean active;
     private int remainingHits;
 
@@ -32,8 +36,16 @@ public class Projectile {
     public Projectile(int damage, double speed, BoardPosition position,
                       ProjectileType type, boolean piercing, int chillDurationTicks,
                       boolean lobbed, String sourcePlant, int maxHits) {
+        this(damage, speed, position, type, piercing, chillDurationTicks, lobbed,
+            sourcePlant, maxHits, 5 * Game.TICKS_PER_SECOND, Math.max(1, damage / 4));
+    }
+
+    public Projectile(int damage, double speed, BoardPosition position,
+                      ProjectileType type, boolean piercing, int chillDurationTicks,
+                      boolean lobbed, String sourcePlant, int maxHits,
+                      int poisonDurationTicks, int poisonDamagePerSecond) {
         if (damage < 0 || speed < 0 || position == null || chillDurationTicks < 0
-            || maxHits <= 0) {
+            || maxHits <= 0 || poisonDurationTicks < 0 || poisonDamagePerSecond < 0) {
             throw new IllegalArgumentException("Invalid projectile data.");
         }
         this.damage = damage;
@@ -44,6 +56,10 @@ public class Projectile {
         this.chillDurationTicks = chillDurationTicks;
         this.lobbed = lobbed;
         this.sourcePlant = sourcePlant == null ? "" : sourcePlant;
+        this.poisonDurationTicks = poisonDurationTicks;
+        this.poisonDamagePerSecond = poisonDamagePerSecond;
+        this.impactType = this.type;
+        this.damageMultiplier = 1;
         this.remainingHits = maxHits;
         this.active = true;
     }
@@ -57,16 +73,22 @@ public class Projectile {
     public void move() { moveOneTick(); }
 
     public boolean hitTarget(Zombie target) {
-        return hitTarget(target, 1);
+        return hitTarget(target, damageMultiplier, impactType);
     }
 
-    public boolean hitTarget(Zombie target, int damageMultiplier) {
+    public boolean hitTarget(Zombie target, int multiplier) {
+        return hitTarget(target, multiplier, impactType);
+    }
+
+    public boolean hitTarget(Zombie target, int damageMultiplier, ProjectileType impactType) {
         if (target == null || !active) {
             return false;
         }
         int actualDamage = Math.max(0, damage * Math.max(1, damageMultiplier));
-        boolean affected = target.takeProjectileDamage(actualDamage, type,
-            chillDurationTicks, lobbed, sourcePlant);
+        ProjectileType resolvedType = impactType == null ? type : impactType;
+        boolean affected = target.takeProjectileDamage(actualDamage, resolvedType,
+            chillDurationTicks, lobbed, sourcePlant, poisonDurationTicks,
+            poisonDamagePerSecond);
         if (affected) {
             remainingHits--;
         }
@@ -76,9 +98,20 @@ public class Projectile {
         return affected;
     }
 
+
+    public void igniteByTorchwood(int multiplier) {
+        if (type == ProjectileType.FIRE || multiplier <= 1) {
+            return;
+        }
+        damageMultiplier = Math.max(damageMultiplier, multiplier);
+        impactType = ProjectileType.FIRE;
+    }
+
     public int getDamage() { return damage; }
     public double getSpeed() { return speed; }
     public ProjectileType getType() { return type; }
+    public ProjectileType getImpactType() { return impactType; }
+    public int getDamageMultiplier() { return damageMultiplier; }
     public boolean isPiercing() { return piercing; }
     public boolean isLobbed() { return lobbed; }
     public String getSourcePlant() { return sourcePlant; }

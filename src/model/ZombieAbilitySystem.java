@@ -12,8 +12,10 @@ final class ZombieAbilitySystem {
     private ZombieAbilitySystem() { }
 
     static int torchwoodMultiplier(Game engine, Projectile projectile, double fromColumn, double toColumn) {
-        String source = PlantDefinition.normalizeKey(projectile.getSourcePlant());
-        if (!source.contains("pea") || projectile.getType() == ProjectileType.FIRE) {
+        PlantDefinition source = engine.plantFactory.findDefinition(
+            projectile.getSourcePlant()).orElse(null);
+        if (source == null || !source.hasTag("Pea")
+            || projectile.getImpactType() == ProjectileType.FIRE) {
             return 1;
         }
         int row = projectile.getPosition().getRow();
@@ -22,8 +24,8 @@ final class ZombieAbilitySystem {
                 continue;
             }
             int column = plant.getPosition().getColumn();
-            if (column - 0.001 <= toColumn) {
-                return plant.getPlantFoodShield() > 0 ? 3 : 2;
+            if (column + 0.001 >= fromColumn && column - 0.001 <= toColumn) {
+                return plant.getTorchwoodMultiplier();
             }
         }
         return 1;
@@ -316,22 +318,73 @@ final class ZombieAbilitySystem {
         }
         if (plant.getAbility() == PlantAbility.HYPNO_SHROOM) {
             plant.takeDamage(Math.max(plant.getHealth(), 1));
-            zombie.hypnotize();
-            engine.addEvent("Hypno-shroom converted " + zombie.getName() + ".");
+            if (plant.consumeHypnoGargantuar()) {
+                replaceWithHypnotizedGargantuar(engine, zombie, plant);
+            } else {
+                zombie.hypnotize();
+                applyHypnoUpgradeBuffs(zombie, plant);
+                engine.addEvent("Hypno-shroom converted " + zombie.getName() + ".");
+            }
             return;
         }
         zombie.attackPlant(plant);
+        int shieldExplosion = plant.consumeShieldExplosionDamage();
+        if (shieldExplosion > 0) {
+            explodePlantFoodArmor(engine, plant, shieldExplosion);
+        }
         if (plant.getAbility() == PlantAbility.ENDURIAN) {
-            zombie.takeDirectDamage(Math.max(1, plant.getEffectiveAttackPower()), plant.getName());
+            zombie.takeDirectDamage(plant.getReflectedDamage(), plant.getName());
         } else if (plant.getAbility() == PlantAbility.SUN_BEAN) {
-            engine.sunAmount += 5;
-            engine.totalSunCollected += 5;
-            engine.addEvent("Sun Bean produced 5 sun after being hit.");
+            int sun = plant.getDefinition().getAbilityParameterInt("sunPerHit", 5)
+                + plant.getSunProductionBonus();
+            engine.sunAmount += sun;
+            engine.totalSunCollected += sun;
+            engine.addEvent("Sun Bean produced " + sun + " sun after being hit.");
         } else if (plant.getAbility() == PlantAbility.GARLIC && !plant.isDestroyed()) {
             engine.moveZombieToAdjacentLane(zombie);
         }
         engine.addEvent("Zombie " + zombie.getName() + " attacked " + plant.getName()
             + " at " + plant.getPosition() + ".");
+    }
+
+    private static void replaceWithHypnotizedGargantuar(Game engine, Zombie eater,
+                                                       Plant hypnoShroom) {
+        BoardPosition position = eater.getPosition();
+        eater.kill("Hypno-shroom");
+        Zombie ally = engine.zombieFactory.createZombie("Gargantuar");
+        ally.applyDifficulty(engine.difficultyLevel);
+        ally.setPosition(position);
+        ally.hypnotize();
+        applyHypnoUpgradeBuffs(ally, hypnoShroom);
+        engine.board.addZombie(ally);
+        engine.addEvent("Hypno-shroom transformed its eater into an allied Gargantuar.");
+    }
+
+    private static void applyHypnoUpgradeBuffs(Zombie ally, Plant hypnoShroom) {
+        if (hypnoShroom.hasUpgradeTrait("ZOMBIE_HP_BUFF")) {
+            int percent = hypnoShroom.getDefinition().getAbilityParameterInt(
+                "hypnotizedHealthBuffPercent", 50);
+            ally.buffHealthPercent(percent);
+        }
+        if (hypnoShroom.hasUpgradeTrait("ZOMBIE_DMG_BUFF")) {
+            int percent = hypnoShroom.getDefinition().getAbilityParameterInt(
+                "hypnotizedDamageBuffPercent", 50);
+            ally.buffDamagePercent(percent);
+        }
+    }
+
+    private static void explodePlantFoodArmor(Game engine, Plant plant, int damage) {
+        GridPosition center = plant.getPosition();
+        int hits = 0;
+        for (Zombie target : engine.hostileZombies()) {
+            if (Math.abs(target.getPosition().getRow() - center.getRow()) <= 1
+                && Math.abs(target.getPosition().getColumn() - center.getColumn()) <= 1.5) {
+                target.takeDamage(damage, plant.getName());
+                hits++;
+            }
+        }
+        engine.addEvent(plant.getName() + " plant-food armor exploded and hit " + hits
+            + " zombie(s).");
     }
     static void moveZombieToAdjacentLane(Game engine, Zombie zombie) {
         int row = zombie.getPosition().getRow();
