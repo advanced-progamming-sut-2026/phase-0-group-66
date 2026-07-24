@@ -29,59 +29,13 @@ public class BattleMenu extends Menu {
 
     @Override
     protected void processSpecificCommand(String command) {
-        Matcher plant = getMatcher(command,
-            "plant plant -t (?<type>.+?) -l \\((?<x>\\d+),\\s*(?<y>\\d+)\\)");
-        Matcher pluck = position(command, "pluck plant -l ");
-        Matcher collect = position(command, "collect sun -l ");
-        Matcher feed = position(command, "feed plant -l ");
-        Matcher tile = position(command, "show tile status -l ");
-        Matcher advance = getMatcher(command, "advance time -t (?<ticks>\\d+) ticks");
-        Matcher addSun = getMatcher(command, "cheat add -n (?<count>\\d+) suns");
-        Matcher spawn = getMatcher(command,
-            "cheat spawn-zombie -t (?<type>.+?) -l \\((?<x>\\d+),\\s*(?<y>\\d+)\\)");
-        if (plant != null) {
-            show(controller.plantPlant(plant.group("type").trim(), number(plant, "x"),
-                number(plant, "y")));
-        } else if (pluck != null) {
-            show(controller.pluckPlant(number(pluck, "x"), number(pluck, "y")));
-        } else if (collect != null) {
-            show(controller.collectSun(number(collect, "x"), number(collect, "y")));
-        } else if (feed != null) {
-            show(controller.feedPlant(number(feed, "x"), number(feed, "y")));
-        } else if (command.equals("show plant-food amount")) {
-            System.out.println(controller.plantFoodAmount());
-        } else if (advance != null) {
-            show(controller.advanceTime(number(advance, "ticks")));
-        } else if (command.equals("start zombie waves")) {
-            show(controller.startZombieWaves());
-        } else if (command.equals("show special status")) {
-            System.out.println(controller.specialStatus());
-        } else if (command.equals("show score status")) {
-            System.out.println(controller.scoreStatus());
-        } else if (command.equals("show map")) {
-            controller.printMap();
-        } else if (command.equals("show sun amount")) {
-            System.out.println(controller.sunAmount());
-        } else if (command.equals("show plants status")) {
-            controller.showPlantStatus();
-        } else if (tile != null) {
-            controller.showTileStatus(number(tile, "x"), number(tile, "y"));
-        } else if (command.equals("zombies info")) {
-            controller.showZombieInfo();
-        } else if (addSun != null) {
-            show(controller.addSuns(number(addSun, "count")));
-        } else if (command.equals("cheat remove-cooldown")) {
-            show(controller.removeCooldowns());
-        } else if (command.equals("cheat add-plant-food")) {
-            show(controller.addPlantFoodCheat());
-        } else if (command.equals("release the nuke")) {
-            show(controller.releaseNuke());
-        } else if (spawn != null) {
-            show(controller.spawnZombie(spawn.group("type").trim(), number(spawn, "x"),
-                number(spawn, "y")));
-        } else if (command.equals("show commands")) {
-            showCommands();
-        } else {
+        boolean handled = processPlantingCommand(command)
+            || processPositionCommand(command)
+            || processTimeCommand(command)
+            || processDisplayCommand(command)
+            || processCheatCommand(command)
+            || processSimpleCommand(command);
+        if (!handled) {
             System.out.println("invalid command");
         }
         if (controller.isGameFinished()) {
@@ -92,6 +46,99 @@ public class BattleMenu extends Menu {
     @Override
     public void exit() {
         System.out.println("A running battle cannot be exited with menu exit.");
+    }
+
+    private boolean processPlantingCommand(String command) {
+        Matcher matcher = getMatcher(command,
+            "plant plant -t (?<type>.+?) -l \\((?<x>\\d+),\\s*(?<y>\\d+)\\)");
+        if (matcher == null) {
+            return false;
+        }
+        show(controller.plantPlant(matcher.group("type").trim(),
+            number(matcher, "x"), number(matcher, "y")));
+        return true;
+    }
+
+    private boolean processPositionCommand(String command) {
+        Matcher matcher = position(command, "pluck plant -l ");
+        if (matcher != null) {
+            show(controller.pluckPlant(number(matcher, "x"), number(matcher, "y")));
+            return true;
+        }
+        matcher = position(command, "collect sun -l ");
+        if (matcher != null) {
+            show(controller.collectSun(number(matcher, "x"), number(matcher, "y")));
+            return true;
+        }
+        matcher = position(command, "feed plant -l ");
+        if (matcher != null) {
+            show(controller.feedPlant(number(matcher, "x"), number(matcher, "y")));
+            return true;
+        }
+        matcher = position(command, "show tile status -l ");
+        if (matcher != null) {
+            controller.showTileStatus(number(matcher, "x"), number(matcher, "y"));
+            return true;
+        }
+        return false;
+    }
+
+    private boolean processTimeCommand(String command) {
+        Matcher matcher = getMatcher(command, "advance time -t (?<ticks>\\d+) ticks");
+        if (matcher != null) {
+            show(controller.advanceTime(number(matcher, "ticks")));
+            return true;
+        }
+        if (command.equals("start zombie waves")) {
+            show(controller.startZombieWaves());
+            return true;
+        }
+        return false;
+    }
+
+    private boolean processDisplayCommand(String command) {
+        switch (command) {
+            case "show plant-food amount" -> System.out.println(controller.plantFoodAmount());
+            case "show special status" -> System.out.println(controller.specialStatus());
+            case "show score status" -> System.out.println(controller.scoreStatus());
+            case "show map" -> controller.printMap();
+            case "show sun amount" -> System.out.println(controller.sunAmount());
+            case "show plants status" -> controller.showPlantStatus();
+            case "zombies info" -> controller.showZombieInfo();
+            default -> {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean processCheatCommand(String command) {
+        Matcher matcher = getMatcher(command, "cheat add -n (?<count>\\d+) suns");
+        if (matcher != null) {
+            show(controller.addSuns(number(matcher, "count")));
+            return true;
+        }
+        matcher = getMatcher(command,
+            "cheat spawn-zombie -t (?<type>.+?) -l \\((?<x>\\d+),\\s*(?<y>\\d+)\\)");
+        if (matcher != null) {
+            show(controller.spawnZombie(matcher.group("type").trim(),
+                number(matcher, "x"), number(matcher, "y")));
+            return true;
+        }
+        return false;
+    }
+
+    private boolean processSimpleCommand(String command) {
+        switch (command) {
+            case "cheat remove-cooldown" -> show(controller.removeCooldowns());
+            case "cheat add-plant-food" -> show(controller.addPlantFoodCheat());
+            case "release the nuke" -> show(controller.releaseNuke());
+            case "show commands" -> showCommands();
+            default -> {
+                return false;
+            }
+        }
+        return true;
     }
 
     private Matcher position(String command, String prefix) {
