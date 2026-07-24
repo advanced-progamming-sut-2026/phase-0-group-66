@@ -29,27 +29,27 @@ public abstract class Plant {
     private int actionTicksRemaining;
     private int plantFoodShield;
     private int coverShield;
-    private int ageTicks;
+    int ageTicks;
     private int stackCount;
-    private int disabledTicks;
-    private int digestionTicks;
-    private int iceHits;
-    private int frozenHealth;
-    private int octopusHealth;
-    private int armTicksRemaining;
-    private int lifetimeTicksRemaining;
-    private int cyanBulbTicks;
-    private int blueBulbTicks;
-    private int orangeBulbTicks;
+    int disabledTicks;
+    int digestionTicks;
+    int iceHits;
+    int frozenHealth;
+    int octopusHealth;
+    int armTicksRemaining;
+    int lifetimeTicksRemaining;
+    int cyanBulbTicks;
+    int blueBulbTicks;
+    int orangeBulbTicks;
     private int reflectDamageMultiplier = 1;
     private int blueFlameMultiplier = 2;
     private int explosiveShieldDamage;
     private boolean shieldExplosionPending;
     private boolean hypnoGargantuarReady;
-    private int mintAuraTicksRemaining;
+    int mintAuraTicksRemaining;
     private final Set<Plant> mintEmpoweredPlants = Collections.newSetFromMap(
         new IdentityHashMap<>());
-    private String transformedBy;
+    String transformedBy;
     private boolean trappedInIceTile;
     private boolean difficultyTimingApplied;
 
@@ -91,9 +91,8 @@ public abstract class Plant {
             || ability == PlantAbility.PRIMAL_POTATO_MINE) {
             int defaultSeconds = ability == PlantAbility.POTATO_MINE ? 15 : 5;
             int configured = definition.getAbilityParameterInt("armSeconds", defaultSeconds);
-            int seconds = Math.min(configured,
-                Math.max(1, (int) Math.round(actionIntervalTicks
-                    / (double) Game.TICKS_PER_SECOND)));
+            int seconds = Math.min(configured, Math.max(1, (int) Math.round(
+                actionIntervalTicks / (double) Game.TICKS_PER_SECOND)));
             armTicksRemaining = seconds * Game.TICKS_PER_SECOND;
         }
         if (ability == PlantAbility.SHORT_RANGE_SHROOM) {
@@ -161,37 +160,7 @@ public abstract class Plant {
     }
 
     public void tickRuntimeState() {
-        ageTicks++;
-        if (disabledTicks > 0) {
-            disabledTicks--;
-        }
-        if (digestionTicks > 0) {
-            digestionTicks--;
-        }
-        if (armTicksRemaining > 0) {
-            armTicksRemaining--;
-        }
-        if (lifetimeTicksRemaining > 0) {
-            lifetimeTicksRemaining--;
-            if (lifetimeTicksRemaining == 0) {
-                health = 0;
-            }
-        }
-        if (cyanBulbTicks > 0) {
-            cyanBulbTicks--;
-        }
-        if (blueBulbTicks > 0) {
-            blueBulbTicks--;
-        }
-        if (orangeBulbTicks > 0) {
-            orangeBulbTicks--;
-        }
-        if (mintAuraTicksRemaining > 0) {
-            mintAuraTicksRemaining--;
-            if (mintAuraTicksRemaining == 0 && ability.isMint()) {
-                health = 0;
-            }
-        }
+        PlantRuntimeSystem.tick(this);
     }
 
     public boolean tickActionTimer() {
@@ -277,40 +246,15 @@ public abstract class Plant {
     }
 
     public int getGrowthStage() {
-        if (ability != PlantAbility.SUN_SHROOM && ability != PlantAbility.KIWIBEAST) {
-            return 3;
-        }
-        int growthDelta = getUpgradeTraitInt("GROW_TIME_DELTA", 0);
-        int stageTwo = Math.max(1, definition.getAbilityParameterInt("stage2Seconds", 24)
-            + growthDelta) * Game.TICKS_PER_SECOND;
-        int stageThree = Math.max(1, definition.getAbilityParameterInt("stage3Seconds", 72)
-            + growthDelta) * Game.TICKS_PER_SECOND;
-        if (ageTicks < stageTwo) {
-            return 1;
-        }
-        if (ageTicks < stageThree) {
-            return 2;
-        }
-        return 3;
+        return PlantRuntimeSystem.growthStage(this);
     }
 
     public int getEffectiveAttackPower() {
-        if (ability == PlantAbility.KIWIBEAST) {
-            int stage = getGrowthStage();
-            if (stage == 3 && hasUpgradeTrait("MAX_SIZE_1")) {
-                stage++;
-            }
-            return Math.max(1, attackPower) * stage;
-        }
-        return attackPower;
+        return PlantRuntimeSystem.effectiveAttackPower(this);
     }
 
     public int getSunShroomProduction() {
-        return switch (getGrowthStage()) {
-            case 1 -> definition.getAbilityParameterInt("stage1Sun", 25);
-            case 2 -> definition.getAbilityParameterInt("stage2Sun", 50);
-            default -> definition.getAbilityParameterInt("stage3Sun", 75);
-        };
+        return PlantRuntimeSystem.sunShroomProduction(this);
     }
 
     public boolean addStack() {
@@ -337,31 +281,15 @@ public abstract class Plant {
     }
 
     public void addIceLayer() {
-        if (definition.hasTag("Fire") || frozenHealth > 0) {
-            return;
-        }
-        iceHits++;
-        if (iceHits >= 3) {
-            iceHits = 3;
-            frozenHealth = 600;
-        }
+        PlantRuntimeSystem.addIceLayer(this);
     }
 
     public void freezeImmediately() {
-        if (!definition.hasTag("Fire")) {
-            iceHits = 3;
-            frozenHealth = 600;
-        }
+        PlantRuntimeSystem.freezeImmediately(this);
     }
 
     public void damageIce(int damage, boolean fire) {
-        if (frozenHealth <= 0) {
-            return;
-        }
-        frozenHealth = fire ? 0 : Math.max(0, frozenHealth - Math.max(0, damage));
-        if (frozenHealth == 0) {
-            iceHits = 0;
-        }
+        PlantRuntimeSystem.damageIce(this, damage, fire);
     }
 
     public void coverWithOctopus() {
@@ -373,37 +301,23 @@ public abstract class Plant {
     }
 
     public void transformByWizard(String wizardId) {
-        if (wizardId != null && !wizardId.isBlank()) {
-            transformedBy = wizardId;
-        }
+        PlantRuntimeSystem.transformByWizard(this, wizardId);
     }
 
     public void releaseWizardTransformation(String wizardId) {
-        if (wizardId != null && wizardId.equals(transformedBy)) {
-            transformedBy = null;
-        }
+        PlantRuntimeSystem.releaseWizardTransformation(this, wizardId);
     }
 
     public void clearControlEffects() {
-        disabledTicks = 0;
-        digestionTicks = 0;
-        iceHits = 0;
-        frozenHealth = 0;
-        octopusHealth = 0;
-        transformedBy = null;
+        PlantRuntimeSystem.clearControlEffects(this);
     }
 
     public void matureFully() {
-        int stageThree = definition.getAbilityParameterInt("stage3Seconds", 72);
-        ageTicks = Math.max(ageTicks, stageThree * Game.TICKS_PER_SECOND);
+        PlantRuntimeSystem.matureFully(this);
     }
 
     public void restoreLifetime() {
-        if (ability == PlantAbility.SHORT_RANGE_SHROOM) {
-            int seconds = definition.getAbilityParameterInt("lifetimeSeconds", 60)
-                + getUpgradeTraitInt("LIFESPAN_10S", 0);
-            lifetimeTicksRemaining = Math.max(1, seconds) * Game.TICKS_PER_SECOND;
-        }
+        PlantRuntimeSystem.restoreLifetime(this);
     }
 
     public void addPlantFoodShield(int amount) {
@@ -449,10 +363,7 @@ public abstract class Plant {
     }
 
     public void startMintAura(int ticks) {
-        if (!ability.isMint()) {
-            throw new IllegalStateException("Only mint plants can start a mint aura.");
-        }
-        mintAuraTicksRemaining = Math.max(1, ticks);
+        PlantRuntimeSystem.startMintAura(this, ticks);
     }
 
     public boolean isMintAuraActive() {
@@ -468,30 +379,7 @@ public abstract class Plant {
     }
 
     public int nextBowlingBulbDamage() {
-        if (ability != PlantAbility.BOWLING_BULB) {
-            return getEffectiveAttackPower();
-        }
-        if (orangeBulbTicks <= 0) {
-            orangeBulbTicks = adjustedBulbRegenSeconds("orangeRegenSeconds", 10)
-                * Game.TICKS_PER_SECOND;
-            return definition.getAbilityParameterInt("orangeDamage", 180);
-        }
-        if (blueBulbTicks <= 0) {
-            blueBulbTicks = adjustedBulbRegenSeconds("blueRegenSeconds", 5)
-                * Game.TICKS_PER_SECOND;
-            return definition.getAbilityParameterInt("blueDamage", 120);
-        }
-        if (cyanBulbTicks <= 0) {
-            cyanBulbTicks = adjustedBulbRegenSeconds("cyanRegenSeconds", 2)
-                * Game.TICKS_PER_SECOND;
-            return definition.getAbilityParameterInt("cyanDamage", 40);
-        }
-        return 0;
-    }
-
-    private int adjustedBulbRegenSeconds(String parameter, int fallback) {
-        int delta = getUpgradeTraitInt("BULB_REGEN_DELTA", 0);
-        return Math.max(1, definition.getAbilityParameterInt(parameter, fallback) + delta);
+        return PlantRuntimeSystem.nextBowlingBulbDamage(this);
     }
 
     public final boolean hasUpgradeTrait(String trait) {

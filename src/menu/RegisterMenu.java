@@ -18,6 +18,16 @@ public class RegisterMenu extends Menu {
         this.registerView = registerView;
     }
 
+
+    @Override
+    protected void handleMenuEnter(String targetMenu) {
+        if (targetMenu.equals("Login Menu")) {
+            menuManager.enterMenu(targetMenu);
+        } else {
+            super.handleMenuEnter(targetMenu);
+        }
+    }
+
     @Override
     public void showCommands() {
         registerView.showRegisterForm();

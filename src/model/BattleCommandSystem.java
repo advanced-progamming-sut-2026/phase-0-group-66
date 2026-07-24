@@ -284,6 +284,12 @@ final class BattleCommandSystem {
         engine.validateSpecialPlantLocation(plant, row, col);
         engine.board.placePlant(plant, row, col);
         engine.finishPlantPurchase(key, definition.getName(), plant, conveyor);
+        completePlantPlacement(engine, definition, plant, plantLevel, row, col);
+        engine.cleanupDestroyedEntities();
+        engine.evaluateGameState();
+    }
+    private static void completePlantPlacement(Game engine, PlantDefinition definition,
+                                               Plant plant, int plantLevel, int row, int col) {
         Plant activePlant = plant.getPosition() == null
             ? engine.board.getTile(row, col).getMainPlant() : plant;
         if (activePlant == null) {
@@ -295,20 +301,23 @@ final class BattleCommandSystem {
             + ") " + detail + " at " + engine.display(row, col) + ".");
         boolean boosted = engine.applyAutomaticBoostIfPresent(
             activePlant, definition.getName());
-        boolean imitaterEntranceFood = definition.getAbility() == PlantAbility.IMITATER
-            && PlantStats.calculate(definition, plantLevel)
-                .hasTrait("PLANT_FOOD_ON_ENTERANCE")
-            && activePlant.getDefinition().getPlantFoodType() != PlantFoodType.NONE;
-        if (!boosted && imitaterEntranceFood) {
+        if (!boosted && hasImitaterEntranceFood(definition, plantLevel, activePlant)) {
             engine.activatePlantFood(activePlant, "Imitater level-4 entrance effect");
             boosted = true;
         }
         if (!boosted || !activePlant.isExplosive()) {
             engine.handleImmediatePlant(activePlant);
         }
-        engine.cleanupDestroyedEntities();
-        engine.evaluateGameState();
     }
+
+    private static boolean hasImitaterEntranceFood(PlantDefinition definition, int plantLevel,
+                                                    Plant activePlant) {
+        return definition.getAbility() == PlantAbility.IMITATER
+            && PlantStats.calculate(definition, plantLevel)
+                .hasTrait("PLANT_FOOD_ON_ENTERANCE")
+            && activePlant.getDefinition().getPlantFoodType() != PlantFoodType.NONE;
+    }
+
     static void pluckPlant(Game engine, int row, int col) {
         engine.requireRunning();
         GridPosition position = new GridPosition(row, col);

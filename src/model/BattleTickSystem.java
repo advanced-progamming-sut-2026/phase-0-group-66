@@ -246,59 +246,74 @@ final class BattleTickSystem {
             ? Collections.<Projectile>emptyList().iterator()
             : new ArrayList<>(engine.board.getProjectiles()).iterator();
         while (iterator.hasNext()) {
-            Projectile projectile = iterator.next();
-            if (!projectile.isActive()) {
-                engine.board.removeProjectile(projectile);
-                continue;
-            }
-            double previousColumn = projectile.moveOneTick();
-            double currentColumn = projectile.getPosition().getColumn();
-            int crossingMultiplier = engine.torchwoodMultiplier(
-                projectile, previousColumn, currentColumn);
-            projectile.igniteByTorchwood(crossingMultiplier);
-            if (!projectile.isLobbed()
-                && engine.hitIceTile(projectile, previousColumn, currentColumn)) {
-                engine.board.removeProjectile(projectile);
-                continue;
-            }
-            if (!projectile.isLobbed() && engine.hitTomb(projectile, previousColumn, currentColumn)) {
-                engine.board.removeProjectile(projectile);
-                continue;
-            }
-            Zombie target = engine.findProjectileTarget(projectile.getPosition().getRow(),
-                previousColumn, currentColumn);
-            PushedObstacle obstacle = ZombieObjectSystem.firstProjectileObstacle(engine,
-                projectile, previousColumn, currentColumn);
-            if (obstacle != null && (target == null || obstacle.getPosition().getColumn()
-                <= target.getPosition().getColumn())) {
-                ZombieObjectSystem.hitObstacleWithProjectile(engine, obstacle, projectile);
-                engine.board.removeProjectile(projectile);
-                continue;
-            }
-            if (target != null) {
-                if (engine.reflectProjectileIfNeeded(projectile, target)) {
-                    engine.board.removeProjectile(projectile);
-                    continue;
-                }
-                int multiplier = projectile.getDamageMultiplier();
-                boolean affected = projectile.hitTarget(target, multiplier,
-                    projectile.getImpactType());
-                if (affected) {
-                    if (projectile.isPiercing()) {
-                        engine.piercingProjectileHits++;
-                    }
-                    engine.addEvent("Projectile from " + projectile.getSourcePlant() + " hit "
-                        + target.getName() + " for "
-                        + projectile.getDamage() * multiplier + " damage.");
-                } else {
-                    engine.addEvent(target.getName() + " blocked or avoided the projectile.");
-                }
-            }
-            if (!projectile.isActive() || currentColumn > engine.board.getCols() + 1) {
-                engine.board.removeProjectile(projectile);
-            }
+            moveProjectileAndResolveHit(engine, iterator.next());
         }
     }
+
+    private static void moveProjectileAndResolveHit(Game engine, Projectile projectile) {
+        if (!projectile.isActive()) {
+            engine.board.removeProjectile(projectile);
+            return;
+        }
+        double previousColumn = projectile.moveOneTick();
+        double currentColumn = projectile.getPosition().getColumn();
+        projectile.igniteByTorchwood(engine.torchwoodMultiplier(
+            projectile, previousColumn, currentColumn));
+        if (projectileBlockedByTerrain(engine, projectile, previousColumn, currentColumn)) {
+            engine.board.removeProjectile(projectile);
+            return;
+        }
+        Zombie target = engine.findProjectileTarget(projectile.getPosition().getRow(),
+            previousColumn, currentColumn);
+        PushedObstacle obstacle = ZombieObjectSystem.firstProjectileObstacle(engine,
+            projectile, previousColumn, currentColumn);
+        if (obstacleComesFirst(target, obstacle)) {
+            ZombieObjectSystem.hitObstacleWithProjectile(engine, obstacle, projectile);
+            engine.board.removeProjectile(projectile);
+            return;
+        }
+        if (target != null) {
+            resolveProjectileTargetHit(engine, projectile, target);
+        }
+        if (!projectile.isActive() || currentColumn > engine.board.getCols() + 1) {
+            engine.board.removeProjectile(projectile);
+        }
+    }
+
+    private static boolean projectileBlockedByTerrain(Game engine, Projectile projectile,
+                                                       double previousColumn,
+                                                       double currentColumn) {
+        if (projectile.isLobbed()) {
+            return false;
+        }
+        return engine.hitIceTile(projectile, previousColumn, currentColumn)
+            || engine.hitTomb(projectile, previousColumn, currentColumn);
+    }
+
+    private static boolean obstacleComesFirst(Zombie target, PushedObstacle obstacle) {
+        return obstacle != null && (target == null || obstacle.getPosition().getColumn()
+            <= target.getPosition().getColumn());
+    }
+
+    private static void resolveProjectileTargetHit(Game engine, Projectile projectile,
+                                                   Zombie target) {
+        if (engine.reflectProjectileIfNeeded(projectile, target)) {
+            engine.board.removeProjectile(projectile);
+            return;
+        }
+        int multiplier = projectile.getDamageMultiplier();
+        boolean affected = projectile.hitTarget(target, multiplier, projectile.getImpactType());
+        if (affected) {
+            if (projectile.isPiercing()) {
+                engine.piercingProjectileHits++;
+            }
+            engine.addEvent("Projectile from " + projectile.getSourcePlant() + " hit "
+                + target.getName() + " for " + projectile.getDamage() * multiplier + " damage.");
+        } else {
+            engine.addEvent(target.getName() + " blocked or avoided the projectile.");
+        }
+    }
+
     static Zombie findProjectileTarget(Game engine, int row, double fromColumn, double toColumn) {
         Zombie target = null;
         for (Zombie zombie : engine.board.getZombiesInRow(row)) {
@@ -367,114 +382,17 @@ final class BattleTickSystem {
         }
     }
     static void cleanupDestroyedEntities(Game engine) {
-        for (Plant plant : new ArrayList<>(engine.board.getPlants())) {
-            if (!plant.isDestroyed() || plant.getPosition() == null) {
-                continue;
-            }
-            GridPosition position = plant.getPosition();
-            if (plant.getAbility() == PlantAbility.EXPLODE_O_NUT) {
-                engine.explodeDestroyedDefender(plant);
-            }
-            if (plant.getAbility() == PlantAbility.TORCHWOOD
-                && plant.hasUpgradeTrait("AOE_ON_DEATH")) {
-                explodeTorchwoodOnDeath(engine, plant);
-            }
-            boolean endangered = engine.endangeredPositions.contains(position)
-                && engine.board.getTile(position.getRow(), position.getColumn()).getMainPlant() == plant;
-            engine.board.removePlant(plant);
-            engine.waitingSunProducers.remove(position);
-            if (endangered) {
-                engine.board.setEndangeredPlantsEaten(true);
-            }
-            engine.lostPlantsCount++;
-            engine.addEvent("Plant " + plant.getName() + " at " + position + " is destroyed.");
-        }
-        engine.removeUnsupportedWaterPlants();
-        for (Zombie zombie : new ArrayList<>(engine.board.getZombies())) {
-            if (!zombie.isDead()) {
-                continue;
-            }
-            BoardPosition position = zombie.getPosition();
-            engine.releaseWizardTransformations(zombie.getRuntimeId());
-            engine.dropStolenSunFromZombie(zombie);
-            engine.handleZombieRewards(zombie);
-            engine.recordZombieKillStatistics(zombie, position);
-            engine.board.removeZombie(zombie);
-            engine.zombieKillCount++;
-            engine.addEvent("Zombie of type " + zombie.getName() + " is dead at " + position + ".");
-        }
-    }
-    private static void explodeTorchwoodOnDeath(Game engine, Plant plant) {
-        int damage = plant.getDefinition().getAbilityParameterInt("deathExplosionDamage", 500);
-        GridPosition center = plant.getPosition();
-        int hits = 0;
-        for (Zombie zombie : engine.hostileZombies()) {
-            if (Math.abs(zombie.getPosition().getRow() - center.getRow()) <= 1
-                && Math.abs(zombie.getPosition().getColumn() - center.getColumn()) <= 1.5) {
-                zombie.takeProjectileDamage(damage, ProjectileType.FIRE, 0, false,
-                    plant.getName());
-                hits++;
-            }
-        }
-        engine.addEvent("Torchwood's level upgrade exploded on death and hit "
-            + hits + " zombie(s).");
+        BattleCleanupSystem.cleanupDestroyedEntities(engine);
     }
 
     static void recordZombieKillStatistics(Game engine, Zombie zombie, BoardPosition position) {
-        if (engine.lastKillTick == engine.elapsedTicks) {
-            engine.killsAtLastKillTick++;
-            engine.multiKillZombieCount++;
-        } else {
-            engine.lastKillTick = engine.elapsedTicks;
-            engine.killsAtLastKillTick = 1;
-        }
-        String sourcePlant = zombie.getLastDamageSourcePlant();
-        if (sourcePlant != null && !sourcePlant.isBlank()) {
-            engine.plantKillCounts.merge(PlantDefinition.normalizeKey(sourcePlant), 1, Integer::sum);
-        }
-        if (engine.elapsedTicks <= 30 * Game.TICKS_PER_SECOND) {
-            engine.killsWithinThirtySeconds++;
-        }
-        if (position != null && position.getColumn() >= 0 && position.getColumn() < 1.0) {
-            int row = position.getRow();
-            if (row >= 0 && row < engine.board.getRows()
-                && !engine.board.getLawnMower(row).isActivated()) {
-                engine.firstColumnNoMowerKills++;
-            }
-        }
+        BattleCleanupSystem.recordZombieKillStatistics(engine, zombie, position);
     }
+
     static void handleZombieRewards(Game engine, Zombie zombie) {
-        if (zombie.isRewardDropped()) {
-            return;
-        }
-        zombie.dropReward();
-        if (zombie.isGlowing()) {
-            if (engine.inventory.getPlantFoodCapacityLeft() > 0) {
-                engine.inventory.addPlantFood(1);
-                engine.addEvent("The glowing zombie dropped a plant food; you have "
-                    + engine.inventory.getPlantFoods() + " plant foods now.");
-            } else {
-                engine.addEvent("The glowing zombie dropped plant food, but storage is full.");
-            }
-        }
-        if (engine.random.nextInt(100) >= 10) {
-            return;
-        }
-        int rewardType = engine.random.nextInt(3);
-        if (rewardType == 0) {
-            engine.wallet.addCoins(50);
-            engine.addEvent("A zombie dropped 50 coins; you have " + engine.wallet.getCoins()
-                + " coins now.");
-        } else if (rewardType == 1) {
-            engine.wallet.addGems(1);
-            engine.addEvent("A zombie dropped a diamond; you have " + engine.wallet.getGems()
-                + " diamonds now.");
-        } else {
-            engine.inventory.addPot();
-            engine.addEvent("A zombie dropped a pot; you have " + engine.inventory.getPots()
-                + " pots now.");
-        }
+        BattleCleanupSystem.handleZombieRewards(engine, zombie);
     }
+
     static void startNextWaveIfReady(Game engine) {
         if (!engine.zombieWavesStarted || engine.nextWaveIndex >= engine.currentLevel.getWaves().size()
             || engine.currentWave == null) {

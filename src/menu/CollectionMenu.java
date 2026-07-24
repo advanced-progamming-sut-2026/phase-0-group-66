@@ -29,6 +29,7 @@ public class CollectionMenu extends Menu {
         System.out.println("menu collection show-zombie -z <zombie_name>");
         System.out.println("menu collection purchase-plant -p <plant_name>");
         System.out.println("menu collection upgrade-plant -p <plant_name>");
+        System.out.println("show commands");
     }
 
     @Override
@@ -54,6 +55,8 @@ public class CollectionMenu extends Menu {
             showResult(controller.upgradePlant(upgrade.group("name").trim()));
         } else if (purchase != null) {
             showResult(controller.purchasePlant(purchase.group("name").trim()));
+        } else if (command.equals("show commands")) {
+            showCommands();
         } else {
             view.showMessage("invalid command");
         }

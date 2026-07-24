@@ -45,6 +45,6 @@ public final class GridPosition implements Serializable {
 
     @Override
     public String toString() {
-        return "(" + column + ", " + row + ")";
+        return "(" + (column + 1) + ", " + (row + 1) + ")";
     }
 }

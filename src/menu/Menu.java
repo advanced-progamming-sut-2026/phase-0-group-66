@@ -36,11 +36,7 @@ public abstract class Menu {
     }
 
     protected void handleMenuEnter(String targetMenu) {
-        if (targetMenu.equals("Register Menu") || targetMenu.equals("Login Menu")) {
-            menuManager.enterMenu(targetMenu);
-        } else {
-            System.out.println("invalid navigation");
-        }
+        System.out.println("invalid navigation");
     }
 
     public void exit() {

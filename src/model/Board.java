@@ -230,89 +230,23 @@ public class Board {
     }
 
     public Zombie findNearestZombieAhead(int row, double column) {
-        Zombie nearest = null;
-        for (Zombie zombie : getZombiesInRow(row)) {
-            double zombieColumn = zombie.getPosition().getColumn();
-            if (zombieColumn + 0.001 < column || zombie.isHypnotized()
-                || zombie.isTrappedInIceTile()) {
-                continue;
-            }
-            if (nearest == null || zombieColumn < nearest.getPosition().getColumn()) {
-                nearest = zombie;
-            }
-        }
-        return nearest;
+        return BoardTargeting.findNearestZombieAhead(this, row, column);
     }
 
     public Zombie findNearestZombieBehind(int row, double column) {
-        Zombie nearest = null;
-        for (Zombie zombie : getZombiesInRow(row)) {
-            double zombieColumn = zombie.getPosition().getColumn();
-            if (zombieColumn - 0.001 > column || zombie.isHypnotized()
-                || zombie.isTrappedInIceTile()) {
-                continue;
-            }
-            if (nearest == null || zombieColumn > nearest.getPosition().getColumn()) {
-                nearest = zombie;
-            }
-        }
-        return nearest;
+        return BoardTargeting.findNearestZombieBehind(this, row, column);
     }
 
     public Zombie findNearestZombieAnywhere() {
-        Zombie nearest = null;
-        for (Zombie zombie : zombies) {
-            if (zombie.isDead() || zombie.getPosition() == null || zombie.isHypnotized()
-                || zombie.isTrappedInIceTile()) {
-                continue;
-            }
-            if (nearest == null
-                || zombie.getPosition().getColumn() < nearest.getPosition().getColumn()) {
-                nearest = zombie;
-            }
-        }
-        return nearest;
+        return BoardTargeting.findNearestZombieAnywhere(this);
     }
 
     public GridPosition findNearestFrozenZombieTileAhead(int row, double column) {
-        GridPosition nearest = null;
-        for (int col = Math.max(0, (int) Math.floor(column)); col < cols; col++) {
-            Tile tile = tiles[row][col];
-            if (tile.getType() != TileType.ICE) {
-                continue;
-            }
-            for (Zombie zombie : tile.getZombies()) {
-                if (!zombie.isDead() && zombie.isTrappedInIceTile()) {
-                    nearest = tile.getPosition();
-                    break;
-                }
-            }
-            if (nearest != null) {
-                break;
-            }
-        }
-        return nearest;
+        return BoardTargeting.findNearestFrozenZombieTileAhead(this, row, column);
     }
 
     public Plant findBlockingPlant(Zombie zombie) {
-        if (zombie == null || zombie.getPosition() == null || zombie.isHypnotized()) {
-            return null;
-        }
-        int row = zombie.getPosition().getRow();
-        double zombieColumn = zombie.getPosition().getColumn();
-        if (row < 0 || row >= rows) {
-            return null;
-        }
-        for (int col = cols - 1; col >= 0; col--) {
-            Plant plant = tiles[row][col].getBlockingPlant();
-            if (plant == null || plant.isDestroyed()) {
-                continue;
-            }
-            if (zombieColumn <= col + 0.82 && zombieColumn >= col - 0.05) {
-                return plant;
-            }
-        }
-        return null;
+        return BoardTargeting.findBlockingPlant(this, zombie);
     }
 
     public void addProjectile(Projectile projectile) {
@@ -500,172 +434,41 @@ public class Board {
     public void setEndangeredPlantsEaten(boolean value) { endangeredPlantsEaten = value; }
 
     public boolean isHorizontallySymmetric() {
-        for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < cols / 2; col++) {
-                String left = plantNameAt(row, col);
-                String right = plantNameAt(row, cols - 1 - col);
-                if (!left.equals(right)) {
-                    return false;
-                }
-            }
-        }
-        return true;
+        return BoardLayoutAnalyzer.isHorizontallySymmetric(this);
     }
 
     public boolean isStrictlyAsymmetricExceptMiddleRow() {
-        boolean hasPlantOutsideMiddleRow = false;
-        for (int row = 0; row < rows / 2; row++) {
-            int mirroredRow = rows - 1 - row;
-            for (int col = 0; col < cols; col++) {
-                String upper = plantStackSignatureAt(row, col);
-                String lower = plantStackSignatureAt(mirroredRow, col);
-                boolean upperOccupied = !isEmptyPlantStackSignature(upper);
-                boolean lowerOccupied = !isEmptyPlantStackSignature(lower);
-                if (upperOccupied || lowerOccupied) {
-                    hasPlantOutsideMiddleRow = true;
-                }
-                if (upperOccupied && lowerOccupied && upper.equals(lower)) {
-                    return false;
-                }
-            }
-        }
-        return hasPlantOutsideMiddleRow;
-    }
-
-    private boolean isEmptyPlantStackSignature(String signature) {
-        return "||".equals(signature);
+        return BoardLayoutAnalyzer.isStrictlyAsymmetricExceptMiddleRow(this);
     }
 
     public boolean hasEmptyRow() {
-        for (int row = 0; row < rows; row++) {
-            if (isRowEmpty(row)) {
-                return true;
-            }
-        }
-        return false;
+        return BoardLayoutAnalyzer.hasEmptyRow(this);
     }
 
     public boolean isRowEmpty(int row) {
         validateRow(row);
-        for (int col = 0; col < cols; col++) {
-            if (tiles[row][col].getPlant() != null) {
-                return false;
-            }
-        }
-        return true;
+        return BoardLayoutAnalyzer.isRowEmpty(this, row);
     }
 
     public boolean hasEmptyColumn() {
-        for (int col = 0; col < cols; col++) {
-            if (isColumnEmpty(col)) {
-                return true;
-            }
-        }
-        return false;
+        return BoardLayoutAnalyzer.hasEmptyColumn(this);
     }
 
     public boolean isColumnEmpty(int col) {
         validateColumn(col);
-        for (int row = 0; row < rows; row++) {
-            if (tiles[row][col].getPlant() != null) {
-                return false;
-            }
-        }
-        return true;
+        return BoardLayoutAnalyzer.isColumnEmpty(this, col);
     }
 
-    public boolean hasEmptyCross() { return hasEmptyRow() && hasEmptyColumn(); }
+    public boolean hasEmptyCross() {
+        return hasEmptyRow() && hasEmptyColumn();
+    }
 
     public boolean isCrossEmpty(int row, int col) {
         return isRowEmpty(row) && isColumnEmpty(col);
     }
 
-    private String plantNameAt(int row, int col) {
-        Plant plant = tiles[row][col].getPlant();
-        return plant == null ? "" : plant.getName();
-    }
-
-    private String plantStackSignatureAt(int row, int col) {
-        Tile tile = tiles[row][col];
-        return plantName(tile.getSupportPlant()) + "|"
-            + plantName(tile.getMainPlant()) + "|" + plantName(tile.getCoverPlant());
-    }
-
-    private String plantName(Plant plant) {
-        return plant == null ? "" : plant.getName();
-    }
-
     public String render() {
-        StringBuilder output = new StringBuilder();
-        output.append("     ");
-        for (int col = 0; col < cols; col++) {
-            output.append(String.format(" %2d ", col + 1));
-        }
-        output.append(System.lineSeparator());
-        for (int row = 0; row < rows; row++) {
-            output.append(String.format("%2d |", row + 1));
-            for (int col = 0; col < cols; col++) {
-                Tile tile = tiles[row][col];
-                boolean hasPlant = tile.getPlant() != null;
-                boolean hasZombie = !tile.getZombies().isEmpty();
-                String token;
-                if (tile.getType() == TileType.ICE && tile.hasTrappedEntity()) {
-                    token = hasZombie ? "IZ" : "IP";
-                } else if (hasPlant && hasZombie) {
-                    token = "PZ";
-                } else if (hasPlant) {
-                    token = tile.getCoverPlant() != null ? "PC" : "P ";
-                } else if (hasZombie) {
-                    token = "Z" + Math.min(9, tile.getZombies().size());
-                } else {
-                    token = laneObjectToken(row, col);
-                    if (token == null && !getSunsAt(row, col).isEmpty()) {
-                        token = "S ";
-                    } else if (token == null) {
-                        token = tileToken(tile.getType());
-                    }
-                }
-                output.append(String.format("%-4s", token));
-            }
-            output.append(" mower=")
-                .append(lawnMowers.get(row).isActivated() ? "used" : "ready")
-                .append(System.lineSeparator());
-        }
-        return output.toString();
-    }
-
-    private String laneObjectToken(int row, int col) {
-        for (PushedObstacle obstacle : pushedObstacles) {
-            if (!obstacle.isDestroyed() && obstacle.getPosition().getRow() == row
-                && (int) Math.floor(obstacle.getPosition().getColumn()) == col) {
-                return switch (obstacle.getType()) {
-                    case ICE_BLOCK -> "IB";
-                    case ARCADE_MACHINE -> "AM";
-                    case BARREL -> "BR";
-                };
-            }
-        }
-        for (ProspectorDynamite dynamite : prospectorDynamites) {
-            if (dynamite.isActive() && dynamite.getPosition().getRow() == row
-                && (int) Math.floor(dynamite.getPosition().getColumn()) == col) {
-                return "DY";
-            }
-        }
-        return null;
-    }
-
-    private String tileToken(TileType type) {
-        return switch (type) {
-            case NORMAL -> ". ";
-            case WATER -> "~~";
-            case TOMB -> "T ";
-            case ICE -> "I ";
-            case SLIPPERY_UP -> "^ ";
-            case SLIPPERY_DOWN -> "v ";
-            case LOW_TIDE -> "L ";
-            case NECROMANCY -> "N ";
-            case CRATER -> "C ";
-        };
+        return BoardRenderer.render(this);
     }
 
     private void validateRow(int row) {

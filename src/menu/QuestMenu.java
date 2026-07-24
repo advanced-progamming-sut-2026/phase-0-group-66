@@ -18,7 +18,7 @@ public class QuestMenu extends Menu {
 
     @Override
     public void showCommands() {
-        System.out.println("travel log page <daily/main/epic/all>");
+        System.out.println("travel log page <daily/main/epic/all/minigame>");
         System.out.println("quest claim -i <quest_id>");
         System.out.println("menu enter MiniGame Menu");
     }
@@ -34,9 +34,11 @@ public class QuestMenu extends Menu {
 
     @Override
     protected void processSpecificCommand(String command) {
-        Matcher page = getMatcher(command, "travel log page (?<pageName>daily|main|epic|all)");
+        Matcher page = getMatcher(command, "travel log page (?<pageName>daily|main|epic|all|minigame)");
         Matcher claim = getMatcher(command, "quest claim -i (?<id>\\d+)");
-        if (page != null) {
+        if (page != null && page.group("pageName").equals("minigame")) {
+            menuManager.enterMenu("MiniGame Menu");
+        } else if (page != null) {
             view.showQuests(controller.getQuestsPage(page.group("pageName")));
         } else if (claim != null) {
             ActionResult result = controller.claimReward(Integer.parseInt(claim.group("id")));

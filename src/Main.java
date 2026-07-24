@@ -21,6 +21,7 @@ import menu.Menu;
 import menu.MenuManager;
 import menu.MiniGameMenu;
 import menu.NewsMenu;
+import menu.NetworkMenu;
 import menu.PlantSelectionMenu;
 import menu.ProfileMenu;
 import menu.QuestMenu;
@@ -94,7 +95,7 @@ public class Main {
         return new MenuSet(
                 new RegisterMenu(manager, authController, new RegisterView()),
                 new LoginMenu(manager, authController, new LoginView()),
-                new MainMenu(manager, authController, newsController),
+                new MainMenu(manager, authController, newsController, gameController),
                 new GameMenu(manager, gameController),
                 new PlantSelectionMenu(manager, gameController),
                 new BattleMenu(manager, gameController),
@@ -103,6 +104,7 @@ public class Main {
                 new ShopMenu(manager, shopController, new ShopView()),
                 new SettingsMenu(manager, settingsController, new SettingsView()),
                 new NewsMenu(manager, newsController, new NewsView()),
+                new NetworkMenu(manager),
                 new ProfileMenu(manager, profileController, new ProfileView()),
                 new QuestMenu(manager, questController, new QuestView()),
                 new LeaderboardMenu(manager, leaderboardController, new LeaderboardView()),
@@ -115,6 +117,7 @@ public class Main {
         menus.gameMenu.setParentMenu(menus.mainMenu);
         menus.settingsMenu.setParentMenu(menus.mainMenu);
         menus.newsMenu.setParentMenu(menus.mainMenu);
+        menus.networkMenu.setParentMenu(menus.mainMenu);
         menus.profileMenu.setParentMenu(menus.mainMenu);
         menus.leaderboardMenu.setParentMenu(menus.mainMenu);
         menus.plantSelectionMenu.setParentMenu(menus.gameMenu);
@@ -148,12 +151,12 @@ public class Main {
                            BattleMenu battleMenu, CollectionMenu collectionMenu,
                            GreenhouseMenu greenhouseMenu, ShopMenu shopMenu,
                            SettingsMenu settingsMenu, NewsMenu newsMenu,
-                           ProfileMenu profileMenu, QuestMenu questMenu,
+                           NetworkMenu networkMenu, ProfileMenu profileMenu, QuestMenu questMenu,
                            LeaderboardMenu leaderboardMenu, MiniGameMenu miniGameMenu) {
         private List<Menu> allMenus() {
             return List.of(registerMenu, loginMenu, mainMenu, gameMenu, plantSelectionMenu,
                     battleMenu, collectionMenu, greenhouseMenu, shopMenu, settingsMenu,
-                    newsMenu, profileMenu, questMenu, leaderboardMenu, miniGameMenu);
+                    newsMenu, networkMenu, profileMenu, questMenu, leaderboardMenu, miniGameMenu);
         }
     }
 }

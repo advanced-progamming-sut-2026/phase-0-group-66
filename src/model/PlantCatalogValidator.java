@@ -70,6 +70,11 @@ public final class PlantCatalogValidator {
     }
 
     private static void validateAbilityParameterContract(PlantDefinition definition) {
+        validateAbilityParameterContractPartOne(definition);
+        validateAbilityParameterContractPartTwo(definition);
+    }
+
+    private static void validateAbilityParameterContractPartOne(PlantDefinition definition) {
         switch (definition.getAbility()) {
             case SUNFLOWER, TWIN_SUNFLOWER, PRIMAL_SUNFLOWER, GOLD_BLOOM ->
                 requireAbilityParameters(definition, "sun");
@@ -96,6 +101,12 @@ public final class PlantCatalogValidator {
                 "butterDamage", "butterStunSeconds");
             case MELON_PULT, WINTER_MELON, PEPPER_PULT ->
                 requireAbilityParameters(definition, "splashDamageFactor");
+            default -> { }
+        }
+    }
+
+    private static void validateAbilityParameterContractPartTwo(PlantDefinition definition) {
+        switch (definition.getAbility()) {
             case POTATO_MINE, PRIMAL_POTATO_MINE ->
                 requireAbilityParameters(definition, "armSeconds");
             case GRAPESHOT -> requireAbilityParameters(definition, "fragmentCount",

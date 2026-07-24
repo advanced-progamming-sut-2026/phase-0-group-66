@@ -7,54 +7,14 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-public final class BeghouldSession extends MiniGameSession {
-    private enum AttackStyle { NONE, DIRECT, PIERCE, SPLASH }
-
-    private record CombatProfile(int maxHealth, int damage, int intervalTicks,
-                                 int projectileCount, AttackStyle style,
-                                 int splashDamage, int chillTicks) { }
-
-    private static final class CombatPlant {
-        private String type;
-        private CombatProfile profile;
-        private int health;
-        private int cooldown;
-
-        CombatPlant(String type, CombatProfile profile) {
-            this.type = type;
-            this.profile = profile;
-            health = profile.maxHealth();
-            cooldown = profile.intervalTicks();
-        }
-
-        void tick() {
-            if (cooldown > 0) {
-                cooldown--;
-            }
-        }
-
-        boolean ready() { return cooldown <= 0 && profile.damage() > 0; }
-        boolean isDead() { return health <= 0; }
-        void damage(int amount) { health = Math.max(0, health - Math.max(0, amount)); }
-        void resetCooldown() { cooldown = profile.intervalTicks(); }
-
-        void upgrade(String newType, CombatProfile newProfile) {
-            double ratio = profile.maxHealth() <= 0 ? 1.0
-                : health / (double) profile.maxHealth();
-            type = newType;
-            profile = newProfile;
-            health = Math.max(1, (int) Math.round(newProfile.maxHealth() * ratio));
-            cooldown = Math.min(cooldown, newProfile.intervalTicks());
-        }
-    }
-
+public final class BeghouledSession extends MiniGameSession {
     private static final int ROWS = 5;
     private static final int COLS = 9;
     private static final String[] TYPES = {
         "Peashooter", "Wall-nut", "Puff-shroom", "Cabbage-pult", "Melon-pult"
     };
 
-    private final CombatPlant[][] grid = new CombatPlant[ROWS][COLS];
+    private final BeghouledCombatPlant[][] grid = new BeghouledCombatPlant[ROWS][COLS];
     private final boolean[][] crater = new boolean[ROWS][COLS];
     private final ArrayList<MiniGameUnit> zombies = new ArrayList<>();
     private final PlantFactory plantFactory;
@@ -63,7 +23,7 @@ public final class BeghouldSession extends MiniGameSession {
     private int matches;
     private int nextZombieTick;
 
-    public BeghouldSession(MiniGameDefinition definition, int level) {
+    public BeghouledSession(MiniGameDefinition definition, int level) {
         super(definition, level);
         plantFactory = MiniGameData.plantFactory();
         random = new Random(40_000L + level * 1237L);
@@ -88,35 +48,35 @@ public final class BeghouldSession extends MiniGameSession {
         }
     }
 
-    private CombatPlant createPlant(String type) {
-        return new CombatPlant(type, profile(type));
+    private BeghouledCombatPlant createPlant(String type) {
+        return new BeghouledCombatPlant(type, profile(type));
     }
 
-    private CombatProfile profile(String type) {
+    private BeghouledCombatProfile profile(String type) {
         Plant plant = plantFactory.createPlant(type);
         PlantAbility ability = plant.getAbility();
-        AttackStyle style = attackStyle(ability, plant.getAttackPower());
-        int splash = style == AttackStyle.SPLASH
+        BeghouledAttackStyle style = attackStyle(ability, plant.getAttackPower());
+        int splash = style == BeghouledAttackStyle.SPLASH
             ? Math.max(1, plant.getAttackPower() / 2 + plant.getSplashDamageBonus()) : 0;
-        return new CombatProfile(plant.getMaxHealth(), plant.getEffectiveAttackPower(),
+        return new BeghouledCombatProfile(plant.getMaxHealth(), plant.getEffectiveAttackPower(),
             plant.getActionIntervalTicks(), plant.getProjectileCount(), style,
             splash, plant.getChillDurationTicks());
     }
 
-    private AttackStyle attackStyle(PlantAbility ability, int damage) {
+    private BeghouledAttackStyle attackStyle(PlantAbility ability, int damage) {
         if (damage <= 0) {
-            return AttackStyle.NONE;
+            return BeghouledAttackStyle.NONE;
         }
         if (ability == PlantAbility.SHORT_RANGE_SHROOM
             || ability == PlantAbility.FUME_SHROOM) {
-            return AttackStyle.PIERCE;
+            return BeghouledAttackStyle.PIERCE;
         }
         if (ability == PlantAbility.CABBAGE_PULT || ability == PlantAbility.KERNEL_PULT
             || ability == PlantAbility.MELON_PULT || ability == PlantAbility.WINTER_MELON
             || ability == PlantAbility.PEPPER_PULT) {
-            return AttackStyle.SPLASH;
+            return BeghouledAttackStyle.SPLASH;
         }
-        return AttackStyle.DIRECT;
+        return BeghouledAttackStyle.DIRECT;
     }
 
     private void fillBoard() {
@@ -161,7 +121,7 @@ public final class BeghouldSession extends MiniGameSession {
     }
 
     private void exchange(int rowOne, int colOne, int rowTwo, int colTwo) {
-        CombatPlant first = grid[rowOne][colOne];
+        BeghouledCombatPlant first = grid[rowOne][colOne];
         grid[rowOne][colOne] = grid[rowTwo][colTwo];
         grid[rowTwo][colTwo] = first;
     }
@@ -196,7 +156,7 @@ public final class BeghouldSession extends MiniGameSession {
 
     private void collapse() {
         for (int col = 0; col < COLS; col++) {
-            ArrayDeque<CombatPlant> values = new ArrayDeque<>();
+            ArrayDeque<BeghouledCombatPlant> values = new ArrayDeque<>();
             for (int row = ROWS - 1; row >= 0; row--) {
                 if (!crater[row][col] && grid[row][col] != null) {
                     values.addLast(grid[row][col]);
@@ -268,10 +228,10 @@ public final class BeghouldSession extends MiniGameSession {
             throw new IllegalStateException("Not enough sun for the upgrade.");
         }
         int changed = 0;
-        CombatProfile targetProfile = profile(upgrade.to());
+        BeghouledCombatProfile targetProfile = profile(upgrade.to());
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLS; col++) {
-                CombatPlant plant = grid[row][col];
+                BeghouledCombatPlant plant = grid[row][col];
                 if (plant != null && upgrade.from().equals(plant.type)) {
                     plant.upgrade(upgrade.to(), targetProfile);
                     changed++;
@@ -324,7 +284,7 @@ public final class BeghouldSession extends MiniGameSession {
     private void tickPlantsAndAttack() {
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLS; col++) {
-                CombatPlant plant = grid[row][col];
+                BeghouledCombatPlant plant = grid[row][col];
                 if (plant == null) {
                     continue;
                 }
@@ -336,7 +296,7 @@ public final class BeghouldSession extends MiniGameSession {
         }
     }
 
-    private void attackFrom(int row, int col, CombatPlant plant) {
+    private void attackFrom(int row, int col, BeghouledCombatPlant plant) {
         MiniGameUnit target = nearestZombieAhead(row, col);
         if (target == null) {
             return;
@@ -350,12 +310,12 @@ public final class BeghouldSession extends MiniGameSession {
         plant.resetCooldown();
     }
 
-    private void damageDirect(MiniGameUnit target, CombatProfile profile) {
+    private void damageDirect(MiniGameUnit target, BeghouledCombatProfile profile) {
         target.damage(profile.damage() * profile.projectileCount());
         applyChill(target, profile);
     }
 
-    private void damagePiercing(int row, int col, CombatProfile profile) {
+    private void damagePiercing(int row, int col, BeghouledCombatProfile profile) {
         for (MiniGameUnit zombie : zombies) {
             if (!zombie.isDead() && zombie.getRow() == row && zombie.getColumn() >= col) {
                 zombie.damage(profile.damage() * profile.projectileCount());
@@ -364,7 +324,7 @@ public final class BeghouldSession extends MiniGameSession {
         }
     }
 
-    private void damageSplash(MiniGameUnit target, CombatProfile profile) {
+    private void damageSplash(MiniGameUnit target, BeghouledCombatProfile profile) {
         target.damage(profile.damage() * profile.projectileCount());
         applyChill(target, profile);
         for (MiniGameUnit zombie : zombies) {
@@ -379,7 +339,7 @@ public final class BeghouldSession extends MiniGameSession {
         }
     }
 
-    private void applyChill(MiniGameUnit zombie, CombatProfile profile) {
+    private void applyChill(MiniGameUnit zombie, BeghouledCombatProfile profile) {
         if (profile.chillTicks() > 0) {
             zombie.slow(0.5, profile.chillTicks());
         }
@@ -404,7 +364,7 @@ public final class BeghouldSession extends MiniGameSession {
                 continue;
             }
             zombie.tickAge();
-            CombatPlant blocker = blockingPlant(zombie);
+            BeghouledCombatPlant blocker = blockingPlant(zombie);
             if (blocker != null) {
                 attackPlant(zombie, blocker);
             } else {
@@ -417,17 +377,17 @@ public final class BeghouldSession extends MiniGameSession {
         }
     }
 
-    private CombatPlant blockingPlant(MiniGameUnit zombie) {
+    private BeghouledCombatPlant blockingPlant(MiniGameUnit zombie) {
         int row = zombie.getRow();
         int col = Math.max(0, Math.min(COLS - 1, (int) Math.floor(zombie.getColumn())));
-        CombatPlant plant = grid[row][col];
+        BeghouledCombatPlant plant = grid[row][col];
         if (plant != null && zombie.getColumn() <= col + 0.85) {
             return plant;
         }
         return null;
     }
 
-    private void attackPlant(MiniGameUnit zombie, CombatPlant plant) {
+    private void attackPlant(MiniGameUnit zombie, BeghouledCombatPlant plant) {
         if (!zombie.ready()) {
             return;
         }
@@ -489,48 +449,7 @@ public final class BeghouldSession extends MiniGameSession {
 
     @Override
     public String boardView() {
-        StringBuilder builder = new StringBuilder(
-            "Beghouled board (#=crater, Z=nearest zombie marker)\n");
-        for (int row = 0; row < ROWS; row++) {
-            for (int col = 0; col < COLS; col++) {
-                if (hasZombieAt(row, col)) {
-                    builder.append("Z ");
-                } else if (crater[row][col]) {
-                    builder.append("# ");
-                } else {
-                    builder.append(symbol(typeAt(row, col))).append(' ');
-                }
-            }
-            builder.append('\n');
-        }
-        builder.append("Legend: P=Pea line, W=Wall line, F=Fume line, C=Cabbage, M=Melon\n")
-            .append("Sun=").append(sun).append(", matches=").append(matches)
-            .append('/').append(getTarget());
-        return builder.toString();
-    }
-
-    private boolean hasZombieAt(int row, int col) {
-        for (MiniGameUnit zombie : zombies) {
-            if (!zombie.isDead() && zombie.getRow() == row
-                && Math.round(zombie.getColumn()) == col) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private char symbol(String type) {
-        if (type == null) {
-            return '.';
-        }
-        return switch (PlantDefinition.normalizeKey(type)) {
-            case "peashooter", "repeater", "megagatlingpea" -> 'P';
-            case "wallnut", "tallnut" -> 'W';
-            case "puffshroom", "fumeshroom" -> 'F';
-            case "cabbagepult" -> 'C';
-            case "melonpult", "wintermelon" -> 'M';
-            default -> '?';
-        };
+        return BeghouledBoardRenderer.render(grid, crater, zombies, sun, matches, getTarget());
     }
 
     private String randomType() { return TYPES[random.nextInt(TYPES.length)]; }

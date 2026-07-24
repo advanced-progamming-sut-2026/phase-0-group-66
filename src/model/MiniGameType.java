@@ -21,6 +21,14 @@ public enum MiniGameType {
         if (normalized.equals("WALLNUTBOWLING")) {
             normalized = "WALLNUT_BOWLING";
         }
+        if (normalized.equals("BEGHOULED")) {
+            normalized = "BEGHOULD";
+        }
         return valueOf(normalized);
+    }
+
+    @Override
+    public String toString() {
+        return this == BEGHOULD ? "BEGHOULED" : name();
     }
 }

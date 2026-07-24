@@ -8,7 +8,7 @@ public final class MiniGameSessionFactory {
             case VASEBREAKER -> new VasebreakerSession(definition, level);
             case WALLNUT_BOWLING -> new WallnutBowlingSession(definition, level);
             case I_ZOMBIE -> new IZombieSession(definition, level);
-            case BEGHOULD -> new BeghouldSession(definition, level);
+            case BEGHOULD -> new BeghouledSession(definition, level);
             case ZOMBOTANY -> new ZombotanySession(definition, level);
         };
     }

@@ -31,6 +31,14 @@ public final class BoardPosition implements Serializable {
 
     @Override
     public String toString() {
-        return "(" + column + ", " + row + ")";
+        return "(" + formatColumn(column + 1) + ", " + (row + 1) + ")";
+    }
+
+    private String formatColumn(double value) {
+        if (Math.abs(value - Math.rint(value)) < 0.0001) {
+            return Long.toString(Math.round(value));
+        }
+        return String.format(java.util.Locale.ROOT, "%.2f", value)
+            .replaceAll("0+$", "").replaceAll("\\.$", "");
     }
 }
