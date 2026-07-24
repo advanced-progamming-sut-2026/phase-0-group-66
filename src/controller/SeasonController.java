@@ -7,7 +7,6 @@ import model.SeasonType;
 import model.Tile;
 import model.TileType;
 
-/** Legacy beach-tide adapter. Wave-start Frostbite and Dark Ages effects live in Game. */
 public class SeasonController {
     private final Board board;
     private final AdvancedLevel currentLevel;

@@ -89,7 +89,6 @@ public class MiniGameController {
         return executeCommand("advance " + ticks);
     }
 
-    /** Backward-compatible API, now dispatching to real mini-game commands. */
     public ActionResult performAction(String action, int amount) {
         if (currentSession == null) {
             return ActionResult.failure("Start a mini-game first.");

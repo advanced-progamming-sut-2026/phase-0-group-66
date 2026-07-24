@@ -134,7 +134,7 @@ public class QuestController {
                 case ZOMBIE_KILLED -> recordZombieQuest(definition, progress, game,
                     killDelta, plantKillDeltas, quickKillDelta, firstColumnKillDelta);
                 default -> {
-                    // Level and menu events are recorded by their dedicated methods.
+
                 }
             }
         }
@@ -224,7 +224,7 @@ public class QuestController {
             case "FIRST_COLUMN_NO_MOWER" -> progress.addProgress(firstColumnKillDelta,
                 definition.getTarget());
             default -> {
-                // Unknown parameters do not receive accidental progress.
+
             }
         }
     }

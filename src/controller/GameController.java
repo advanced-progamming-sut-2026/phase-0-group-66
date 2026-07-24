@@ -7,7 +7,6 @@ import model.Game;
 import model.GameData;
 import model.GameState;
 import model.DailyScoredLevelFactory;
-import model.MeowPointTracker;
 import model.Level;
 import model.PlantDefinition;
 import model.User;
@@ -15,9 +14,7 @@ import model.Zombie;
 import view.GameView;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.time.LocalDate;
 
@@ -27,18 +24,8 @@ public class GameController {
     private final AdventureFactory adventureFactory;
     private final GameView view;
     private final QuestController questController;
+    private final GameProgressHandler progressHandler;
     private Game game;
-    private boolean resultRecorded;
-    private boolean scoredMode;
-    private MeowPointTracker meowPointTracker;
-    private LocalDate scoredGameDate;
-    private int syncedSun;
-    private int syncedKills;
-    private int syncedExplosives;
-    private int syncedMowerKills;
-    private int syncedQuickKills;
-    private int syncedFirstColumnKills;
-    private final LinkedHashMap<String, Integer> syncedPlantKills = new LinkedHashMap<>();
 
     public GameController(AuthController authController, GameData gameData, GameView view,
                           QuestController questController) {
@@ -50,6 +37,8 @@ public class GameController {
         this.view = view;
         this.questController = questController;
         this.adventureFactory = new AdventureFactory();
+        this.progressHandler = new GameProgressHandler(authController, questController,
+            adventureFactory, view);
     }
 
     public ActionResult startLevel(String chapterName) {
@@ -82,17 +71,7 @@ public class GameController {
             user.getDifficultyLevel(), user.getCollectionBook().getPlantLevels(),
             user.getInventory(), user.getWallet());
         game.prepareLevel(chapter, playLevel);
-        scoredMode = false;
-        meowPointTracker = null;
-        scoredGameDate = null;
-        resultRecorded = false;
-        syncedSun = 0;
-        syncedKills = 0;
-        syncedExplosives = 0;
-        syncedMowerKills = 0;
-        syncedQuickKills = 0;
-        syncedFirstColumnKills = 0;
-        syncedPlantKills.clear();
+        progressHandler.beginAdventure();
         flushEvents();
         return ActionResult.success("Choose up to " + level.getAllowedPlantCount()
             + " plants, then use 'start game'. Special rule: "
@@ -115,11 +94,7 @@ public class GameController {
             user.getDifficultyLevel(), user.getCollectionBook().getPlantLevels(),
             user.getInventory(), user.getWallet(), scored.randomSeed());
         game.prepareLevel(scored.chapter(), scored.level());
-        scoredMode = true;
-        meowPointTracker = new MeowPointTracker();
-        scoredGameDate = scored.date();
-        resultRecorded = false;
-        resetSyncedCombatCounters();
+        progressHandler.beginScored(scored.date());
         flushEvents();
         return ActionResult.success("Daily scored game for " + scored.date()
             + " is ready. Every user receives the same seeded wave pattern. "
@@ -128,14 +103,12 @@ public class GameController {
     }
 
     public String scoreStatus() {
-        if (!scoredMode || meowPointTracker == null) {
-            return "No scored game is running.";
-        }
-        meowPointTracker.update(game);
-        return "Daily arena: " + scoredGameDate + "\n" + meowPointTracker.status();
+        return progressHandler.scoreStatus(game);
     }
 
-    public boolean isScoredMode() { return scoredMode; }
+    public boolean isScoredMode() {
+        return progressHandler.isScoredMode();
+    }
 
     public ActionResult selectPlant(String plantType) {
         User user = authController.getCurrentUser();
@@ -160,7 +133,7 @@ public class GameController {
     public ActionResult startGame() {
         ActionResult result = perform(() -> game.startGame(), "Game started.");
         if (result.isSuccessful()) {
-            synchronizeSeenZombies();
+            progressHandler.synchronizeSeenZombies(game);
             authController.saveCurrentState();
         }
         return result;
@@ -169,7 +142,7 @@ public class GameController {
     public ActionResult startZombieWaves() {
         ActionResult result = perform(() -> game.startZombieWaves(), "Zombie waves started.");
         if (result.isSuccessful()) {
-            synchronizeSeenZombies();
+            progressHandler.synchronizeSeenZombies(game);
             authController.saveCurrentState();
         }
         return result;
@@ -219,7 +192,7 @@ public class GameController {
             game.plant(plantType, internalRow, internalColumn);
         }, "Planting completed.");
         if (result.isSuccessful()) {
-            synchronizeQuestProgress();
+            progressHandler.synchronizeQuestProgress(game);
             authController.saveCurrentState();
         }
         return result;
@@ -233,8 +206,8 @@ public class GameController {
         ActionResult result = perform(() -> game.collectSun(toRow(row), toColumn(col)),
             "Sun collected.");
         if (result.isSuccessful()) {
-            synchronizeQuestProgress();
-            recordGameResultIfNeeded();
+            progressHandler.synchronizeQuestProgress(game);
+            progressHandler.recordGameResultIfNeeded(game);
             authController.saveCurrentState();
         }
         return result;
@@ -244,7 +217,7 @@ public class GameController {
         ActionResult result = perform(() -> game.feedPlant(toRow(row), toColumn(col)),
             "Plant food used.");
         if (result.isSuccessful()) {
-            synchronizeQuestProgress();
+            progressHandler.synchronizeQuestProgress(game);
             authController.saveCurrentState();
         }
         return result;
@@ -270,9 +243,9 @@ public class GameController {
         ActionResult result = perform(() -> game.advanceTime(ticks),
             "Advanced time by " + ticks + " tick(s).");
         if (result.isSuccessful()) {
-            synchronizeSeenZombies();
-            synchronizeQuestProgress();
-            recordGameResultIfNeeded();
+            progressHandler.synchronizeSeenZombies(game);
+            progressHandler.synchronizeQuestProgress(game);
+            progressHandler.recordGameResultIfNeeded(game);
             authController.saveCurrentState();
         }
         return result;
@@ -289,8 +262,8 @@ public class GameController {
     public ActionResult releaseNuke() {
         ActionResult result = perform(() -> game.releaseNuke(), "Nuke released.");
         if (result.isSuccessful()) {
-            synchronizeQuestProgress();
-            recordGameResultIfNeeded();
+            progressHandler.synchronizeQuestProgress(game);
+            progressHandler.recordGameResultIfNeeded(game);
             authController.saveCurrentState();
         }
         return result;
@@ -300,7 +273,7 @@ public class GameController {
         ActionResult result = perform(() -> game.spawnZombie(zombieType, toRow(row), col - 1.0),
             "Zombie spawned.");
         if (result.isSuccessful()) {
-            synchronizeSeenZombies();
+            progressHandler.synchronizeSeenZombies(game);
             authController.saveCurrentState();
         }
         return result;
@@ -454,43 +427,6 @@ public class GameController {
         level.configureConveyorPlants(owned);
     }
 
-    private void synchronizeQuestProgress() {
-        if (game == null) {
-            return;
-        }
-        int sunDelta = game.getTotalSunCollected() - syncedSun;
-        int killDelta = game.getZombieKillCount() - syncedKills;
-        int explosiveDelta = game.getExplosivePlantsUsed() - syncedExplosives;
-        int mowerDelta = game.getLawnMowerKills() - syncedMowerKills;
-        int quickKillDelta = game.getKillsWithinThirtySeconds() - syncedQuickKills;
-        int firstColumnDelta = game.getFirstColumnNoMowerKills() - syncedFirstColumnKills;
-        Map<String, Integer> plantKillDeltas = plantKillDeltas();
-        questController.recordCombatProgress(game, sunDelta, killDelta,
-            explosiveDelta, mowerDelta, plantKillDeltas, quickKillDelta, firstColumnDelta);
-        syncedSun = game.getTotalSunCollected();
-        syncedKills = game.getZombieKillCount();
-        syncedExplosives = game.getExplosivePlantsUsed();
-        syncedMowerKills = game.getLawnMowerKills();
-        syncedQuickKills = game.getKillsWithinThirtySeconds();
-        syncedFirstColumnKills = game.getFirstColumnNoMowerKills();
-        syncedPlantKills.clear();
-        syncedPlantKills.putAll(game.getPlantKillCounts());
-        if (scoredMode && meowPointTracker != null) {
-            meowPointTracker.update(game);
-        }
-    }
-
-    private Map<String, Integer> plantKillDeltas() {
-        LinkedHashMap<String, Integer> result = new LinkedHashMap<>();
-        for (Map.Entry<String, Integer> entry : game.getPlantKillCounts().entrySet()) {
-            int delta = entry.getValue() - syncedPlantKills.getOrDefault(entry.getKey(), 0);
-            if (delta > 0) {
-                result.put(entry.getKey(), delta);
-            }
-        }
-        return result;
-    }
-
     private ActionResult perform(GameAction action, String successMessage) {
         if (game == null) {
             return ActionResult.failure("First choose a chapter and level.");
@@ -511,95 +447,6 @@ public class GameController {
         for (String event : game.drainEvents()) {
             view.showMessage(event);
         }
-    }
-
-    private void synchronizeSeenZombies() {
-        User user = authController.getCurrentUser();
-        if (user == null || game == null || game.getBoard() == null) {
-            return;
-        }
-        for (String zombieName : game.getEncounteredZombieNames()) {
-            if (user.getCollectionBook().unlockZombie(zombieName)) {
-                user.addNews(new model.News("New zombie discovered",
-                    zombieName + " was seen for the first time and added to Collection."));
-            }
-        }
-    }
-
-    private void recordGameResultIfNeeded() {
-        if (resultRecorded || game == null) {
-            return;
-        }
-        GameState state = game.getGameState();
-        if (state != GameState.WON && state != GameState.LOST) {
-            return;
-        }
-        User user = authController.getCurrentUser();
-        if (user == null) {
-            return;
-        }
-        resultRecorded = true;
-        user.getProgress().recordGamePlayed();
-        boolean won = state == GameState.WON;
-        questController.recordLevelResult(game, user.getDifficultyLevel(), won);
-        if (scoredMode && meowPointTracker != null) {
-            meowPointTracker.finalizeScore(game);
-            int score = meowPointTracker.getTotalScore();
-            user.getProgress().updateBestMeowPoints(score);
-            user.getWallet().addCoins(Math.max(100, score / 20));
-            user.addNews(new model.News("Scored game result",
-                "Daily arena " + scoredGameDate + " finished with " + score
-                    + " meowpoints."));
-        }
-        if (won && !scoredMode) {
-            Level level = game.getCurrentLevel();
-            Chapter chapter = game.getCurrentChapter();
-            user.getProgress().completeLevel(level);
-            if (chapter != null) {
-                user.getProgress().recordCompletedLevel(chapter.getChapterNumber(),
-                    level.getLevelNumber());
-            }
-            unlockFollowingContent(user, chapter, level);
-        }
-        ActionResult saveResult = authController.saveCurrentState();
-        if (!saveResult.isSuccessful()) {
-            view.showMessage(saveResult.getMessage());
-        }
-        view.showGameOver(state == GameState.WON);
-    }
-
-    private void unlockFollowingContent(User user, Chapter chapter, Level level) {
-        if (chapter == null || level == null) {
-            return;
-        }
-        if (level.getLevelNumber() < 4) {
-            chapter.findLevel(level.getLevelNumber() + 1).ifPresent(next -> {
-                user.getProgress().unlockLevelId(next.getLevelId());
-                user.addNews(new model.News("New level unlocked",
-                    "Level " + next.getLevelNumber() + " of " + chapter.getName()
-                        + " is now available."));
-            });
-            return;
-        }
-        int nextChapterIndex = chapter.getChapterNumber();
-        if (nextChapterIndex < adventureFactory.getChapters().size()) {
-            Chapter nextChapter = adventureFactory.getChapters().get(nextChapterIndex);
-            user.getProgress().unlockChapterName(nextChapter.getName());
-            nextChapter.findLevel(1)
-                .ifPresent(next -> user.getProgress().unlockLevelId(next.getLevelId()));
-            user.addNews(new model.News("New chapter unlocked",
-                nextChapter.getName() + " is now available."));
-        }
-    }
-
-    private void resetSyncedCombatCounters() {
-        syncedSun = 0;
-        syncedKills = 0;
-        syncedExplosives = 0;
-        syncedMowerKills = 0;
-        syncedQuickKills = 0;
-        syncedFirstColumnKills = 0;
-        syncedPlantKills.clear();
     }
 
     private int toRow(int commandRow) {
