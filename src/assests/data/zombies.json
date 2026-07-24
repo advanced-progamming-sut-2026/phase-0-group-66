@@ -389,7 +389,23 @@
         ],
         "ListType": "includelist"
       },
-      "SkipHeadDropState": true
+      "SkipHeadDropState": true,
+      "projectPlantAbilitiesToFlyOver": [
+        "WALL_NUT",
+        "ENDURIAN",
+        "CACTUS",
+        "POTATO_MINE",
+        "PRIMAL_POTATO_MINE",
+        "ICEBERG_LETTUCE",
+        "EXPLODE_O_NUT",
+        "GARLIC",
+        "SWEET_POTATO"
+      ],
+      "projectTileTypesToFlyOver": [
+        "SLIPPERY_UP",
+        "SLIPPERY_DOWN"
+      ],
+      "projectFlightDistanceTiles": 2
     },
     "seasons": [
       "FROSTBITE_CAVES"
@@ -446,7 +462,9 @@
       "Cost": 150,
       "GroundTrackName": "ground_swatch",
       "ImpType": "iceage_imp",
-      "NumberOfIceblocksToSpawnWith": 3
+      "NumberOfIceblocksToSpawnWith": 3,
+      "projectIceBlockHealth": 600,
+      "projectIceBlockSpacingTiles": 0.9
     },
     "seasons": [
       "FROSTBITE_CAVES"
@@ -800,10 +818,15 @@
       },
       "MaxProjectilesToJuggle": 1000,
       "MoveSpeedMultiplierWhileJuggling": 1.1,
-      "UnthrowableProjectiles": []
+      "UnthrowableProjectiles": [],
+      "projectSpinDurationSeconds": 2
     },
     "seasons": [
       "DARK_AGES"
+    ],
+    "lookupAliases": [
+      "Jester Zombie",
+      "Jester"
     ]
   },
   {
@@ -1046,7 +1069,9 @@
       "GroundTrackName": "ground_swatch",
       "LaunchCountdown": 10,
       "StunTime": 2.5,
-      "TimeToTravel": 1.5
+      "TimeToTravel": 1.5,
+      "projectDynamiteSpeed": 0.2,
+      "projectDynamiteStartColumn": 0.0
     },
     "seasons": [
       "ANCIENT_EGYPT",
@@ -1152,13 +1177,45 @@
       ],
       "Cost": 150,
       "GroundTrackName": "ground_swatch",
-      "JamStyle": "jam_8bit"
+      "JamStyle": "jam_8bit",
+      "projectMachineHealth": 1290,
+      "projectMachineSpacingTiles": 0.9
     },
     "seasons": [
       "ANCIENT_EGYPT",
       "FROSTBITE_CAVES",
       "BIG_WAVE_BEACH",
       "DARK_AGES"
+    ]
+  },
+  {
+    "key": "barrel-roller-zombie",
+    "alias": "ZombieBarrelRoller",
+    "displayName": "Barrel Roller Zombie",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 500,
+      "selectionWeight": 2000
+    },
+    "ability": "BARREL_ROLLER",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "projectDataOrigin": "PDF behavior; numerical values are explicit project defaults because official zombie data omits this zombie",
+      "projectBarrelHealth": 1100,
+      "projectBarrelSpacingTiles": 0.9,
+      "projectImpCount": 2
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ],
+    "lookupAliases": [
+      "Barrel Roller"
     ]
   }
 ]
