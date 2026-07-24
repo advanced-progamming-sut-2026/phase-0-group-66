@@ -26,7 +26,22 @@ public class MiniGameController {
     }
 
     public List<String> showMiniGamesStatus() {
-        return definitions.values().stream().map(MiniGameDefinition::toString).toList();
+        User user = authController.getCurrentUser();
+        if (user == null) {
+            return List.of("Login is required.");
+        }
+        ArrayList<String> result = new ArrayList<>();
+        for (MiniGameDefinition definition : definitions.values()) {
+            for (int level = 1; level <= 3; level++) {
+                String state = user.getProgress().isMiniGameLevelCompleted(
+                    definition.type(), level) ? "COMPLETED"
+                    : user.getProgress().isMiniGameLevelUnlocked(definition.type(), level)
+                    ? "UNLOCKED" : "LOCKED";
+                result.add(definition.type() + " level " + level + " [" + state + "] - "
+                    + definition.objective());
+            }
+        }
+        return List.copyOf(result);
     }
 
     public ActionResult startMiniGame(String miniGameName, int level) {
@@ -36,6 +51,13 @@ public class MiniGameController {
         try {
             MiniGameType type = MiniGameType.fromText(miniGameName);
             MiniGameDefinition definition = definitions.get(type);
+            if (definition == null) {
+                return ActionResult.failure("Mini-game does not exist.");
+            }
+            User user = authController.getCurrentUser();
+            if (!user.getProgress().isMiniGameLevelUnlocked(type, level)) {
+                return ActionResult.failure(type + " level " + level + " is locked.");
+            }
             currentSession = MiniGameSessionFactory.create(definition, level);
             rewardRecorded = false;
             return ActionResult.success("Started " + type + " level " + level + ". "
@@ -106,14 +128,38 @@ public class MiniGameController {
             return;
         }
         User user = authController.getCurrentUser();
+        MiniGameType type = currentSession.getDefinition().type();
+        int level = currentSession.getLevel();
         int score = currentSession.getScore();
-        user.getProgress().recordCompletedMiniGame(score);
-        user.getWallet().addCoins(250 * currentSession.getLevel());
-        questController.recordEvent(QuestEventType.MINI_GAME_WON, 1);
-        user.addNews(new model.News("Mini-game completed",
-            currentSession.getDefinition().type() + " level " + currentSession.getLevel()
-                + " was completed with score " + score + "."));
+        boolean firstCompletion = user.getProgress().completeMiniGameLevel(type, level, score);
+        if (firstCompletion) {
+            user.getWallet().addCoins(250 * level);
+            questController.recordEvent(QuestEventType.MINI_GAME_WON, 1);
+            user.addNews(new model.News("Mini-game completed",
+                type + " level " + level + " was completed with score " + score + "."));
+            unlockNextMiniGameContent(user, type, level);
+        }
         authController.saveCurrentState();
+    }
+
+    private void unlockNextMiniGameContent(User user, MiniGameType type, int level) {
+        if (level < 3) {
+            int nextLevel = level + 1;
+            if (user.getProgress().unlockMiniGameLevel(type, nextLevel)) {
+                user.addNews(new model.News("New mini-game level unlocked",
+                    type + " level " + nextLevel + " is now available."));
+            }
+            return;
+        }
+        MiniGameType[] order = MiniGameType.values();
+        int nextIndex = type.ordinal() + 1;
+        if (nextIndex < order.length) {
+            MiniGameType nextType = order[nextIndex];
+            if (user.getProgress().unlockMiniGameLevel(nextType, 1)) {
+                user.addNews(new model.News("New mini-game unlocked",
+                    nextType + " level 1 is now available in Travel Log."));
+            }
+        }
     }
 
     private void registerDefaults() {

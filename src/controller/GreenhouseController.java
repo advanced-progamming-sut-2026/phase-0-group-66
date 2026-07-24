@@ -41,6 +41,9 @@ public class GreenhouseController {
             if (!slot.isEmpty()) {
                 return ActionResult.failure("Greenhouse slot is occupied.");
             }
+            if (!user.getInventory().consumePot()) {
+                return ActionResult.failure("No planting pot is available in inventory.");
+            }
             boolean marigold = random.nextBoolean();
             String plantName = marigold ? "Marigold" : randomBoostablePlant(user);
             if (plantName == null) {
@@ -50,7 +53,9 @@ public class GreenhouseController {
             long growth = marigold ? Greenhouse.MARIGOLD_GROWTH_MILLIS
                 : Greenhouse.PLANT_GROWTH_MILLIS;
             slot.plant(plantName, marigold, System.currentTimeMillis(), growth);
-            return save("Planted " + plantName + " at (" + x + ", " + y + ").");
+            return save("Planted " + plantName + " at (" + x + ", " + y
+                + "); one inventory pot was consumed. Remaining pots: "
+                + user.getInventory().getPots() + ".");
         } catch (IllegalArgumentException exception) {
             return ActionResult.failure(exception.getMessage());
         }

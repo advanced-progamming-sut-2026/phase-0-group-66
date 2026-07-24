@@ -158,11 +158,21 @@ public class GameController {
     }
 
     public ActionResult startGame() {
-        return perform(() -> game.startGame(), "Game started.");
+        ActionResult result = perform(() -> game.startGame(), "Game started.");
+        if (result.isSuccessful()) {
+            synchronizeSeenZombies();
+            authController.saveCurrentState();
+        }
+        return result;
     }
 
     public ActionResult startZombieWaves() {
-        return perform(() -> game.startZombieWaves(), "Zombie waves started.");
+        ActionResult result = perform(() -> game.startZombieWaves(), "Zombie waves started.");
+        if (result.isSuccessful()) {
+            synchronizeSeenZombies();
+            authController.saveCurrentState();
+        }
+        return result;
     }
 
     public String specialStatus() {
@@ -291,6 +301,7 @@ public class GameController {
             "Zombie spawned.");
         if (result.isSuccessful()) {
             synchronizeSeenZombies();
+            authController.saveCurrentState();
         }
         return result;
     }
@@ -507,8 +518,11 @@ public class GameController {
         if (user == null || game == null || game.getBoard() == null) {
             return;
         }
-        for (Zombie zombie : game.getBoard().getZombies()) {
-            user.getCollectionBook().unlockZombie(zombie.getName());
+        for (String zombieName : game.getEncounteredZombieNames()) {
+            if (user.getCollectionBook().unlockZombie(zombieName)) {
+                user.addNews(new model.News("New zombie discovered",
+                    zombieName + " was seen for the first time and added to Collection."));
+            }
         }
     }
 

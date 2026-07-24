@@ -9,6 +9,7 @@ import model.QuestDefinition;
 import model.QuestEventType;
 import model.QuestFactory;
 import model.QuestPriority;
+import model.QuestRewardFormula;
 import model.QuestProgress;
 import model.RewardType;
 import model.SeasonType;
@@ -64,7 +65,8 @@ public class QuestController {
                 + definition.getCategory() + "/" + definition.getPriority() + "] "
                 + conditionDescription(definition) + " | " + progress.getProgress() + "/"
                 + definition.getTarget() + " - " + status + " - reward: "
-                + definition.getRewardAmount() + " " + definition.getRewardType());
+                + progress.resolveRewardAmount(definition.getRewardAmount()) + " "
+                + definition.getRewardType());
         }
         return List.copyOf(result);
     }
@@ -85,7 +87,8 @@ public class QuestController {
         if (progress.isRewardClaimed()) {
             return ActionResult.failure("Quest reward was already claimed.");
         }
-        applyReward(user, definition);
+        applyReward(user, definition,
+            progress.resolveRewardAmount(definition.getRewardAmount()));
         progress.claim();
         user.getProgress().recordCompletedQuest(definition.getCategory() == QuestCategory.DAILY);
         user.addNews(new model.News("Quest completed", definition.getTitle()
@@ -153,8 +156,13 @@ public class QuestController {
             QuestProgress progress = user.getQuestLog().getProgress(definition);
             if (definition.getParameter().equals("DIFFICULTY_5")) {
                 updateDifficultyStreak(progress, definition, difficultyLevel, won);
-            } else if (won && levelConditionMatches(definition.getParameter(), game,
-                difficultyLevel)) {
+            } else if (won && !progress.isCompleted(definition.getTarget())
+                && levelConditionMatches(definition.getParameter(), game, difficultyLevel)) {
+                if (definition.getRewardFormula()
+                    != QuestRewardFormula.FIXED) {
+                    progress.setRewardAmountOverride(definition.calculateRewardAmount(
+                        game.getLostPlantsCount()));
+                }
                 progress.addProgress(1, definition.getTarget());
             }
         }
@@ -192,20 +200,25 @@ public class QuestController {
                                    Game game, int killDelta,
                                    Map<String, Integer> plantKillDeltas,
                                    int quickKillDelta, int firstColumnKillDelta) {
+        String parameter = definition.getParameter();
+        if (parameter.equals("ANY_PLANT")) {
+            recordSinglePlantOnlyKills(progress, definition, game,
+                killDelta, plantKillDeltas);
+            return;
+        }
+        if (parameter.equals("CACTUS")) {
+            recordCactusOnlyKills(progress, definition, game,
+                killDelta, plantKillDeltas);
+            return;
+        }
         if (killDelta <= 0 && plantKillDeltas.isEmpty()
             && quickKillDelta <= 0 && firstColumnKillDelta <= 0) {
             return;
         }
-        String parameter = definition.getParameter();
         switch (parameter) {
             case "" -> progress.addProgress(killDelta, definition.getTarget());
             case "ANY_CHAPTER" -> progress.addBucketProgress(
                 game.getCurrentLevel().getSeason().name(), killDelta, definition.getTarget());
-            case "ANY_PLANT" -> recordAnyAttackingPlantKills(progress, definition,
-                plantKillDeltas);
-            case "CACTUS" -> progress.addProgress(
-                plantKillDeltas.getOrDefault(PlantDefinition.normalizeKey("Cactus"), 0),
-                definition.getTarget());
             case "TIME_LIMIT_30_SECONDS" -> progress.updateMaximum(
                 game.getKillsWithinThirtySeconds(), definition.getTarget());
             case "FIRST_COLUMN_NO_MOWER" -> progress.addProgress(firstColumnKillDelta,
@@ -216,16 +229,119 @@ public class QuestController {
         }
     }
 
-    private void recordAnyAttackingPlantKills(QuestProgress progress,
-                                               QuestDefinition definition,
-                                               Map<String, Integer> plantKillDeltas) {
+    private void recordSinglePlantOnlyKills(QuestProgress progress,
+                                             QuestDefinition definition,
+                                             Game game,
+                                             int totalKillDelta,
+                                             Map<String, Integer> plantKillDeltas) {
+        if (progress.isCompleted(definition.getTarget())) {
+            return;
+        }
+        String usedPlantKey = onlyHistoricallyUsedPlant(game);
+        if (usedPlantKey == null) {
+            if (!game.getPlantedPlantNames().isEmpty()) {
+                progress.resetProgress();
+            }
+            return;
+        }
+        PlantDefinition usedPlant = plantFactory.findDefinition(usedPlantKey).orElse(null);
+        if (usedPlant == null || !isAttackingPlant(usedPlant)) {
+            progress.resetProgress();
+            return;
+        }
+        if (totalKillDelta <= 0 && plantKillDeltas.isEmpty()) {
+            return;
+        }
+        Map.Entry<String, Integer> onlySource = singleValidPlantSource(plantKillDeltas);
+        int attributedKills = sumPositiveKills(plantKillDeltas);
+        if (onlySource == null || attributedKills != totalKillDelta
+            || !PlantDefinition.normalizeKey(onlySource.getKey()).equals(usedPlantKey)
+            || conflictsWithExistingPlantBucket(progress, usedPlantKey)) {
+            progress.resetProgress();
+            return;
+        }
+        progress.addBucketProgress(usedPlantKey, onlySource.getValue(),
+            definition.getTarget());
+    }
+
+    private void recordCactusOnlyKills(QuestProgress progress,
+                                       QuestDefinition definition,
+                                       Game game,
+                                       int totalKillDelta,
+                                       Map<String, Integer> plantKillDeltas) {
+        if (progress.isCompleted(definition.getTarget())) {
+            return;
+        }
+        String cactusKey = PlantDefinition.normalizeKey("Cactus");
+        List<String> usedPlants = game.getPlantedPlantNames();
+        if (!usedPlants.isEmpty() && usedPlants.stream().anyMatch(name ->
+            !PlantDefinition.normalizeKey(name).equals(cactusKey))) {
+            progress.resetProgress();
+            return;
+        }
+        if (totalKillDelta <= 0 && plantKillDeltas.isEmpty()) {
+            return;
+        }
+        int cactusKills = 0;
         for (Map.Entry<String, Integer> entry : plantKillDeltas.entrySet()) {
-            PlantDefinition plant = plantFactory.findDefinition(entry.getKey()).orElse(null);
-            if (plant != null && isAttackingPlant(plant)) {
-                progress.addBucketProgress(plant.getNormalizedName(), entry.getValue(),
-                    definition.getTarget());
+            if (PlantDefinition.normalizeKey(entry.getKey()).equals(cactusKey)
+                && entry.getValue() != null && entry.getValue() > 0) {
+                cactusKills += entry.getValue();
             }
         }
+        if (usedPlants.isEmpty() || cactusKills <= 0 || cactusKills != totalKillDelta
+            || sumPositiveKills(plantKillDeltas) != cactusKills) {
+            progress.resetProgress();
+            return;
+        }
+        progress.addProgress(cactusKills, definition.getTarget());
+    }
+
+    private String onlyHistoricallyUsedPlant(Game game) {
+        String onlyKey = null;
+        for (String name : game.getPlantedPlantNames()) {
+            String key = PlantDefinition.normalizeKey(name);
+            if (onlyKey != null && !onlyKey.equals(key)) {
+                return null;
+            }
+            onlyKey = key;
+        }
+        return onlyKey;
+    }
+
+    private Map.Entry<String, Integer> singleValidPlantSource(
+            Map<String, Integer> plantKillDeltas) {
+        Map.Entry<String, Integer> result = null;
+        for (Map.Entry<String, Integer> entry : plantKillDeltas.entrySet()) {
+            if (entry.getValue() == null || entry.getValue() <= 0) {
+                continue;
+            }
+            if (result != null) {
+                return null;
+            }
+            result = entry;
+        }
+        return result;
+    }
+
+    private int sumPositiveKills(Map<String, Integer> plantKillDeltas) {
+        int total = 0;
+        for (Integer value : plantKillDeltas.values()) {
+            if (value != null && value > 0) {
+                total += value;
+            }
+        }
+        return total;
+    }
+
+    private boolean conflictsWithExistingPlantBucket(QuestProgress progress,
+                                                      String plantKey) {
+        for (Map.Entry<String, Integer> entry : progress.getBucketProgress().entrySet()) {
+            if (entry.getValue() > 0 && !entry.getKey().equals(plantKey)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isAttackingPlant(PlantDefinition plant) {
@@ -261,12 +377,12 @@ public class QuestController {
             case "FINAL_SUN_0" -> game.getSunAmount() == 0;
             case "SYMMETRIC_GARDEN" -> !game.getPlantedPlantNames().isEmpty()
                 && game.getBoard().isHorizontallySymmetric();
-            case "ASYMMETRIC_GARDEN" -> !game.getPlantedPlantNames().isEmpty()
-                && !game.getBoard().isHorizontallySymmetric();
+            case "ASYMMETRIC_GARDEN" -> game.getBoard()
+                .isStrictlyAsymmetricExceptMiddleRow();
             case "DIFFICULTY_5" -> difficultyLevel == 5;
-            case "EMPTY_COLUMN" -> game.getBoard().isColumnEmpty(getDailyEmptyColumn() - 1);
-            case "EMPTY_ROW" -> game.getBoard().isRowEmpty(getDailyEmptyRow() - 1);
-            case "EMPTY_CROSS" -> game.getBoard().isCrossEmpty(
+            case "EMPTY_COLUMN" -> !game.wasColumnEverPlanted(getDailyEmptyColumn() - 1);
+            case "EMPTY_ROW" -> !game.wasRowEverPlanted(getDailyEmptyRow() - 1);
+            case "EMPTY_CROSS" -> !game.wasCrossEverPlanted(
                 getDailyEmptyCrossIndex() - 1, getDailyEmptyCrossIndex() - 1);
             case "MUSHROOMS_ONLY" -> isDayLevel(game)
                 && usedPlantsMatch(game, "Shroom");
@@ -328,8 +444,7 @@ public class QuestController {
         return false;
     }
 
-    private void applyReward(User user, QuestDefinition definition) {
-        int amount = definition.getRewardAmount();
+    private void applyReward(User user, QuestDefinition definition, int amount) {
         RewardType type = definition.getRewardType();
         if (type == RewardType.COINS) {
             user.getWallet().addCoins(amount);
