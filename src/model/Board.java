@@ -183,6 +183,28 @@ public class Board {
         }
     }
 
+    public void addFrozenZombie(Zombie zombie, int row, int col) {
+        if (zombie == null) {
+            throw new IllegalArgumentException("Frozen zombie cannot be null.");
+        }
+        Tile tile = getTile(row, col);
+        if (!tile.isEmpty() || tile.getType() != TileType.NORMAL) {
+            throw new IllegalStateException("Frozen zombie needs an empty normal tile.");
+        }
+        zombie.setPosition(new BoardPosition(row, col + 0.5));
+        zombies.add(zombie);
+        refreshZombieTiles();
+        tile.encaseZombie(zombie);
+    }
+
+    public void placeFrozenPlant(Plant plant, int row, int col) {
+        Tile tile = getTile(row, col);
+        if (!tile.isEmpty() || tile.getType() != TileType.NORMAL) {
+            throw new IllegalStateException("Frozen plant needs an empty normal tile.");
+        }
+        tile.encasePlant(plant);
+    }
+
     public void removeZombie(Zombie zombie) {
         zombies.remove(zombie);
         for (Tile[] rowTiles : tiles) {
@@ -211,7 +233,8 @@ public class Board {
         Zombie nearest = null;
         for (Zombie zombie : getZombiesInRow(row)) {
             double zombieColumn = zombie.getPosition().getColumn();
-            if (zombieColumn + 0.001 < column || zombie.isHypnotized()) {
+            if (zombieColumn + 0.001 < column || zombie.isHypnotized()
+                || zombie.isTrappedInIceTile()) {
                 continue;
             }
             if (nearest == null || zombieColumn < nearest.getPosition().getColumn()) {
@@ -225,7 +248,8 @@ public class Board {
         Zombie nearest = null;
         for (Zombie zombie : getZombiesInRow(row)) {
             double zombieColumn = zombie.getPosition().getColumn();
-            if (zombieColumn - 0.001 > column || zombie.isHypnotized()) {
+            if (zombieColumn - 0.001 > column || zombie.isHypnotized()
+                || zombie.isTrappedInIceTile()) {
                 continue;
             }
             if (nearest == null || zombieColumn > nearest.getPosition().getColumn()) {
@@ -238,12 +262,33 @@ public class Board {
     public Zombie findNearestZombieAnywhere() {
         Zombie nearest = null;
         for (Zombie zombie : zombies) {
-            if (zombie.isDead() || zombie.getPosition() == null || zombie.isHypnotized()) {
+            if (zombie.isDead() || zombie.getPosition() == null || zombie.isHypnotized()
+                || zombie.isTrappedInIceTile()) {
                 continue;
             }
             if (nearest == null
                 || zombie.getPosition().getColumn() < nearest.getPosition().getColumn()) {
                 nearest = zombie;
+            }
+        }
+        return nearest;
+    }
+
+    public GridPosition findNearestFrozenZombieTileAhead(int row, double column) {
+        GridPosition nearest = null;
+        for (int col = Math.max(0, (int) Math.floor(column)); col < cols; col++) {
+            Tile tile = tiles[row][col];
+            if (tile.getType() != TileType.ICE) {
+                continue;
+            }
+            for (Zombie zombie : tile.getZombies()) {
+                if (!zombie.isDead() && zombie.isTrappedInIceTile()) {
+                    nearest = tile.getPosition();
+                    break;
+                }
+            }
+            if (nearest != null) {
+                break;
             }
         }
         return nearest;
@@ -530,7 +575,9 @@ public class Board {
                 boolean hasPlant = tile.getPlant() != null;
                 boolean hasZombie = !tile.getZombies().isEmpty();
                 String token;
-                if (hasPlant && hasZombie) {
+                if (tile.getType() == TileType.ICE && tile.hasTrappedEntity()) {
+                    token = hasZombie ? "IZ" : "IP";
+                } else if (hasPlant && hasZombie) {
                     token = "PZ";
                 } else if (hasPlant) {
                     token = tile.getCoverPlant() != null ? "PC" : "P ";

@@ -58,26 +58,37 @@ final class LevelSetupSystem {
         } else if (engine.currentLevel.getSeason() == SeasonType.FROSTBITE_CAVES) {
             engine.board.getTile(1, 4).setTileType(TileType.SLIPPERY_UP);
             engine.board.getTile(3, 5).setTileType(TileType.SLIPPERY_DOWN);
-            engine.board.getTile(0, 6).setTileType(TileType.ICE);
+            addInitialFrozenZombie(engine, 0, 6);
             engine.board.getTile(4, 6).setTileType(TileType.ICE);
         } else if (engine.currentLevel.getSeason() == SeasonType.BIG_WAVE_BEACH) {
             engine.setBeachWaterLevel(7);
             engine.board.getTile(1, 6).setTileType(TileType.LOW_TIDE);
             engine.board.getTile(3, 6).setTileType(TileType.LOW_TIDE);
         } else if (engine.currentLevel.getSeason() == SeasonType.DARK_AGES) {
-            engine.addRandomTombs(3, true);
             engine.board.getTile(1, 5).setTileType(TileType.NECROMANCY);
             engine.board.getTile(3, 6).setTileType(TileType.NECROMANCY);
+            engine.addRandomTombs(3, true);
         }
     }
-    static void addRandomTombs(Game engine, int count, boolean mayContainRewards) {
+    private static void addInitialFrozenZombie(Game engine, int row, int col) {
+        Zombie zombie = engine.zombieFactory.createZombie("Basic Zombie");
+        zombie.applyDifficulty(engine.difficultyLevel);
+        zombie.setIceImmune(true);
+        engine.board.addFrozenZombie(zombie, row, col);
+        engine.addEvent("A " + zombie.getName() + " is trapped in 600 HP ice at "
+            + new GridPosition(row, col) + ".");
+    }
+    static int addRandomTombs(Game engine, int count, boolean mayContainRewards) {
         List<GridPosition> candidates = new ArrayList<>();
         int lastCandidateColumn = Math.min(engine.board.getCols() - 1, 6);
         for (int row = 0; row < engine.board.getRows(); row++) {
             for (int col = 3; col <= lastCandidateColumn; col++) {
                 GridPosition position = new GridPosition(row, col);
                 Tile tile = engine.board.getTile(row, col);
-                if (!engine.tombs.containsKey(position) && tile.getPlant() == null) {
+                boolean suitableGround = tile.getType() == TileType.NORMAL
+                    || tile.getType() == TileType.NECROMANCY;
+                if (!engine.tombs.containsKey(position) && tile.getPlant() == null
+                    && suitableGround && tile.getZombies().isEmpty()) {
                     candidates.add(position);
                 }
             }
@@ -87,10 +98,60 @@ final class LevelSetupSystem {
             GridPosition position = candidates.remove(engine.random.nextInt(candidates.size()));
             boolean sun = mayContainRewards && engine.random.nextInt(5) == 0;
             boolean plantFood = mayContainRewards && !sun && engine.random.nextInt(10) == 0;
-            engine.tombs.put(position, new Tomb(position.getRow(), position.getColumn(), sun, plantFood));
-            engine.board.getTile(position.getRow(), position.getColumn()).setTileType(TileType.TOMB);
+            Tile tile = engine.board.getTile(position.getRow(), position.getColumn());
+            Tomb tomb = new Tomb(position.getRow(), position.getColumn(), sun, plantFood,
+                tile.getType());
+            engine.tombs.put(position, tomb);
+            tile.setTileType(TileType.TOMB);
+            String reward = sun ? " containing 50 sun" : plantFood
+                ? " containing plant food" : "";
+            String tombKind = engine.currentLevel.getSeason() == SeasonType.DARK_AGES
+                ? "Dark Ages tomb" : "tomb";
+            engine.addEvent("A " + tombKind + reward + " formed at " + position + ".");
+        }
+        return tombCount;
+    }
+    static void applyWaveStartSeasonEffects(Game engine, Wave wave) {
+        if (engine.currentLevel.getSeason() == SeasonType.FROSTBITE_CAVES) {
+            applyColdWind(engine, wave);
+        } else if (engine.currentLevel.getSeason() == SeasonType.DARK_AGES) {
+            int requested = 1 + engine.random.nextInt(2);
+            int created = engine.addRandomTombs(requested, true);
+            engine.addEvent("Dark Ages wave " + wave.getWaveNumber() + " formed "
+                + created + " new tomb(s) at wave start.");
         }
     }
+
+    private static void applyColdWind(Game engine, Wave wave) {
+        ArrayList<Integer> rows = new ArrayList<>();
+        for (int row = 0; row < engine.board.getRows(); row++) {
+            rows.add(row);
+        }
+        Collections.shuffle(rows, engine.random);
+        int affectedRowCount = 1 + engine.random.nextInt(Math.min(3, rows.size()));
+        ArrayList<Integer> affectedRows = new ArrayList<>();
+        int layeredPlants = 0;
+        int firePlantsIgnored = 0;
+        for (int index = 0; index < affectedRowCount; index++) {
+            int row = rows.get(index);
+            affectedRows.add(row + 1);
+            for (Plant plant : engine.board.getPlantsInRow(row)) {
+                if (plant.getDefinition().hasTag("Fire")) {
+                    firePlantsIgnored++;
+                } else {
+                    int previousLayers = plant.getIceHits();
+                    plant.addIceLayer();
+                    if (plant.getIceHits() > previousLayers) {
+                        layeredPlants++;
+                    }
+                }
+            }
+        }
+        engine.addEvent("Cold wind struck row(s) " + affectedRows + " at the start of wave "
+            + wave.getWaveNumber() + "; ice layers added=" + layeredPlants
+            + ", fire plants ignored=" + firePlantsIgnored + ".");
+    }
+
     static void configureWaveForSeason(Game engine, Wave wave) {
         boolean finalWave = engine.nextWaveIndex == engine.currentLevel.getWaves().size() - 1;
         for (Zombie zombie : wave.getZombies()) {
@@ -131,15 +192,16 @@ final class LevelSetupSystem {
         }
     }
     static void spawnNecromancyZombie(Game engine, Wave wave) {
-        for (int row = 0; row < engine.board.getRows(); row++) {
-            for (int col = 0; col < engine.board.getCols(); col++) {
-                if (engine.board.getTile(row, col).getType() == TileType.NECROMANCY
-                    && engine.random.nextBoolean()) {
-                    Zombie zombie = engine.zombieFactory.createZombie("Basic Zombie");
-                    zombie.setPosition(new BoardPosition(row, col + 0.5));
-                    wave.addZombie(zombie);
-                }
+        for (Map.Entry<GridPosition, Tomb> entry : engine.tombs.entrySet()) {
+            if (!entry.getValue().isNecromancySite() || !engine.random.nextBoolean()) {
+                continue;
             }
+            GridPosition position = entry.getKey();
+            Zombie zombie = engine.zombieFactory.createZombie("Basic Zombie");
+            zombie.setPosition(new BoardPosition(position.getRow(), position.getColumn() + 0.5));
+            wave.addZombie(zombie);
+            engine.addEvent("Necromancy raised a " + zombie.getName() + " beneath the tomb at "
+                + position + ".");
         }
     }
     static void applySlipperyTile(Game engine, Zombie zombie) {
@@ -155,9 +217,11 @@ final class LevelSetupSystem {
         if (zombie.getAbility() == ZombieAbility.DODO_RIDER
             && zombie.getDefinition().getSpecialPropertyStrings(
                 "projectTileTypesToFlyOver").contains(type.name())) {
-            zombie.startFlight(zombie.getDefinition().getSpecialPropertyDouble(
-                "projectFlightDistanceTiles", 2.0));
-            engine.addEvent("Dodo Rider flew over a " + type + " tile.");
+            if (!zombie.isFlying()) {
+                zombie.startFlight(zombie.getDefinition().getSpecialPropertyDouble(
+                    "projectFlightDistanceTiles", 2.0));
+                engine.addEvent("Dodo Rider flew over a " + type + " tile without changing lane.");
+            }
             return;
         }
         int targetRow = position.getRow();
@@ -170,6 +234,32 @@ final class LevelSetupSystem {
             zombie.setPosition(position.withRow(targetRow));
         }
     }
+    static boolean hitIceTile(Game engine, Projectile projectile, double fromColumn,
+                              double toColumn) {
+        int row = projectile.getPosition().getRow();
+        for (int col = Math.max(0, (int) Math.floor(fromColumn));
+             col <= Math.min(engine.board.getCols() - 1, (int) Math.floor(toColumn)); col++) {
+            Tile tile = engine.board.getTile(row, col);
+            if (tile.getType() != TileType.ICE) {
+                continue;
+            }
+            int before = tile.getIceHealth();
+            tile.damageIce(projectile.getDamage() * projectile.getDamageMultiplier(),
+                projectile.getImpactType() == ProjectileType.FIRE);
+            projectile.deactivate();
+            int after = tile.getIceHealth();
+            if (after == 0) {
+                engine.addEvent("The 600 HP ice at " + tile.getPosition()
+                    + " broke and released its trapped entity.");
+            } else {
+                engine.addEvent("Projectile damaged ice at " + tile.getPosition() + " from "
+                    + before + " to " + after + " HP.");
+            }
+            return true;
+        }
+        return false;
+    }
+
     static boolean hitTomb(Game engine, Projectile projectile, double fromColumn, double toColumn) {
         int row = projectile.getPosition().getRow();
         for (Map.Entry<GridPosition, Tomb> entry : new ArrayList<>(engine.tombs.entrySet())) {
@@ -183,7 +273,7 @@ final class LevelSetupSystem {
             projectile.deactivate();
             if (tomb.isDestroyed()) {
                 engine.board.getTile(position.getRow(), position.getColumn())
-                    .setTileType(TileType.NORMAL);
+                    .setTileType(tomb.getUnderlyingTileType());
                 engine.tombs.remove(position);
                 if (tomb.containsSun()) {
                     engine.board.addSun(new Sun(50, position));

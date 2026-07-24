@@ -120,7 +120,12 @@ final class BattleQuerySystem {
         Tile tile = engine.board.getTile(row, col);
         StringBuilder output = new StringBuilder();
         output.append("Tile ").append(engine.display(row, col)).append(": type=")
-            .append(tile.getTileType()).append(System.lineSeparator());
+            .append(tile.getTileType());
+        if (tile.getType() == TileType.ICE) {
+            output.append(", iceHealth=").append(tile.getIceHealth()).append("/600")
+                .append(", trappedEntity=").append(tile.hasTrappedEntity());
+        }
+        output.append(System.lineSeparator());
         Plant plant = tile.getPlant();
         if (plant == null) {
             output.append("plant: none").append(System.lineSeparator());
@@ -129,6 +134,7 @@ final class BattleQuerySystem {
                 .append(plant.getPlantLevel()).append(", health=")
                 .append(plant.getHealth()).append('/').append(plant.getMaxHealth())
                 .append(", shield=").append(plant.getPlantFoodShield())
+                .append(", trappedInTileIce=").append(plant.isTrappedInIceTile())
                 .append(System.lineSeparator());
         }
         List<Zombie> tileZombies = tile.getZombies();
@@ -139,7 +145,8 @@ final class BattleQuerySystem {
             for (Zombie zombie : tileZombies) {
                 output.append("- ").append(zombie.getName()).append(", health=")
                     .append(zombie.getHealth()).append(", effectiveHealth=")
-                    .append(zombie.getEffectiveHealth()).append(System.lineSeparator());
+                    .append(zombie.getEffectiveHealth()).append(", trappedInTileIce=")
+                    .append(zombie.isTrappedInIceTile()).append(System.lineSeparator());
             }
         }
         List<PushedObstacle> obstacles = engine.board.getPushedObstaclesAt(row, col);
@@ -173,6 +180,10 @@ final class BattleQuerySystem {
                     .append(armor.getHealth()).append(System.lineSeparator());
             }
             output.append("effects:").append(System.lineSeparator());
+            if (zombie.isTrappedInIceTile()) {
+                output.append("  trapped in tile ice: inactive until 600 HP ice breaks")
+                    .append(System.lineSeparator());
+            }
             if (zombie.isGlowing()) {
                 output.append("  glowing: drops plant food on death")
                     .append(System.lineSeparator());

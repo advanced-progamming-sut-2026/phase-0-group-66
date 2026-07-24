@@ -34,6 +34,7 @@ final class BattleCommandSystem {
         engine.plantedPlantNames.clear();
         engine.plantedPlantFamilies.clear();
         engine.tombs.clear();
+        engine.warmedIcePositions.clear();
         engine.totalSunCollected = 0;
         engine.zombieKillCount = 0;
         engine.explosivePlantsUsed = 0;
@@ -217,6 +218,7 @@ final class BattleCommandSystem {
         wave.populate(engine.zombieFactory,
             engine.zombieFactory.getDefinitionsForSeason(engine.currentLevel.getSeason()), targetCost,
             engine.board.getRows(), engine.board.getCols() - 0.05, engine.random);
+        engine.applyWaveStartSeasonEffects(wave);
         engine.configureWaveForSeason(wave);
         engine.configureZombieDifficultyAndDrops(wave);
         wave.startWave();

@@ -30,6 +30,7 @@ public class Game {
     final  LinkedHashSet<String> plantedPlantNames;
     final  LinkedHashSet<String> plantedPlantFamilies;
     final  LinkedHashMap<GridPosition, Tomb> tombs;
+    final  LinkedHashSet<GridPosition> warmedIcePositions;
     final  ArrayList<String> events;
 
     GameState gameState;
@@ -97,6 +98,7 @@ public class Game {
         this.plantedPlantNames = new LinkedHashSet<>();
         this.plantedPlantFamilies = new LinkedHashSet<>();
         this.tombs = new LinkedHashMap<>();
+        this.warmedIcePositions = new LinkedHashSet<>();
         this.events = new ArrayList<>();
         this.gameState = GameState.PLANT_SELECTION;
     }
@@ -180,16 +182,26 @@ public class Game {
         LevelSetupSystem.configureZombieDifficultyAndDrops(this, wave);
     }
     void initializeSeasonTerrain() { LevelSetupSystem.initializeSeasonTerrain(this); }
-    void addRandomTombs(int count, boolean mayContainRewards) {
-        LevelSetupSystem.addRandomTombs(this, count, mayContainRewards);
+    int addRandomTombs(int count, boolean mayContainRewards) {
+        return LevelSetupSystem.addRandomTombs(this, count, mayContainRewards);
+    }
+    void applyWaveStartSeasonEffects(Wave wave) {
+        LevelSetupSystem.applyWaveStartSeasonEffects(this, wave);
     }
     void configureWaveForSeason(Wave wave) { LevelSetupSystem.configureWaveForSeason(this, wave); }
     void setBeachWaterLevel(int startColumn) { LevelSetupSystem.setBeachWaterLevel(this, startColumn); }
     void spawnNecromancyZombie(Wave wave) { LevelSetupSystem.spawnNecromancyZombie(this, wave); }
     void applySlipperyTile(Zombie zombie) { LevelSetupSystem.applySlipperyTile(this, zombie); }
+    boolean hitIceTile(Projectile projectile, double fromColumn, double toColumn) {
+        return LevelSetupSystem.hitIceTile(this, projectile, fromColumn, toColumn);
+    }
     boolean hitTomb(Projectile projectile, double fromColumn, double toColumn) {
         return LevelSetupSystem.hitTomb(this, projectile, fromColumn, toColumn);
     }
+    boolean markIceWarmed(GridPosition position) {
+        return warmedIcePositions.add(position);
+    }
+    void resetWarmedIcePositions() { warmedIcePositions.clear(); }
     boolean applyAutomaticBoostIfPresent(Plant plant) {
         return LevelSetupSystem.applyAutomaticBoostIfPresent(this, plant, plant.getName());
     }

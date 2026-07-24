@@ -42,6 +42,9 @@ final class BattleTickSystem {
     }
     static void advanceOneTick(Game engine) {
         engine.elapsedTicks++;
+        if (engine.elapsedTicks % Game.TICKS_PER_SECOND == 0) {
+            engine.resetWarmedIcePositions();
+        }
         engine.tickCooldowns();
         engine.tickConveyor();
         engine.tickSuns();
@@ -169,7 +172,9 @@ final class BattleTickSystem {
     static void shootProjectiles(Game engine, Plant plant) {
         GridPosition position = plant.getPosition();
         Zombie target = engine.board.findNearestZombieAhead(position.getRow(), position.getColumn());
-        if (target == null) {
+        GridPosition frozenTarget = engine.board.findNearestFrozenZombieTileAhead(
+            position.getRow(), position.getColumn());
+        if (target == null && frozenTarget == null) {
             return;
         }
         double shortRange = plant.getEffectiveRange(
@@ -251,6 +256,11 @@ final class BattleTickSystem {
             int crossingMultiplier = engine.torchwoodMultiplier(
                 projectile, previousColumn, currentColumn);
             projectile.igniteByTorchwood(crossingMultiplier);
+            if (!projectile.isLobbed()
+                && engine.hitIceTile(projectile, previousColumn, currentColumn)) {
+                engine.board.removeProjectile(projectile);
+                continue;
+            }
             if (!projectile.isLobbed() && engine.hitTomb(projectile, previousColumn, currentColumn)) {
                 engine.board.removeProjectile(projectile);
                 continue;
@@ -292,7 +302,7 @@ final class BattleTickSystem {
     static Zombie findProjectileTarget(Game engine, int row, double fromColumn, double toColumn) {
         Zombie target = null;
         for (Zombie zombie : engine.board.getZombiesInRow(row)) {
-            if (zombie.isHypnotized()) {
+            if (zombie.isHypnotized() || zombie.isTrappedInIceTile()) {
                 continue;
             }
             double column = zombie.getPosition().getColumn();
@@ -307,7 +317,7 @@ final class BattleTickSystem {
     }
     static void moveZombiesAndResolveCombat(Game engine) {
         for (Zombie zombie : new ArrayList<>(engine.board.getZombies())) {
-            if (zombie.isDead()) {
+            if (zombie.isDead() || zombie.isTrappedInIceTile()) {
                 continue;
             }
             zombie.tickEffects();
