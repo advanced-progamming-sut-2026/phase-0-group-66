@@ -17,6 +17,9 @@ public class Board {
     private final List<Projectile> projectiles;
     private final List<GrapeshotFragment> grapeshotFragments;
     private final List<Sun> suns;
+    private final List<PushedObstacle> pushedObstacles;
+    private final List<ProspectorDynamite> prospectorDynamites;
+    private final List<ReflectedProjectile> reflectedProjectiles;
     private boolean endangeredPlantsEaten;
 
     public Board() {
@@ -35,6 +38,9 @@ public class Board {
         this.projectiles = new ArrayList<>();
         this.grapeshotFragments = new ArrayList<>();
         this.suns = new ArrayList<>();
+        this.pushedObstacles = new ArrayList<>();
+        this.prospectorDynamites = new ArrayList<>();
+        this.reflectedProjectiles = new ArrayList<>();
         for (int row = 0; row < rows; row++) {
             lawnMowers.add(new LawnMower(row));
             for (int col = 0; col < cols; col++) {
@@ -289,6 +295,100 @@ public class Board {
         return Collections.unmodifiableList(grapeshotFragments);
     }
 
+    public void addPushedObstacle(PushedObstacle obstacle) {
+        if (obstacle != null && !pushedObstacles.contains(obstacle)) {
+            pushedObstacles.add(obstacle);
+        }
+    }
+
+    public void removePushedObstacle(PushedObstacle obstacle) {
+        pushedObstacles.remove(obstacle);
+    }
+
+    public List<PushedObstacle> getPushedObstacles() {
+        return Collections.unmodifiableList(pushedObstacles);
+    }
+
+    public List<PushedObstacle> getPushedObstaclesAt(int row, int col) {
+        ArrayList<PushedObstacle> result = new ArrayList<>();
+        for (PushedObstacle obstacle : pushedObstacles) {
+            if (!obstacle.isDestroyed() && obstacle.getPosition().getRow() == row
+                && (int) Math.floor(obstacle.getPosition().getColumn()) == col) {
+                result.add(obstacle);
+            }
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+    public PushedObstacle findPushedObstacleByOwner(String ownerRuntimeId,
+                                                     PushedObstacleType type) {
+        for (PushedObstacle obstacle : pushedObstacles) {
+            if (!obstacle.isDestroyed() && obstacle.getType() == type
+                && obstacle.getOwnerRuntimeId().equals(ownerRuntimeId)) {
+                return obstacle;
+            }
+        }
+        return null;
+    }
+
+    public PushedObstacle findFirstObstacleCrossed(int row, double fromColumn,
+                                                    double toColumn) {
+        PushedObstacle nearest = null;
+        for (PushedObstacle obstacle : pushedObstacles) {
+            if (obstacle.isDestroyed() || obstacle.getPosition().getRow() != row
+                || !obstacle.blocksDirectProjectiles()) {
+                continue;
+            }
+            double column = obstacle.getPosition().getColumn();
+            if (column + 0.001 < fromColumn || column - 0.001 > toColumn) {
+                continue;
+            }
+            if (nearest == null || column < nearest.getPosition().getColumn()) {
+                nearest = obstacle;
+            }
+        }
+        return nearest;
+    }
+
+    public void addProspectorDynamite(ProspectorDynamite dynamite) {
+        if (dynamite != null && !prospectorDynamites.contains(dynamite)) {
+            prospectorDynamites.add(dynamite);
+        }
+    }
+
+    public void removeProspectorDynamite(ProspectorDynamite dynamite) {
+        prospectorDynamites.remove(dynamite);
+    }
+
+    public List<ProspectorDynamite> getProspectorDynamites() {
+        return Collections.unmodifiableList(prospectorDynamites);
+    }
+
+    public List<ProspectorDynamite> getProspectorDynamitesAt(int row, int col) {
+        ArrayList<ProspectorDynamite> result = new ArrayList<>();
+        for (ProspectorDynamite dynamite : prospectorDynamites) {
+            if (dynamite.isActive() && dynamite.getPosition().getRow() == row
+                && (int) Math.floor(dynamite.getPosition().getColumn()) == col) {
+                result.add(dynamite);
+            }
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+    public void addReflectedProjectile(ReflectedProjectile projectile) {
+        if (projectile != null) {
+            reflectedProjectiles.add(projectile);
+        }
+    }
+
+    public void removeReflectedProjectile(ReflectedProjectile projectile) {
+        reflectedProjectiles.remove(projectile);
+    }
+
+    public List<ReflectedProjectile> getReflectedProjectiles() {
+        return Collections.unmodifiableList(reflectedProjectiles);
+    }
+
     public void addSun(Sun sun) {
         if (sun != null) {
             suns.add(sun);
@@ -436,10 +536,13 @@ public class Board {
                     token = tile.getCoverPlant() != null ? "PC" : "P ";
                 } else if (hasZombie) {
                     token = "Z" + Math.min(9, tile.getZombies().size());
-                } else if (!getSunsAt(row, col).isEmpty()) {
-                    token = "S ";
                 } else {
-                    token = tileToken(tile.getType());
+                    token = laneObjectToken(row, col);
+                    if (token == null && !getSunsAt(row, col).isEmpty()) {
+                        token = "S ";
+                    } else if (token == null) {
+                        token = tileToken(tile.getType());
+                    }
                 }
                 output.append(String.format("%-4s", token));
             }
@@ -448,6 +551,26 @@ public class Board {
                 .append(System.lineSeparator());
         }
         return output.toString();
+    }
+
+    private String laneObjectToken(int row, int col) {
+        for (PushedObstacle obstacle : pushedObstacles) {
+            if (!obstacle.isDestroyed() && obstacle.getPosition().getRow() == row
+                && (int) Math.floor(obstacle.getPosition().getColumn()) == col) {
+                return switch (obstacle.getType()) {
+                    case ICE_BLOCK -> "IB";
+                    case ARCADE_MACHINE -> "AM";
+                    case BARREL -> "BR";
+                };
+            }
+        }
+        for (ProspectorDynamite dynamite : prospectorDynamites) {
+            if (dynamite.isActive() && dynamite.getPosition().getRow() == row
+                && (int) Math.floor(dynamite.getPosition().getColumn()) == col) {
+                return "DY";
+            }
+        }
+        return null;
     }
 
     private String tileToken(TileType type) {

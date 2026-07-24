@@ -152,6 +152,14 @@ final class LevelSetupSystem {
             return;
         }
         TileType type = engine.board.getTile(position.getRow(), col).getType();
+        if (zombie.getAbility() == ZombieAbility.DODO_RIDER
+            && zombie.getDefinition().getSpecialPropertyStrings(
+                "projectTileTypesToFlyOver").contains(type.name())) {
+            zombie.startFlight(zombie.getDefinition().getSpecialPropertyDouble(
+                "projectFlightDistanceTiles", 2.0));
+            engine.addEvent("Dodo Rider flew over a " + type + " tile.");
+            return;
+        }
         int targetRow = position.getRow();
         if (type == TileType.SLIPPERY_UP) {
             targetRow--;

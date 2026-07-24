@@ -439,13 +439,18 @@ final class PlantAttackSystem {
         if (target.getAbility() != ZombieAbility.JUGGLER || projectile.isLobbed()) {
             return false;
         }
-        Plant victim = engine.nearestPlantInRow(target.getPosition().getRow(),
-            target.getPosition().getColumn());
-        if (victim != null) {
-            victim.takeDamage(projectile.getDamage());
-            engine.addEvent("Juggler Zombie reflected a projectile into " + victim.getName() + ".");
-        }
+        int spinSeconds = target.getDefinition().getSpecialPropertyInt(
+            "projectSpinDurationSeconds", 2);
+        target.startJuggling(Math.max(1, spinSeconds) * Game.TICKS_PER_SECOND);
+        int reflectedDamage = projectile.getDamage()
+            * Math.max(1, projectile.getDamageMultiplier());
+        ReflectedProjectile reflected = new ReflectedProjectile(reflectedDamage,
+            projectile.getSpeed(), new BoardPosition(target.getPosition().getRow(),
+                target.getPosition().getColumn() - 0.05), projectile.getImpactType());
+        engine.board.addReflectedProjectile(reflected);
         projectile.deactivate();
+        engine.addEvent("Juggler Zombie started spinning and reflected a "
+            + projectile.getImpactType() + " projectile toward the plants.");
         return true;
     }
     static Plant nearestPlantInRow(Game engine, int row, double zombieColumn) {
