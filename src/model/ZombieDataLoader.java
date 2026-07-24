@@ -9,7 +9,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-/** Loads the project-owned structured zombie schema. */
 public final class ZombieDataLoader {
     public List<ZombieDefinition> load(Path path) throws IOException {
         Object root = SimpleJsonParser.parse(path);
@@ -65,7 +64,6 @@ public final class ZombieDataLoader {
             throw new IllegalArgumentException(fieldName + " has an unknown value: " + text);
         }
     }
-
 
     private <T extends Enum<T>> List<T> enumList(Class<T> type, Object value, String fieldName) {
         ArrayList<T> result = new ArrayList<>();

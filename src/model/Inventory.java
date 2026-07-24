@@ -102,7 +102,6 @@ public class Inventory implements Serializable {
         selectedPlants.clear();
     }
 
-
     private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
         input.defaultReadObject();
         if (selectedPlants == null) {

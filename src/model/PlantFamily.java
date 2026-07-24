@@ -1,6 +1,5 @@
 package model;
 
-/** Stable plant family identifiers used by data files and gameplay rules. */
 public enum PlantFamily {
     SUN_PRODUCER("Sun Producer"),
     SHOOTER("Shooter"),

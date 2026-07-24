@@ -3,7 +3,6 @@ package model;
 import java.util.EnumMap;
 import java.util.Map;
 
-/** Resolves zombie behavior from the explicit ability field in zombies.json. */
 public final class ZombieBehaviorFactory {
     private static final ZombieBehavior NO_ACTION = (game, zombie) -> { };
     private static final Map<ZombieAbility, ZombieBehavior> BEHAVIORS = createBehaviors();

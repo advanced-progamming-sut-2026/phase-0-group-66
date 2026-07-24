@@ -2,7 +2,6 @@ package model;
 
 import java.util.Objects;
 
-/** One typed level upgrade from plants.json. */
 public final class PlantUpgrade {
     private final int level;
     private final PlantUpgradeType effect;

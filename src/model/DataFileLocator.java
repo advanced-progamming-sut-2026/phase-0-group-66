@@ -36,7 +36,6 @@ public final class DataFileLocator {
         directories.add(Paths.get("src", "main", "resources", "assets", "data"));
         directories.add(Paths.get("data"));
 
-        // Backward-compatible fallback for older archives that used the misspelled folder name.
         directories.add(Paths.get("assests", "data"));
         directories.add(Paths.get("src", "assests", "data"));
         return directories;

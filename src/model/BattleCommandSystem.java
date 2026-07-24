@@ -48,6 +48,7 @@ final class BattleCommandSystem {
         engine.sunProducerPlantsPlanted = 0;
         engine.nextConveyorTick = 0;
         engine.zombieWavesStarted = false;
+        engine.externalWinControlled = false;
         engine.events.clear();
         engine.gameState = GameState.PLANT_SELECTION;
         engine.addForcedPlantSelections();
@@ -164,6 +165,11 @@ final class BattleCommandSystem {
         engine.nextWaveIndex = 0;
         engine.nextSkySunTick = engine.calculateNextSkySunTick();
         engine.lostPlantsCount = 0;
+        engine.plantedPositions.clear();
+        engine.encounteredZombieNames.clear();
+        engine.plantedPlantNames.clear();
+        engine.plantedPlantFamilies.clear();
+        engine.sunProducerPlantsPlanted = 0;
         engine.currentLevel.startLevel();
         engine.gameState = GameState.RUNNING;
         engine.initializeSeasonTerrain();
@@ -224,6 +230,7 @@ final class BattleCommandSystem {
         wave.startWave();
         for (Zombie zombie : wave.getZombies()) {
             engine.board.addZombie(zombie);
+            engine.recordZombieEncounter(zombie);
         }
         ZombieObjectSystem.ensureZombieCompanions(engine);
         engine.currentWave = wave;
@@ -270,6 +277,7 @@ final class BattleCommandSystem {
             throw new IllegalStateException("Not enough sun.");
         }
         if (engine.handleTerrainUtilityPlant(plant, row, col)) {
+            engine.recordPlantUsage(plant, row, col);
             engine.finishPlantPurchase(key, definition.getName(), plant, conveyor);
             return;
         }
@@ -282,7 +290,7 @@ final class BattleCommandSystem {
             throw new IllegalStateException("Plant placement did not create an active plant.");
         }
         String detail = activePlant == plant ? "planted" : "stacked";
-        engine.recordPlantUsage(plant);
+        engine.recordPlantUsage(plant, row, col);
         engine.addEvent("Plant " + plant.getName() + " (level " + plant.getPlantLevel()
             + ") " + detail + " at " + engine.display(row, col) + ".");
         boolean boosted = engine.applyAutomaticBoostIfPresent(

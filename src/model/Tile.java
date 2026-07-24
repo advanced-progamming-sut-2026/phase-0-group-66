@@ -114,7 +114,6 @@ public class Tile {
         return false;
     }
 
-    /** Returns the main interactive plant, falling back to support or cover. */
     public Plant getPlant() {
         if (mainPlant != null) {
             return mainPlant;
@@ -156,7 +155,6 @@ public class Tile {
         return Collections.unmodifiableList(result);
     }
 
-    /** Legacy setter: replaces the main plant. */
     public void setPlant(Plant plant) {
         this.mainPlant = plant;
     }

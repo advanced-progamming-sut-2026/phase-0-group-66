@@ -2,7 +2,6 @@ package model;
 
 import java.util.Locale;
 
-/** Immutable quest definition with a structured completion condition. */
 public final class QuestDefinition {
     private final int id;
     private final String key;

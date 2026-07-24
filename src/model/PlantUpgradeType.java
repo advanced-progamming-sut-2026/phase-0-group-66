@@ -1,6 +1,5 @@
 package model;
 
-/** Machine-readable upgrade operations. */
 public enum PlantUpgradeType {
     MAX_HEALTH_DELTA,
     DAMAGE_DELTA,

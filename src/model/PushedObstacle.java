@@ -1,6 +1,5 @@
 package model;
 
-/** A damageable object that occupies a lane independently from its owning zombie. */
 public final class PushedObstacle {
     private final PushedObstacleType type;
     private final String ownerRuntimeId;

@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/** Creates zombies from explicit data-file abilities and season availability. */
 public final class ZombieFactory {
     private final LinkedHashMap<String, ZombieDefinition> definitionsByLookup;
     private final ArrayList<ZombieDefinition> orderedDefinitions;

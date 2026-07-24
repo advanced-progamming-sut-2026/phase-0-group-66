@@ -5,7 +5,6 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
-/** Effective, level-aware plant statistics calculated from typed upgrades. */
 public final class PlantStats {
     private final int level;
     private int maxHealth;

@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/** Creates runtime plants from structured definitions rather than display-name checks. */
 public final class PlantFactory {
     private final LinkedHashMap<String, PlantDefinition> definitionsByLookup;
     private final ArrayList<PlantDefinition> orderedDefinitions;

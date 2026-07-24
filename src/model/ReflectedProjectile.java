@@ -1,6 +1,5 @@
 package model;
 
-/** A projectile sent back toward plants by a spinning Juggler/Jester zombie. */
 public final class ReflectedProjectile {
     private final int damage;
     private final double speed;

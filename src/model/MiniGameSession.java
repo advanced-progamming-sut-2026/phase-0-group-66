@@ -2,7 +2,6 @@ package model;
 
 import java.util.List;
 
-/** Base class for a playable mini-game session. */
 public abstract class MiniGameSession {
     private final MiniGameDefinition definition;
     private final int level;
@@ -43,7 +42,6 @@ public abstract class MiniGameSession {
 
     protected abstract void onTick();
 
-    /** Compatibility bridge for the former counter-only implementation. */
     public void perform(String action, int amount) {
         execute(action, List.of(Integer.toString(amount)));
     }

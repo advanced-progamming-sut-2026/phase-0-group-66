@@ -3,7 +3,6 @@ package model;
 import java.util.EnumMap;
 import java.util.Map;
 
-/** Factory for stateless special-level strategies. */
 public final class SpecialLevelRuleFactory {
     private static final Map<SpecialLevelType, SpecialLevelRule> RULES = createRules();
 

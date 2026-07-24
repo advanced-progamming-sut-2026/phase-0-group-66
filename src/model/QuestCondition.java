@@ -1,6 +1,5 @@
 package model;
 
-/** Structured completion condition for a quest. */
 public final class QuestCondition {
     private final QuestEventType event;
     private final int target;

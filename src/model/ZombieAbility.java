@@ -1,6 +1,5 @@
 package model;
 
-/** Identifies the special gameplay behavior of a zombie. */
 public enum ZombieAbility {
     BASIC,
     ARMORED,

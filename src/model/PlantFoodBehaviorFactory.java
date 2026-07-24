@@ -1,6 +1,5 @@
 package model;
 
-/** Dispatches the exact plant-food behavior selected by plants.json. */
 final class PlantFoodBehaviorFactory {
     private PlantFoodBehaviorFactory() { }
 

@@ -1,6 +1,5 @@
 package model;
 
-/** Centralized difficulty multipliers. Difficulty 3 is the neutral baseline. */
 public final class DifficultyScaling {
     private DifficultyScaling() { }
 

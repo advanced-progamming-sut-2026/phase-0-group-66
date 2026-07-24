@@ -1,6 +1,5 @@
 package model;
 
-/** Strategy object for one special-level ruleset. */
 public interface SpecialLevelRule {
     SpecialLevelType getType();
 

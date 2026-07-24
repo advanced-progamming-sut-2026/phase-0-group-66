@@ -1,6 +1,5 @@
 package model;
 
-/** Identifies the gameplay behavior attached to a plant definition. */
 public enum PlantAbility {
     SUNFLOWER,
     TWIN_SUNFLOWER,

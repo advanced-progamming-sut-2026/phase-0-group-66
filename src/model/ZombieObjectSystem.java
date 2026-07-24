@@ -2,7 +2,6 @@ package model;
 
 import java.util.ArrayList;
 
-/** Runtime system for independent objects created or pushed by special zombies. */
 final class ZombieObjectSystem {
     private ZombieObjectSystem() { }
 

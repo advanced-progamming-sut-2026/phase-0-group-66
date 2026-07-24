@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** Tracks the five independent scoring patterns required by scored mode. */
 public final class MeowPointTracker {
     private final LinkedHashMap<String, Integer> breakdown = new LinkedHashMap<>();
     private int syncedKills;

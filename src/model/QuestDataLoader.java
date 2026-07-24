@@ -9,7 +9,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-/** Loads English quest data with nested condition and reward objects. */
 public final class QuestDataLoader {
     public List<QuestDefinition> load(Path path) throws IOException {
         Object root = SimpleJsonParser.parse(path);
@@ -72,7 +71,6 @@ public final class QuestDataLoader {
             throw new IllegalArgumentException(fieldName + " has an unknown value: " + text);
         }
     }
-
 
     private <T extends Enum<T>> T optionalEnumValue(Class<T> type, Object value,
                                                      T defaultValue, String fieldName) {

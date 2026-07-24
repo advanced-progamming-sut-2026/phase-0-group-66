@@ -9,7 +9,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-/** Loads the structured, English-only plant schema. */
 public final class PlantDataLoader {
     public List<PlantDefinition> load(Path path) throws IOException {
         Object root = SimpleJsonParser.parse(path);

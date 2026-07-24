@@ -3,7 +3,6 @@ package model;
 import java.util.HashSet;
 import java.util.Set;
 
-/** A short-lived bouncing Grapeshot fragment driven by plants.json values. */
 final class GrapeshotFragment {
     private static final double SPEED_TILES_PER_SECOND = 3.0;
     private static final double HIT_RADIUS = 0.48;

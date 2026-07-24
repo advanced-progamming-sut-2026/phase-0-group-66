@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalDouble;
 
-/** Immutable, machine-readable plant definition loaded from plants.json. */
 public final class PlantDefinition {
     private final int id;
     private final boolean required;
@@ -116,13 +115,10 @@ public final class PlantDefinition {
         return (int) Math.round(getPlantFoodParameter(name, fallback));
     }
 
-    /** Compatibility display method used by the collection screen. */
     public String getBaseAbility() { return abilityDescription; }
 
-    /** Compatibility display method used by the collection and greenhouse screens. */
     public String getPlantFoodEffect() { return plantFoodDescription; }
 
-    /** Compatibility display method; gameplay reads typed upgrades through getUpgrades(). */
     public List<String> getLevelUpgrades() {
         ArrayList<String> result = new ArrayList<>();
         for (PlantUpgrade upgrade : upgrades) {

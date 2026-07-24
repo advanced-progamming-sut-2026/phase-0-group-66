@@ -1,6 +1,5 @@
 package model;
 
-/** The independent reverse-moving threat created by a Prospector after its fuse expires. */
 public final class ProspectorDynamite {
     private final String ownerRuntimeId;
     private final int damagePerSecond;

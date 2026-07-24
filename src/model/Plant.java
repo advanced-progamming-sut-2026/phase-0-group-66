@@ -393,7 +393,6 @@ public abstract class Plant {
         transformedBy = null;
     }
 
-
     public void matureFully() {
         int stageThree = definition.getAbilityParameterInt("stage3Seconds", 72);
         ageTicks = Math.max(ageTicks, stageThree * Game.TICKS_PER_SECOND);

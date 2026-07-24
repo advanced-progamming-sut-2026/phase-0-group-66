@@ -98,7 +98,6 @@ public class Projectile {
         return affected;
     }
 
-
     public void igniteByTorchwood(int multiplier) {
         if (type == ProjectileType.FIRE || multiplier <= 1) {
             return;

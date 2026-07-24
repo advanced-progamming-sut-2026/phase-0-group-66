@@ -1,6 +1,5 @@
 package model;
 
-/** Builds adventure levels and delegates special setup to rule strategies. */
 public final class LevelFactory {
     public Level createAdventureLevel(SeasonType season, int levelNumber,
                                       SpecialLevelType type, int waveCount,

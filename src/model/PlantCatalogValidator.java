@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** Verifies that the default plant catalog matches the official 69-row data sheet. */
 public final class PlantCatalogValidator {
     public static final int EXPECTED_PLANT_COUNT = 69;
     public static final int EXPECTED_REQUIRED_COUNT = 57;

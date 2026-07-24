@@ -6,7 +6,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Structured zombie definition loaded from zombies.json. */
 public final class ZombieDefinition {
     private final String key;
     private final String alias;

@@ -1,6 +1,5 @@
 package model;
 
-/** Structured plant-food effects selected by plants.json. */
 public enum PlantFoodType {
     NONE,
     SUN_BURST,

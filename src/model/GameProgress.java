@@ -123,7 +123,6 @@ public class GameProgress implements Serializable {
         }
     }
 
-    /** Legacy compatibility for older callers that did not identify the mini-game level. */
     public void recordCompletedMiniGame(int score) {
         completedMiniGames++;
         updateBestScore(score);

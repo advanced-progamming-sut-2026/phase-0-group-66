@@ -2,7 +2,6 @@ package model;
 
 import java.io.IOException;
 
-/** Shared access to the same JSON-backed catalogs used by the main battle engine. */
 final class MiniGameData {
     private static PlantFactory plantFactory;
     private static ZombieFactory zombieFactory;

@@ -3,7 +3,6 @@ package model;
 import java.util.EnumMap;
 import java.util.Map;
 
-/** Resolves active plant behavior from the ability identifier loaded from JSON. */
 public final class PlantBehaviorFactory {
     private static final PlantBehavior NO_ACTION = (game, plant) -> { };
     private static final PlantBehavior GENERIC_ATTACK = (game, plant) -> {
