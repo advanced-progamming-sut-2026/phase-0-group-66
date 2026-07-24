@@ -1,6 +1,10 @@
 package model;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class Plant {
     private static final int PUFF_LIFETIME_TICKS = 60 * Game.TICKS_PER_SECOND;
@@ -15,12 +19,13 @@ public abstract class Plant {
     protected int cooldown;
     private final int plantLevel;
     private final int actionIntervalTicks;
-    private final int rechargeTicks;
+    private int rechargeTicks;
     private final int sunProductionBonus;
     private final boolean doubleSunChance;
     private final int chillDurationTicks;
     private final int pierceBonus;
     private final PlantAbility ability;
+    private final Map<String, Double> upgradeTraits;
     private int actionTicksRemaining;
     private int plantFoodShield;
     private int coverShield;
@@ -33,6 +38,17 @@ public abstract class Plant {
     private int octopusHealth;
     private int armTicksRemaining;
     private int lifetimeTicksRemaining;
+    private int cyanBulbTicks;
+    private int blueBulbTicks;
+    private int orangeBulbTicks;
+    private int reflectDamageMultiplier = 1;
+    private int blueFlameMultiplier = 2;
+    private int explosiveShieldDamage;
+    private boolean shieldExplosionPending;
+    private boolean hypnoGargantuarReady;
+    private int mintAuraTicksRemaining;
+    private final Set<Plant> mintEmpoweredPlants = Collections.newSetFromMap(
+        new IdentityHashMap<>());
     private String transformedBy;
 
     protected Plant(PlantDefinition definition) {
@@ -57,22 +73,31 @@ public abstract class Plant {
             stats.getRechargeSeconds() * Game.TICKS_PER_SECOND));
         this.sunProductionBonus = stats.getSunProductionBonus();
         this.doubleSunChance = stats.hasDoubleSunChance();
-        this.chillDurationTicks = 50 + stats.getChillBonusTicks();
+        int baseChillSeconds = definition.getAbilityParameterInt("chillSeconds", 5);
+        this.chillDurationTicks = Math.max(0, baseChillSeconds) * Game.TICKS_PER_SECOND
+            + stats.getChillBonusTicks();
         this.pierceBonus = stats.getPierceBonus();
         this.ability = PlantAbility.fromDefinition(definition);
+        this.upgradeTraits = stats.getTraitValues();
         this.actionTicksRemaining = actionIntervalTicks;
         this.stackCount = 1;
         initializeRuntimeState();
     }
 
     private void initializeRuntimeState() {
-        if (ability == PlantAbility.POTATO_MINE) {
-            armTicksRemaining = 15 * Game.TICKS_PER_SECOND;
-        } else if (ability == PlantAbility.PRIMAL_POTATO_MINE) {
-            armTicksRemaining = 5 * Game.TICKS_PER_SECOND;
+        if (ability == PlantAbility.POTATO_MINE
+            || ability == PlantAbility.PRIMAL_POTATO_MINE) {
+            int defaultSeconds = ability == PlantAbility.POTATO_MINE ? 15 : 5;
+            int configured = definition.getAbilityParameterInt("armSeconds", defaultSeconds);
+            int seconds = Math.min(configured,
+                Math.max(1, (int) Math.round(actionIntervalTicks
+                    / (double) Game.TICKS_PER_SECOND)));
+            armTicksRemaining = seconds * Game.TICKS_PER_SECOND;
         }
         if (ability == PlantAbility.SHORT_RANGE_SHROOM) {
-            lifetimeTicksRemaining = PUFF_LIFETIME_TICKS;
+            int seconds = definition.getAbilityParameterInt("lifetimeSeconds", 60)
+                + getUpgradeTraitInt("LIFESPAN_10S", 0);
+            lifetimeTicksRemaining = Math.max(1, seconds) * Game.TICKS_PER_SECOND;
         }
     }
 
@@ -85,7 +110,11 @@ public abstract class Plant {
             throw new IllegalArgumentException("Damage cannot be negative.");
         }
         int remaining = absorbCoverDamage(amount);
+        int shieldBefore = plantFoodShield;
         remaining = absorbPlantFoodShield(remaining);
+        if (explosiveShieldDamage > 0 && shieldBefore > 0 && plantFoodShield == 0) {
+            shieldExplosionPending = true;
+        }
         health = Math.max(0, health - remaining);
     }
 
@@ -108,20 +137,13 @@ public abstract class Plant {
     public void usePlantFood() {
         healToFull();
         clearControlEffects();
-        int shield = switch (ability) {
-            case WALL_NUT -> 4000;
-            case TALL_NUT -> 8000;
-            case ENDURIAN, EXPLODE_O_NUT, PUMPKIN, SUN_BEAN -> Math.max(4000, maxHealth);
-            default -> maxHealth;
-        };
-        plantFoodShield = Math.max(plantFoodShield, shield);
         actionTicksRemaining = 0;
         if (ability == PlantAbility.POTATO_MINE
             || ability == PlantAbility.PRIMAL_POTATO_MINE) {
             armTicksRemaining = 0;
         }
         if (ability == PlantAbility.SHORT_RANGE_SHROOM) {
-            lifetimeTicksRemaining = PUFF_LIFETIME_TICKS;
+            restoreLifetime();
         }
     }
 
@@ -139,6 +161,21 @@ public abstract class Plant {
         if (lifetimeTicksRemaining > 0) {
             lifetimeTicksRemaining--;
             if (lifetimeTicksRemaining == 0) {
+                health = 0;
+            }
+        }
+        if (cyanBulbTicks > 0) {
+            cyanBulbTicks--;
+        }
+        if (blueBulbTicks > 0) {
+            blueBulbTicks--;
+        }
+        if (orangeBulbTicks > 0) {
+            orangeBulbTicks--;
+        }
+        if (mintAuraTicksRemaining > 0) {
+            mintAuraTicksRemaining--;
+            if (mintAuraTicksRemaining == 0 && ability.isMint()) {
                 health = 0;
             }
         }
@@ -160,7 +197,7 @@ public abstract class Plant {
     }
 
     public boolean isDestroyed() {
-        return health <= 0;
+        return health <= 0 && !isMintAuraActive();
     }
 
     public boolean isOperational() {
@@ -229,10 +266,15 @@ public abstract class Plant {
         if (ability != PlantAbility.SUN_SHROOM && ability != PlantAbility.KIWIBEAST) {
             return 3;
         }
-        if (ageTicks < 24 * Game.TICKS_PER_SECOND) {
+        int growthDelta = getUpgradeTraitInt("GROW_TIME_DELTA", 0);
+        int stageTwo = Math.max(1, definition.getAbilityParameterInt("stage2Seconds", 24)
+            + growthDelta) * Game.TICKS_PER_SECOND;
+        int stageThree = Math.max(1, definition.getAbilityParameterInt("stage3Seconds", 72)
+            + growthDelta) * Game.TICKS_PER_SECOND;
+        if (ageTicks < stageTwo) {
             return 1;
         }
-        if (ageTicks < 72 * Game.TICKS_PER_SECOND) {
+        if (ageTicks < stageThree) {
             return 2;
         }
         return 3;
@@ -240,21 +282,26 @@ public abstract class Plant {
 
     public int getEffectiveAttackPower() {
         if (ability == PlantAbility.KIWIBEAST) {
-            return Math.max(1, attackPower) * getGrowthStage();
+            int stage = getGrowthStage();
+            if (stage == 3 && hasUpgradeTrait("MAX_SIZE_1")) {
+                stage++;
+            }
+            return Math.max(1, attackPower) * stage;
         }
         return attackPower;
     }
 
     public int getSunShroomProduction() {
         return switch (getGrowthStage()) {
-            case 1 -> 25;
-            case 2 -> 50;
-            default -> 75;
+            case 1 -> definition.getAbilityParameterInt("stage1Sun", 25);
+            case 2 -> definition.getAbilityParameterInt("stage2Sun", 50);
+            default -> definition.getAbilityParameterInt("stage3Sun", 75);
         };
     }
 
     public boolean addStack() {
-        if (ability != PlantAbility.PEA_POD || stackCount >= 5) {
+        int maximumStacks = definition.getAbilityParameterInt("maxStacks", 5);
+        if (ability != PlantAbility.PEA_POD || stackCount >= maximumStacks) {
             return false;
         }
         stackCount++;
@@ -334,13 +381,160 @@ public abstract class Plant {
 
 
     public void matureFully() {
-        ageTicks = Math.max(ageTicks, 72 * Game.TICKS_PER_SECOND);
+        int stageThree = definition.getAbilityParameterInt("stage3Seconds", 72);
+        ageTicks = Math.max(ageTicks, stageThree * Game.TICKS_PER_SECOND);
     }
 
     public void restoreLifetime() {
         if (ability == PlantAbility.SHORT_RANGE_SHROOM) {
-            lifetimeTicksRemaining = PUFF_LIFETIME_TICKS;
+            int seconds = definition.getAbilityParameterInt("lifetimeSeconds", 60)
+                + getUpgradeTraitInt("LIFESPAN_10S", 0);
+            lifetimeTicksRemaining = Math.max(1, seconds) * Game.TICKS_PER_SECOND;
         }
+    }
+
+    public void addPlantFoodShield(int amount) {
+        plantFoodShield += Math.max(0, amount);
+    }
+
+    public void setReflectDamageMultiplier(int multiplier) {
+        reflectDamageMultiplier = Math.max(reflectDamageMultiplier, Math.max(1, multiplier));
+    }
+
+    public int getReflectedDamage() {
+        return Math.max(1, getEffectiveAttackPower()) * reflectDamageMultiplier;
+    }
+
+    public void igniteBlueFlame(int multiplier) {
+        blueFlameMultiplier = Math.max(blueFlameMultiplier, Math.max(2, multiplier));
+    }
+
+    public int getTorchwoodMultiplier() {
+        return blueFlameMultiplier;
+    }
+
+    public void armExplosiveShield(int damage) {
+        explosiveShieldDamage = Math.max(explosiveShieldDamage, Math.max(0, damage));
+    }
+
+    public int consumeShieldExplosionDamage() {
+        if (!shieldExplosionPending) {
+            return 0;
+        }
+        shieldExplosionPending = false;
+        return explosiveShieldDamage;
+    }
+
+    public void enableHypnoGargantuar() {
+        hypnoGargantuarReady = true;
+    }
+
+    public boolean consumeHypnoGargantuar() {
+        boolean result = hypnoGargantuarReady;
+        hypnoGargantuarReady = false;
+        return result;
+    }
+
+    public void startMintAura(int ticks) {
+        if (!ability.isMint()) {
+            throw new IllegalStateException("Only mint plants can start a mint aura.");
+        }
+        mintAuraTicksRemaining = Math.max(1, ticks);
+    }
+
+    public boolean isMintAuraActive() {
+        return ability.isMint() && mintAuraTicksRemaining > 0;
+    }
+
+    public int getMintAuraTicksRemaining() {
+        return mintAuraTicksRemaining;
+    }
+
+    public boolean markMintEmpowered(Plant plant) {
+        return plant != null && mintEmpoweredPlants.add(plant);
+    }
+
+    public int nextBowlingBulbDamage() {
+        if (ability != PlantAbility.BOWLING_BULB) {
+            return getEffectiveAttackPower();
+        }
+        if (orangeBulbTicks <= 0) {
+            orangeBulbTicks = adjustedBulbRegenSeconds("orangeRegenSeconds", 10)
+                * Game.TICKS_PER_SECOND;
+            return definition.getAbilityParameterInt("orangeDamage", 180);
+        }
+        if (blueBulbTicks <= 0) {
+            blueBulbTicks = adjustedBulbRegenSeconds("blueRegenSeconds", 5)
+                * Game.TICKS_PER_SECOND;
+            return definition.getAbilityParameterInt("blueDamage", 120);
+        }
+        if (cyanBulbTicks <= 0) {
+            cyanBulbTicks = adjustedBulbRegenSeconds("cyanRegenSeconds", 2)
+                * Game.TICKS_PER_SECOND;
+            return definition.getAbilityParameterInt("cyanDamage", 40);
+        }
+        return 0;
+    }
+
+    private int adjustedBulbRegenSeconds(String parameter, int fallback) {
+        int delta = getUpgradeTraitInt("BULB_REGEN_DELTA", 0);
+        return Math.max(1, definition.getAbilityParameterInt(parameter, fallback) + delta);
+    }
+
+    public final boolean hasUpgradeTrait(String trait) {
+        return upgradeTraits.containsKey(normalizeTrait(trait));
+    }
+
+    public final double getUpgradeTrait(String trait, double fallback) {
+        return upgradeTraits.getOrDefault(normalizeTrait(trait), fallback);
+    }
+
+    public final int getUpgradeTraitInt(String trait, int fallback) {
+        return (int) Math.round(getUpgradeTrait(trait, fallback));
+    }
+
+    public double getEffectiveRange(double baseRange) {
+        return Math.max(0.0, baseRange + getUpgradeTrait("RANGE_1_TILE", 0.0));
+    }
+
+    public int getDigestionSeconds() {
+        int base = definition.getAbilityParameterInt("digestSeconds", 40);
+        return Math.max(1, base + getUpgradeTraitInt("DIGEST_SECONDS_DELTA", 0));
+    }
+
+    public int getWarmthRadius() {
+        return Math.max(1, 1 + getUpgradeTraitInt("WARMTH_RADIUS_1", 0));
+    }
+
+    public void applyImitaterCardModifiers(PlantDefinition imitaterDefinition,
+                                            int imitaterLevel) {
+        if (imitaterDefinition == null
+            || imitaterDefinition.getAbility() != PlantAbility.IMITATER) {
+            throw new IllegalArgumentException("Imitater modifiers require its definition.");
+        }
+        int costDelta = 0;
+        double rechargeDelta = 0.0;
+        for (PlantUpgrade upgrade : imitaterDefinition.getUpgrades()) {
+            if (upgrade.getLevel() > imitaterLevel) {
+                continue;
+            }
+            if (upgrade.getEffect() == PlantUpgradeType.SUN_COST_DELTA) {
+                costDelta += (int) Math.round(upgrade.getAmount());
+            } else if (upgrade.getEffect() == PlantUpgradeType.RECHARGE_DELTA) {
+                rechargeDelta += upgrade.getAmount();
+            }
+        }
+        sunCost = Math.max(0, sunCost + costDelta);
+        rechargeTicks = Math.max(0, rechargeTicks
+            + (int) Math.round(rechargeDelta * Game.TICKS_PER_SECOND));
+    }
+
+    public int getSplashDamageBonus() {
+        return Math.max(0, getUpgradeTraitInt("AOE_DAMAGE_BONUS", 0));
+    }
+
+    private static String normalizeTrait(String trait) {
+        return trait == null ? "" : trait.trim().toUpperCase(Locale.ROOT);
     }
 
     public PlantAbility getAbility() { return ability; }
@@ -351,6 +545,12 @@ public abstract class Plant {
     public int getSunProductionBonus() { return sunProductionBonus; }
     public boolean hasDoubleSunChance() { return doubleSunChance; }
     public int getChillDurationTicks() { return chillDurationTicks; }
+    public int getPierceBonus() { return pierceBonus; }
+    public int getChillBonusTicks() {
+        int base = Math.max(0, definition.getAbilityParameterInt("chillSeconds", 5))
+            * Game.TICKS_PER_SECOND;
+        return Math.max(0, chillDurationTicks - base);
+    }
     public int getPlantFoodShield() { return plantFoodShield; }
     public int getCoverShield() { return coverShield; }
     public int getAgeTicks() { return ageTicks; }

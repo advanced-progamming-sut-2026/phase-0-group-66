@@ -58,40 +58,89 @@ final class PlantAttackSystem {
         }
         switch (plant.getAbility()) {
             case ICEBERG_LETTUCE -> {
-                target.stun(5 * Game.TICKS_PER_SECOND);
-                target.chill(10 * Game.TICKS_PER_SECOND);
+                int freezeTicks = plant.getDefinition().getAbilityParameterInt(
+                    "freezeSeconds", 5) * Game.TICKS_PER_SECOND
+                    + plant.getChillBonusTicks();
+                int chillTicks = plant.getDefinition().getAbilityParameterInt(
+                    "chillSeconds", 10) * Game.TICKS_PER_SECOND;
+                target.stun(freezeTicks);
+                target.chill(chillTicks);
                 plant.takeDamage(Math.max(plant.getHealth(), 1));
                 engine.addEvent("Iceberg Lettuce froze " + target.getName() + ".");
             }
             case TANGLE_KELP -> {
-                target.kill(plant.getName());
+                int targetCount = 1 + plant.getUpgradeTraitInt("TARGETS_1", 0);
+                int killed = killNearbyTrapTargets(engine, plant, target, targetCount, true);
                 plant.takeDamage(Math.max(plant.getHealth(), 1));
-                engine.addEvent("Tangle Kelp pulled " + target.getName() + " underwater.");
+                engine.addEvent("Tangle Kelp pulled " + killed + " zombie(s) underwater.");
             }
             case SQUASH -> {
-                target.kill(plant.getName());
+                int targetCount = plant.hasUpgradeTrait("CAN_CRUSH_2X") ? 2 : 1;
+                int killed = killNearbyTrapTargets(engine, plant, target, targetCount, false);
                 plant.takeDamage(Math.max(plant.getHealth(), 1));
-                engine.addEvent("Squash crushed " + target.getName() + ".");
+                engine.addEvent("Squash crushed " + killed + " zombie(s).");
             }
             default -> engine.detonatePlant(plant);
         }
     }
+    private static int killNearbyTrapTargets(Game engine, Plant plant, Zombie first,
+                                             int targetCount, boolean waterOnly) {
+        int killed = 0;
+        if (first != null && !first.isDead()) {
+            first.kill(plant.getName());
+            killed++;
+        }
+        GridPosition position = plant.getPosition();
+        for (Zombie zombie : engine.hostileZombies()) {
+            if (killed >= targetCount || zombie == first || zombie.getPosition() == null) {
+                continue;
+            }
+            if (zombie.getPosition().getRow() != position.getRow()
+                || Math.abs(zombie.getPosition().getColumn() - position.getColumn()) > 2.0) {
+                continue;
+            }
+            if (waterOnly) {
+                int col = (int) Math.floor(zombie.getPosition().getColumn());
+                if (!engine.board.isInside(zombie.getPosition().getRow(), col)) {
+                    continue;
+                }
+                TileType type = engine.board.getTile(zombie.getPosition().getRow(), col).getType();
+                if (type != TileType.WATER && type != TileType.LOW_TIDE) {
+                    continue;
+                }
+            }
+            zombie.kill(plant.getName());
+            killed++;
+        }
+        return killed;
+    }
+
     static void performPassivePlantAction(Game engine, Plant plant) {
         if (engine.elapsedTicks % Game.TICKS_PER_SECOND != 0) {
             return;
         }
         if (plant.getAbility() == PlantAbility.SWEET_POTATO) {
             engine.pullZombiesTowardSweetPotato(plant);
+        } else if (plant.getAbility().isMint()) {
+            BattleRuleSystem.empowerMintFamily(engine, plant);
         }
     }
     static void performActivePlantAction(Game engine, Plant plant) {
         PlantBehaviorFactory.create(plant.getAbility()).perform(engine, plant);
+        int chance = plant.getUpgradeTraitInt("PLANT_FOOD_CHANCE_5", 0);
+        if (plant.getAbility() == PlantAbility.MEGA_GATLING_PEA && chance > 0
+            && engine.random.nextInt(100) < chance) {
+            plant.usePlantFood();
+            PlantFoodBehaviorFactory.activate(engine, plant);
+            engine.addEvent("Mega Gatling Pea triggered its level-up plant-food chance.");
+        }
     }
     static void fireThreepeater(Game engine, Plant plant) {
         int centerRow = plant.getPosition().getRow();
+        int radius = plant.getDefinition().getAbilityParameterInt("laneRadius", 1);
         int fired = 0;
-        for (int row = Math.max(0, centerRow - 1);
-             row <= Math.min(engine.board.getRows() - 1, centerRow + 1); row++) {
+        for (int row = Math.max(0, centerRow - radius);
+             row <= Math.min(engine.board.getRows() - 1, centerRow + radius); row++) {
             if (engine.fireProjectileInRow(plant, row, 1, 1)) {
                 fired++;
             }
@@ -101,80 +150,121 @@ final class PlantAttackSystem {
         }
     }
     static void fireRotobaga(Game engine, Plant plant) {
+        int hits = fireRotobagaVolley(engine, plant);
+        if (hits > 0) {
+            engine.addEvent("Rotobaga hit " + hits + " diagonal target(s).");
+        }
+    }
+
+    static int fireRotobagaVolley(Game engine, Plant plant) {
         GridPosition position = plant.getPosition();
+        int shots = plant.getDefinition().getAbilityParameterInt("shotsPerDirection", 3);
         int hits = 0;
         for (int row : List.of(position.getRow() - 1, position.getRow() + 1)) {
             if (row < 0 || row >= engine.board.getRows()) {
                 continue;
             }
-            Zombie target = engine.board.findNearestZombieAhead(row, position.getColumn());
-            if (target != null) {
-                engine.damageZombieFromPlant(target, plant,
-                    Math.max(1, plant.getEffectiveAttackPower()) * 3, false);
-                hits++;
-            }
+            hits += hitDirectionalTarget(engine, plant,
+                engine.board.findNearestZombieAhead(row, position.getColumn()), shots);
+            hits += hitDirectionalTarget(engine, plant,
+                engine.board.findNearestZombieBehind(row, position.getColumn()), shots);
         }
-        engine.addEvent("Rotobaga hit " + hits + " diagonal target(s).");
+        return hits;
+    }
+
+    private static int hitDirectionalTarget(Game engine, Plant plant, Zombie target, int shots) {
+        if (target == null) {
+            return 0;
+        }
+        int hits = 0;
+        for (int index = 0; index < shots && !target.isDead(); index++) {
+            engine.damageZombieFromPlant(target, plant,
+                Math.max(1, plant.getEffectiveAttackPower()), false);
+            hits++;
+        }
+        return hits;
     }
     static void fireSplitPea(Game engine, Plant plant) {
         GridPosition position = plant.getPosition();
         Zombie ahead = engine.board.findNearestZombieAhead(position.getRow(), position.getColumn());
         Zombie behind = engine.board.findNearestZombieBehind(position.getRow(), position.getColumn());
-        if (ahead != null) {
-            engine.damageZombieFromPlant(ahead, plant, Math.max(1, plant.getEffectiveAttackPower()), false);
-        }
-        if (behind != null) {
-            engine.damageZombieFromPlant(behind, plant,
-                Math.max(1, plant.getEffectiveAttackPower()) * 2, false);
-        }
+        int frontShots = plant.getDefinition().getAbilityParameterInt("forwardShots", 1);
+        int backShots = plant.getDefinition().getAbilityParameterInt("backwardShots", 2);
+        hitDirectionalTarget(engine, plant, ahead, frontShots);
+        hitDirectionalTarget(engine, plant, behind, backShots);
     }
     static void fireStarfruit(Game engine, Plant plant) {
+        int hits = fireStarfruitVolley(engine, plant);
+        if (hits > 0) {
+            engine.addEvent("Starfruit fired in five directions and hit " + hits + " target(s).");
+        }
+    }
+
+    static int fireStarfruitVolley(Game engine, Plant plant) {
         GridPosition position = plant.getPosition();
         LinkedHashSet<Zombie> targets = new LinkedHashSet<>();
-        Zombie ahead = engine.board.findNearestZombieAhead(position.getRow(), position.getColumn());
-        Zombie behind = engine.board.findNearestZombieBehind(position.getRow(), position.getColumn());
-        if (ahead != null) {
-            targets.add(ahead);
-        }
-        if (behind != null) {
-            targets.add(behind);
-        }
+        addTarget(targets, engine.board.findNearestZombieAhead(position.getRow(),
+            position.getColumn()));
         for (int row : List.of(position.getRow() - 1, position.getRow() + 1)) {
-            if (row >= 0 && row < engine.board.getRows()) {
-                Zombie diagonal = engine.board.findNearestZombieAhead(row, position.getColumn());
-                if (diagonal != null) {
-                    targets.add(diagonal);
-                }
+            if (row < 0 || row >= engine.board.getRows()) {
+                continue;
             }
+            addTarget(targets, engine.board.findNearestZombieAhead(row, position.getColumn()));
+            addTarget(targets, engine.board.findNearestZombieBehind(row, position.getColumn()));
         }
+        int hits = 0;
         for (Zombie target : targets) {
-            engine.damageZombieFromPlant(target, plant, Math.max(1, plant.getEffectiveAttackPower()), false);
+            engine.damageZombieFromPlant(target, plant,
+                Math.max(1, plant.getEffectiveAttackPower()), false);
+            hits++;
         }
-        engine.addEvent("Starfruit fired in multiple directions and hit " + targets.size() + " target(s).");
+        return hits;
+    }
+
+    private static void addTarget(LinkedHashSet<Zombie> targets, Zombie target) {
+        if (target != null) {
+            targets.add(target);
+        }
     }
     static void bowlBulbs(Game engine, Plant plant) {
+        int damage = plant.nextBowlingBulbDamage();
+        if (damage <= 0) {
+            return;
+        }
         GridPosition position = plant.getPosition();
-        int[] damages = {40, 120, 180};
         int row = position.getRow();
         int hits = 0;
-        for (int damage : damages) {
+        int maximumBounces = plant.getDefinition().getAbilityParameterInt(
+            "maxBounces", 3);
+        for (int bounce = 0; bounce < maximumBounces; bounce++) {
             Zombie target = engine.board.findNearestZombieAhead(row, position.getColumn());
             if (target == null) {
                 break;
             }
             engine.damageZombieFromPlant(target, plant, damage, false);
             hits++;
-            row += engine.random.nextBoolean() ? 1 : -1;
-            row = Math.max(0, Math.min(engine.board.getRows() - 1, row));
+            row = nextBounceRow(engine, row);
         }
-        engine.addEvent("Bowling Bulb bounced through " + hits + " target(s).");
+        engine.addEvent("Bowling Bulb launched a " + damage + " damage bulb with " + hits
+            + " bounce hit(s).");
+    }
+
+    private static int nextBounceRow(Game engine, int row) {
+        int direction = engine.random.nextBoolean() ? 1 : -1;
+        int next = row + direction;
+        if (next < 0 || next >= engine.board.getRows()) {
+            next = row - direction;
+        }
+        return Math.max(0, Math.min(engine.board.getRows() - 1, next));
     }
     static void attackFumeShroom(Game engine, Plant plant) {
         GridPosition position = plant.getPosition();
         int hits = 0;
         for (Zombie zombie : new ArrayList<>(engine.board.getZombiesInRow(position.getRow()))) {
             double distance = zombie.getPosition().getColumn() - position.getColumn();
-            if (!zombie.isHypnotized() && distance >= 0 && distance <= 4.0) {
+            double range = plant.getEffectiveRange(
+                plant.getDefinition().getAbilityParameter("rangeTiles", 4.0));
+            if (!zombie.isHypnotized() && distance >= 0 && distance <= range) {
                 engine.damageZombieFromPlant(zombie, plant,
                     Math.max(1, plant.getEffectiveAttackPower()), false);
                 hits++;
@@ -191,14 +281,24 @@ final class PlantAttackSystem {
             return;
         }
         int damage = Math.max(1, plant.getEffectiveAttackPower());
-        if (plant.getAbility() == PlantAbility.KERNEL_PULT && engine.random.nextInt(4) == 0) {
-            damage = Math.max(damage, 40);
-            target.stun(3 * Game.TICKS_PER_SECOND);
+        int butterChance = plant.getDefinition().getAbilityParameterInt(
+            "butterChancePercent", 25)
+            + plant.getUpgradeTraitInt("BUTTER_5", 0);
+        if (plant.getAbility() == PlantAbility.KERNEL_PULT
+            && engine.random.nextInt(100) < butterChance) {
+            damage = Math.max(damage,
+                plant.getDefinition().getAbilityParameterInt("butterDamage", 40));
+            int stunSeconds = plant.getDefinition().getAbilityParameterInt("butterStunSeconds", 3);
+            target.stun(stunSeconds * Game.TICKS_PER_SECOND);
             engine.addEvent("Kernel-pult butter stunned " + target.getName() + ".");
         }
         engine.damageZombieFromPlant(target, plant, damage, true);
         if (plant.getDefinition().hasTag("AoE")) {
-            engine.damageAdjacentZombies(target, plant, Math.max(1, damage / 2), true);
+            double factor = plant.getDefinition().getAbilityParameter(
+                "splashDamageFactor", 0.5);
+            int splashDamage = Math.max(1, (int) Math.round(damage * factor)
+                + plant.getSplashDamageBonus());
+            engine.damageAdjacentZombies(target, plant, splashDamage, true);
         }
     }
     static void hypnotizeWithCaulipower(Game engine, Plant plant) {
@@ -215,16 +315,32 @@ final class PlantAttackSystem {
         if (targets.isEmpty()) {
             return;
         }
-        Zombie target = targets.get(engine.random.nextInt(targets.size()));
+        Zombie target;
+        if (plant.hasUpgradeTrait("TARGET_PRIORITY_UP")) {
+            target = Collections.max(targets,
+                (first, second) -> Integer.compare(first.getEffectiveHealth(),
+                    second.getEffectiveHealth()));
+        } else {
+            target = targets.get(engine.random.nextInt(targets.size()));
+        }
         target.kill(plant.getName());
         engine.addEvent("Electric Blueberry electrocuted " + target.getName() + ".");
     }
     static void useMagnetShroom(Game engine, Plant plant) {
         Zombie target = null;
+        double range = plant.getEffectiveRange(
+            plant.getDefinition().getAbilityParameter("rangeTiles", 3.0));
+        double bestDistance = Double.MAX_VALUE;
         for (Zombie zombie : engine.hostileZombies()) {
-            if (zombie.hasMetalArmor()) {
+            if (!zombie.hasMetalArmor() || zombie.getPosition() == null
+                || zombie.getPosition().getRow() != plant.getPosition().getRow()) {
+                continue;
+            }
+            double distance = Math.abs(zombie.getPosition().getColumn()
+                - plant.getPosition().getColumn());
+            if (distance <= range && distance < bestDistance) {
                 target = zombie;
-                break;
+                bestDistance = distance;
             }
         }
         if (target != null) {
@@ -235,10 +351,14 @@ final class PlantAttackSystem {
     }
     static void chompZombie(Game engine, Plant plant) {
         GridPosition position = plant.getPosition();
-        Zombie target = engine.board.findNearestZombieAhead(position.getRow(), position.getColumn() - 0.5);
-        if (target != null && target.getPosition().getColumn() <= position.getColumn() + 1.25) {
+        Zombie target = engine.board.findNearestZombieAhead(position.getRow(),
+            position.getColumn() - 0.5);
+        double range = plant.getEffectiveRange(
+            plant.getDefinition().getAbilityParameter("rangeTiles", 1.25));
+        if (target != null && target.getPosition().getColumn() <= position.getColumn() + range) {
             target.kill(plant.getName());
-            plant.startDigestion(40 * Game.TICKS_PER_SECOND);
+            int digestSeconds = plant.getDigestionSeconds();
+            plant.startDigestion(digestSeconds * Game.TICKS_PER_SECOND);
             engine.addEvent("Chomper swallowed " + target.getName() + " and started digesting.");
         }
     }
@@ -248,15 +368,29 @@ final class PlantAttackSystem {
             return false;
         }
         for (int index = 0; index < count; index++) {
+            int poisonSeconds = plant.getDefinition().getAbilityParameterInt(
+                "poisonSeconds", 5);
+            double poisonFactor = plant.getDefinition().getAbilityParameter(
+                "poisonDamageFactor", 0.25);
+            int poisonDamage = Math.max(0, (int) Math.round(
+                plant.getEffectiveAttackPower() * poisonFactor))
+                + plant.getUpgradeTraitInt("POISON_TICK_BONUS", 0);
             Projectile projectile = new Projectile(plant.getEffectiveAttackPower(),
-                Game.PROJECTILE_SPEED, new BoardPosition(row, plant.getPosition().getColumn() + 0.25),
+                Game.PROJECTILE_SPEED, new BoardPosition(row,
+                    plant.getPosition().getColumn() + 0.25),
                 plant.getProjectileElementType(), maxHits > 1,
-                plant.getChillDurationTicks(), false, plant.getName(), maxHits);
+                plant.getChillDurationTicks(), false, plant.getName(), maxHits,
+                poisonSeconds * Game.TICKS_PER_SECOND, poisonDamage);
             engine.board.addProjectile(projectile);
         }
         return true;
     }
     static void pullZombiesTowardSweetPotato(Game engine, Plant plant) {
+        double radius = plant.getDefinition().getAbilityParameter("pullRadiusTiles", 3.0);
+        pullZombiesTowardSweetPotato(engine, plant, radius);
+    }
+
+    static void pullZombiesTowardSweetPotato(Game engine, Plant plant, double radius) {
         int targetRow = plant.getPosition().getRow();
         for (Zombie zombie : engine.hostileZombies()) {
             if (zombie.getPosition() == null) {
@@ -265,7 +399,7 @@ final class PlantAttackSystem {
             int row = zombie.getPosition().getRow();
             double distance = Math.abs(zombie.getPosition().getColumn()
                 - plant.getPosition().getColumn());
-            if (Math.abs(row - targetRow) == 1 && distance <= 3.0) {
+            if (Math.abs(row - targetRow) == 1 && distance <= Math.max(0.0, radius)) {
                 zombie.setPosition(zombie.getPosition().withRow(targetRow));
             }
         }

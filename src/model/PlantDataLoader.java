@@ -46,6 +46,7 @@ public final class PlantDataLoader {
         Map<String, Object> plantFood = requireMap(entry.get("plantFood"), "plantFood");
         return new PlantDefinition(
             requireInt(entry.get("id"), "id"),
+            optionalBoolean(entry.get("required"), true),
             requireString(entry.get("key"), "key"),
             requireString(entry.get("displayName"), "displayName"),
             enumValue(PlantFamily.class, entry.get("family"), "family"),
@@ -53,15 +54,33 @@ public final class PlantDataLoader {
             requireInt(stats.get("sunCost"), "stats.sunCost"),
             requireInt(stats.get("maxHealth"), "stats.maxHealth"),
             requireInt(stats.get("damage"), "stats.damage"),
+            optionalString(stats.get("damageDisplay")),
             requireDouble(stats.get("actionInterval"), "stats.actionInterval"),
             requireDouble(stats.get("recharge"), "stats.recharge"),
             requireInt(stats.get("projectileCount"), "stats.projectileCount"),
             enumValue(PlantAbility.class, ability.get("kind"), "ability.kind"),
             optionalDouble(ability.get("power"), "ability.power"),
+            optionalString(ability.get("description")),
+            numberMap(ability.get("parameters"), "ability.parameters"),
             enumValue(PlantFoodType.class, plantFood.get("kind"), "plantFood.kind"),
             optionalDouble(plantFood.get("power"), "plantFood.power"),
+            optionalString(plantFood.get("description")),
+            numberMap(plantFood.get("parameters"), "plantFood.parameters"),
             parseUpgrades(entry.get("upgrades"))
         );
+    }
+
+    private Map<String, Double> numberMap(Object value, String fieldName) {
+        if (value == null) {
+            return Map.of();
+        }
+        Map<String, Object> input = requireMap(value, fieldName);
+        java.util.LinkedHashMap<String, Double> result = new java.util.LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : input.entrySet()) {
+            result.put(entry.getKey(), requireDouble(entry.getValue(),
+                fieldName + "." + entry.getKey()));
+        }
+        return Map.copyOf(result);
     }
 
     private List<PlantUpgrade> parseUpgrades(Object value) {
@@ -120,6 +139,16 @@ public final class PlantDataLoader {
 
     private String optionalString(Object value) {
         return value instanceof String text ? text.trim() : "";
+    }
+
+    private boolean optionalBoolean(Object value, boolean fallback) {
+        if (value == null) {
+            return fallback;
+        }
+        if (!(value instanceof Boolean booleanValue)) {
+            throw new IllegalArgumentException("required must be boolean.");
+        }
+        return booleanValue;
     }
 
     private int requireInt(Object value, String fieldName) {

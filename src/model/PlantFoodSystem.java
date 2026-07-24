@@ -30,7 +30,8 @@ final class PlantFoodSystem {
     static void handleImmediatePlant(Game engine, Plant plant) {
         PlantAbility ability = plant.getAbility();
         if (ability == PlantAbility.GOLD_BLOOM) {
-            int amount = Math.max(0, (int) Math.round(plant.getDefinition().getAbilityPower()));
+            int amount = Math.max(0, (int) Math.round(
+                plant.getDefinition().getAbilityPower())) + plant.getSunProductionBonus();
             engine.sunAmount += amount;
             engine.removeInstantPlant(plant);
             engine.addEvent("Gold Bloom produced " + amount + " suns and disappeared.");
@@ -38,6 +39,13 @@ final class PlantFoodSystem {
             engine.activateMint(plant);
         } else if (ability == PlantAbility.ICE_SHROOM) {
             engine.freezeAllZombies(plant, false);
+            if (plant.getEffectiveAttackPower() > 0) {
+                for (Zombie zombie : engine.hostileZombies()) {
+                    zombie.takeProjectileDamage(plant.getEffectiveAttackPower(),
+                        ProjectileType.ICE, plant.getChillDurationTicks(), false,
+                        plant.getName());
+                }
+            }
             engine.removeInstantPlant(plant);
         } else if (ability == PlantAbility.CHERRY_BOMB
             || ability == PlantAbility.GRAPESHOT
@@ -101,15 +109,6 @@ final class PlantFoodSystem {
             }
         }
         sun.collect();
-    }
-    static void activateSunProducerFood(Game engine, Plant plant) {
-        if (plant.getAbility() == PlantAbility.SUN_SHROOM) {
-            plant.matureFully();
-        }
-        int amount = engine.plantFoodSunAmount(plant);
-        engine.sunAmount += amount;
-        engine.addEvent("Plant food made " + plant.getName() + " produce " + amount
-            + " suns immediately.");
     }
     static void armMineWithPlantFood(Game engine, Plant plant) {
         engine.addEvent(plant.getName() + " armed immediately.");
@@ -250,26 +249,6 @@ final class PlantFoodSystem {
         }
         engine.addEvent("Fume-shroom pushed " + pushed + " zombie(s) backward.");
     }
-    static void activateGeneralOffensiveFood(Game engine, Plant plant) {
-        if (plant.isShooter()) {
-            if (plant.getAbility() == PlantAbility.THREEPEATER
-                || plant.getAbility() == PlantAbility.STARFRUIT
-                || plant.getAbility() == PlantAbility.ROTOBAGA) {
-                for (int index = 0; index < 5; index++) {
-                    engine.performActivePlantAction(plant);
-                }
-            } else {
-                engine.plantFoodShooterVolley(plant);
-            }
-        } else if (plant.isHoming()) {
-            engine.plantFoodHomingStrike(plant);
-        } else if (plant.isMelee()) {
-            engine.plantFoodMeleeStrike(plant);
-        } else {
-            engine.addEvent("Plant food fully healed " + plant.getName()
-                + " and granted a " + plant.getPlantFoodShield() + " point shield.");
-        }
-    }
     static void ensureConveyorCardAvailable(Game engine, PlantDefinition definition, boolean conveyor) {
         if (conveyor && engine.conveyorCards.getOrDefault(definition.getName(), 0) <= 0) {
             throw new IllegalStateException("No conveyor card is available for this plant.");
@@ -279,12 +258,17 @@ final class PlantFoodSystem {
         if (PlantAbility.fromDefinition(definition) != PlantAbility.IMITATER) {
             return engine.plantFactory.createPlant(definition.getName(), level);
         }
-        for (String selected : engine.selectedPlants) {
+        List<String> selectedPlants = new ArrayList<>(engine.selectedPlants);
+        Collections.reverse(selectedPlants);
+        for (String selected : selectedPlants) {
             PlantDefinition candidate = engine.plantFactory.findDefinition(selected).orElse(null);
             if (candidate != null && PlantAbility.fromDefinition(candidate) != PlantAbility.IMITATER) {
-                engine.addEvent("Imitater copied " + candidate.getName() + ".");
-                return engine.plantFactory.createPlant(candidate.getName(),
+                Plant copy = engine.plantFactory.createPlant(candidate.getName(),
                     engine.plantLevels.getOrDefault(candidate.getNormalizedName(), 1));
+                copy.applyImitaterCardModifiers(definition, level);
+                engine.addEvent("Imitater copied " + candidate.getName()
+                    + " with its own card upgrades.");
+                return copy;
             }
         }
         throw new IllegalStateException("Imitater needs another selected plant to copy.");
@@ -306,8 +290,11 @@ final class PlantFoodSystem {
             if (tile.getType() != TileType.ICE) {
                 throw new IllegalStateException("Hot Potato can only be used on ice.");
             }
-            tile.setTileType(TileType.NORMAL);
-            engine.addEvent("Hot Potato melted the ice at " + position + ".");
+            int radius = plant.hasUpgradeTrait("MELT_AREA_3X3") ? 1 : 0;
+            int melted = meltIceArea(engine, row, col, radius);
+            explodeUtilityPlantIfUpgraded(engine, plant, position);
+            engine.addEvent("Hot Potato melted " + melted + " ice tile(s) around "
+                + position + ".");
             return true;
         }
         if (plant.getAbility() == PlantAbility.GRAVE_BUSTER) {
@@ -316,11 +303,48 @@ final class PlantFoodSystem {
                 throw new IllegalStateException("There is no tomb on this tile.");
             }
             tile.setTileType(TileType.NORMAL);
+            explodeUtilityPlantIfUpgraded(engine, plant, position);
             engine.addEvent("Grave Buster removed the tomb at " + position + ".");
             return true;
         }
         return false;
     }
+    private static int meltIceArea(Game engine, int centerRow, int centerCol, int radius) {
+        int melted = 0;
+        for (int row = Math.max(0, centerRow - radius);
+             row <= Math.min(engine.board.getRows() - 1, centerRow + radius); row++) {
+            for (int col = Math.max(0, centerCol - radius);
+                 col <= Math.min(engine.board.getCols() - 1, centerCol + radius); col++) {
+                Tile current = engine.board.getTile(row, col);
+                if (current.getType() == TileType.ICE) {
+                    current.setTileType(TileType.NORMAL);
+                    melted++;
+                }
+            }
+        }
+        return melted;
+    }
+
+    private static void explodeUtilityPlantIfUpgraded(Game engine, Plant plant,
+                                                       GridPosition center) {
+        if (!plant.hasUpgradeTrait("EXPLODE_ON_FINISH")) {
+            return;
+        }
+        int damage = plant.getDefinition().getAbilityParameterInt(
+            "finishExplosionDamage", 500);
+        int hits = 0;
+        for (Zombie zombie : engine.hostileZombies()) {
+            if (Math.abs(zombie.getPosition().getRow() - center.getRow()) <= 1
+                && Math.abs(zombie.getPosition().getColumn() - center.getColumn()) <= 1.5) {
+                zombie.takeProjectileDamage(damage, ProjectileType.FIRE, 0, false,
+                    plant.getName());
+                hits++;
+            }
+        }
+        engine.addEvent(plant.getName() + " exploded on finish and hit " + hits
+            + " zombie(s).");
+    }
+
     static void validateSpecialPlantLocation(Game engine, Plant plant, int row, int col) {
         Tile tile = engine.board.getTile(row, col);
         if (plant.getAbility() == PlantAbility.TANGLE_KELP
@@ -333,22 +357,24 @@ final class PlantFoodSystem {
             return;
         }
         GridPosition center = plant.getPosition();
+        int radius = plant.getWarmthRadius();
         for (Plant other : engine.board.getPlants()) {
             if (other == plant || other.getPosition() == null) {
                 continue;
             }
             GridPosition position = other.getPosition();
-            if (Math.abs(position.getRow() - center.getRow()) <= 1
-                && Math.abs(position.getColumn() - center.getColumn()) <= 1) {
+            if (Math.abs(position.getRow() - center.getRow()) <= radius
+                && Math.abs(position.getColumn() - center.getColumn()) <= radius) {
                 other.damageIce(60, false);
             }
         }
-        for (int row = Math.max(0, center.getRow() - 1);
-             row <= Math.min(engine.board.getRows() - 1, center.getRow() + 1); row++) {
-            for (int col = Math.max(0, center.getColumn() - 1);
-                 col <= Math.min(engine.board.getCols() - 1, center.getColumn() + 1); col++) {
-                if (engine.board.getTile(row, col).getType() == TileType.ICE) {
-                    engine.board.getTile(row, col).setTileType(TileType.NORMAL);
+        for (int row = Math.max(0, center.getRow() - radius);
+             row <= Math.min(engine.board.getRows() - 1, center.getRow() + radius); row++) {
+            for (int col = Math.max(0, center.getColumn() - radius);
+                 col <= Math.min(engine.board.getCols() - 1, center.getColumn() + radius); col++) {
+                Tile tile = engine.board.getTile(row, col);
+                if (tile.getType() == TileType.ICE) {
+                    tile.damageIce(60, false);
                 }
             }
         }
