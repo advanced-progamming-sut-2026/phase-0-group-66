@@ -46,9 +46,14 @@ final class BattleTickSystem {
         engine.tickConveyor();
         engine.tickSuns();
         engine.spawnSkySunIfNeeded();
+        ZombieObjectSystem.ensureZombieCompanions(engine);
+        ZombieAbilitySystem.refreshSnorkelStates(engine);
         engine.performPlantActions();
         engine.moveProjectilesAndResolveHits();
         moveGrapeshotFragmentsAndResolveHits(engine);
+        ZombieObjectSystem.tickReflectedProjectiles(engine);
+        ZombieObjectSystem.tickPushedObstacles(engine);
+        ZombieObjectSystem.tickProspectorDynamites(engine);
         engine.moveZombiesAndResolveCombat();
         engine.cleanupDestroyedEntities();
         engine.startNextWaveIfReady();
@@ -252,6 +257,14 @@ final class BattleTickSystem {
             }
             Zombie target = engine.findProjectileTarget(projectile.getPosition().getRow(),
                 previousColumn, currentColumn);
+            PushedObstacle obstacle = ZombieObjectSystem.firstProjectileObstacle(engine,
+                projectile, previousColumn, currentColumn);
+            if (obstacle != null && (target == null || obstacle.getPosition().getColumn()
+                <= target.getPosition().getColumn())) {
+                ZombieObjectSystem.hitObstacleWithProjectile(engine, obstacle, projectile);
+                engine.board.removeProjectile(projectile);
+                continue;
+            }
             if (target != null) {
                 if (engine.reflectProjectileIfNeeded(projectile, target)) {
                     engine.board.removeProjectile(projectile);
@@ -308,6 +321,7 @@ final class BattleTickSystem {
                 continue;
             }
             Plant blockingPlant = engine.board.findBlockingPlant(zombie);
+            ZombieAbilitySystem.updateSnorkelCombatState(zombie, blockingPlant != null);
             if (blockingPlant != null && engine.shouldZombieBypassPlant(zombie, blockingPlant)) {
                 zombie.moveOneTick();
                 continue;

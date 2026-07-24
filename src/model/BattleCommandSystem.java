@@ -223,6 +223,7 @@ final class BattleCommandSystem {
         for (Zombie zombie : wave.getZombies()) {
             engine.board.addZombie(zombie);
         }
+        ZombieObjectSystem.ensureZombieCompanions(engine);
         engine.currentWave = wave;
         engine.nextWaveIndex++;
         if (engine.nextWaveIndex == waves.size()) {

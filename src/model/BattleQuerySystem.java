@@ -43,6 +43,7 @@ final class BattleQuerySystem {
         zombie.setGlowing(zombie.getDefinition().canSpawnPlantFood() && engine.random.nextInt(100) < 5);
         zombie.setPosition(new BoardPosition(row, column));
         engine.board.addZombie(zombie);
+        ZombieObjectSystem.ensureZombieCompanions(engine);
         engine.addEvent("Cheat spawned " + zombie.getName() + " at ("
             + engine.formatColumn(column) + ", " + (row + 1) + ").");
     }
@@ -57,7 +58,9 @@ final class BattleQuerySystem {
         if (rule.blocksNormalWin(engine)) {
             return false;
         }
-        return engine.nextWaveIndex >= engine.currentLevel.getWaves().size() && engine.board.getZombies().isEmpty();
+        return engine.nextWaveIndex >= engine.currentLevel.getWaves().size()
+            && engine.board.getZombies().isEmpty()
+            && engine.board.getProspectorDynamites().isEmpty();
     }
     static boolean checkLoseCondition(Game engine) {
         return engine.gameState == GameState.LOST;
@@ -139,6 +142,20 @@ final class BattleQuerySystem {
                     .append(zombie.getEffectiveHealth()).append(System.lineSeparator());
             }
         }
+        List<PushedObstacle> obstacles = engine.board.getPushedObstaclesAt(row, col);
+        if (!obstacles.isEmpty()) {
+            output.append("lane objects:").append(System.lineSeparator());
+            for (PushedObstacle obstacle : obstacles) {
+                output.append("- ").append(obstacle.getType()).append(", health=")
+                    .append(obstacle.getHealth()).append('/')
+                    .append(obstacle.getMaximumHealth()).append(System.lineSeparator());
+            }
+        }
+        for (ProspectorDynamite dynamite
+            : engine.board.getProspectorDynamitesAt(row, col)) {
+            output.append("- PROSPECTOR_DYNAMITE, damagePerSecond=")
+                .append(dynamite.getDamagePerSecond()).append(System.lineSeparator());
+        }
         return output.toString();
     }
     static String zombieInfo(Game engine) {
@@ -163,6 +180,24 @@ final class BattleQuerySystem {
             if (zombie.getChilledTicks() > 0) {
                 output.append("  chilled: ").append(engine.formatSeconds(zombie.getChilledTicks()))
                     .append('s').append(System.lineSeparator());
+            }
+            if (zombie.isSubmerged()) {
+                output.append("  submerged: direct shots blocked")
+                    .append(System.lineSeparator());
+            }
+            if (zombie.isSurfacedForCombat()) {
+                output.append("  surfaced: vulnerable while eating")
+                    .append(System.lineSeparator());
+            }
+            if (zombie.isJuggling()) {
+                output.append("  spinning: ")
+                    .append(engine.formatSeconds(zombie.getJugglingTicks()))
+                    .append('s').append(System.lineSeparator());
+            }
+            if (zombie.isFlying()) {
+                output.append("  flying: ")
+                    .append(engine.formatColumn(zombie.getFlightDistanceRemaining()))
+                    .append(" tiles remaining").append(System.lineSeparator());
             }
         }
         return output.toString();
