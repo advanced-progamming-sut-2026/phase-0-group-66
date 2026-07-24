@@ -55,7 +55,7 @@ final class BattleQuerySystem {
         if (rule.hasSpecialWin(engine)) {
             return true;
         }
-        if (rule.blocksNormalWin(engine)) {
+        if (rule.blocksNormalWin(engine) || engine.externalWinControlled) {
             return false;
         }
         return engine.nextWaveIndex >= engine.currentLevel.getWaves().size()

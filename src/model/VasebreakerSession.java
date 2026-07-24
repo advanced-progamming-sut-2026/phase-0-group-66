@@ -9,8 +9,12 @@ import java.util.Random;
 
 public final class VasebreakerSession extends MiniGameSession {
     private enum VaseContent { EMPTY, PLANT_PACKET, ZOMBIE, GARGANTUAR }
+    private enum VaseKind { NORMAL, PLANT, GIANT }
 
-    private record Vase(int row, int column, VaseContent content, String payload) { }
+    private record Vase(int row, int column, VaseKind kind,
+                        VaseContent content, String payload) { }
+    private record Packet(int id, String plantType, int row, int column,
+                          int expiresAt) { }
 
     private static final int ROWS = 5;
     private static final int COLS = 9;
@@ -23,8 +27,6 @@ public final class VasebreakerSession extends MiniGameSession {
     private int brokenVases;
     private int killedZombies;
 
-    private record Packet(int id, String plantType, int row, int column, int expiresAt) { }
-
     public VasebreakerSession(MiniGameDefinition definition, int level) {
         super(definition, level);
         random = new Random(10_000L + level * 7919L);
@@ -36,48 +38,67 @@ public final class VasebreakerSession extends MiniGameSession {
         ensureRunning();
         String normalized = normalize(command);
         switch (normalized) {
-            case "break", "breakvase" -> breakVase(intArg(arguments, 0), intArg(arguments, 1));
+            case "break", "breakvase" -> breakVase(intArg(arguments, 0),
+                intArg(arguments, 1));
             case "plant", "plantpacket" -> plantPacket(intArg(arguments, 0),
                 intArg(arguments, 1), intArg(arguments, 2));
             case "advance" -> advanceTime(intArg(arguments, 0));
             default -> throw new IllegalArgumentException(
-                "Vasebreaker commands: break <x> <y>, plant <packetId> <x> <y>, advance <ticks>.");
+                "Vasebreaker commands: break <x> <y>, plant <packetId> <x> <y>, "
+                    + "advance <ticks>.");
         }
         evaluateState();
     }
 
     private void initializeVases() {
         int count = getTarget();
+        ArrayList<GridPosition> positions = vasePositions();
+        java.util.Collections.shuffle(positions, random);
+        List<String> packetsPool = List.of("Peashooter", "Cabbage-pult", "Wall-nut",
+            "Snow Pea", "Repeater", "Potato Mine");
+        int specialPlantVases = Math.min(3, 1 + getLevel());
+        for (int index = 0; index < count; index++) {
+            GridPosition position = positions.get(index);
+            Vase vase;
+            if (index == 0) {
+                vase = new Vase(position.getRow(), position.getColumn(), VaseKind.GIANT,
+                    VaseContent.GARGANTUAR, "Gargantuar");
+            } else if (index <= specialPlantVases) {
+                String packet = packetsPool.get(random.nextInt(packetsPool.size()));
+                vase = new Vase(position.getRow(), position.getColumn(), VaseKind.PLANT,
+                    VaseContent.PLANT_PACKET, packet);
+            } else {
+                vase = createNormalVase(position, packetsPool);
+            }
+            vases.put(position, vase);
+        }
+    }
+
+    private ArrayList<GridPosition> vasePositions() {
         ArrayList<GridPosition> positions = new ArrayList<>();
         for (int row = 0; row < ROWS; row++) {
             for (int col = 3; col < COLS; col++) {
                 positions.add(new GridPosition(row, col));
             }
         }
-        java.util.Collections.shuffle(positions, random);
-        List<String> packetsPool = List.of("Peashooter", "Cabbage-pult", "Wall-nut",
-            "Snow Pea", "Repeater", "Potato Mine");
-        for (int index = 0; index < count; index++) {
-            GridPosition position = positions.get(index);
-            VaseContent content;
-            String payload = "";
-            if (index == 0) {
-                content = VaseContent.GARGANTUAR;
-                payload = "Gargantuar";
-            } else {
-                int roll = random.nextInt(100);
-                if (roll < 18) {
-                    content = VaseContent.EMPTY;
-                } else if (roll < 58) {
-                    content = VaseContent.PLANT_PACKET;
-                    payload = packetsPool.get(random.nextInt(packetsPool.size()));
-                } else {
-                    content = VaseContent.ZOMBIE;
-                    payload = random.nextBoolean() ? "Basic Zombie" : "Conehead Zombie";
-                }
-            }
-            vases.put(position, new Vase(position.getRow(), position.getColumn(), content, payload));
+        return positions;
+    }
+
+    private Vase createNormalVase(GridPosition position, List<String> packetsPool) {
+        int roll = random.nextInt(100);
+        VaseContent content;
+        String payload = "";
+        if (roll < 18) {
+            content = VaseContent.EMPTY;
+        } else if (roll < 48) {
+            content = VaseContent.PLANT_PACKET;
+            payload = packetsPool.get(random.nextInt(packetsPool.size()));
+        } else {
+            content = VaseContent.ZOMBIE;
+            payload = random.nextBoolean() ? "Basic Zombie" : "Conehead Zombie";
         }
+        return new Vase(position.getRow(), position.getColumn(), VaseKind.NORMAL,
+            content, payload);
     }
 
     private void breakVase(int x, int y) {
@@ -87,23 +108,30 @@ public final class VasebreakerSession extends MiniGameSession {
             throw new IllegalStateException("There is no intact vase at that position.");
         }
         brokenVases++;
-        addScore(25);
+        addScore(vase.kind() == VaseKind.NORMAL ? 25 : 50);
         switch (vase.content()) {
             case EMPTY -> addScore(10);
-            case PLANT_PACKET -> packets.put(nextPacketId,
-                new Packet(nextPacketId++, vase.payload(), vase.row(), vase.column(),
-                    getElapsedTicks() + 100));
-            case ZOMBIE -> zombies.add(createZombie(vase.payload(), vase.row(), vase.column()));
+            case PLANT_PACKET -> addPacket(vase);
+            case ZOMBIE -> zombies.add(createZombie(vase.payload(),
+                vase.row(), vase.column()));
             case GARGANTUAR -> zombies.add(new MiniGameUnit("Gargantuar", vase.row(),
                 vase.column(), 900 + getLevel() * 250, 1000, 0.025));
         }
     }
 
+    private void addPacket(Vase vase) {
+        int packetId = nextPacketId++;
+        packets.put(packetId, new Packet(packetId, vase.payload(), vase.row(),
+            vase.column(), getElapsedTicks() + 100));
+    }
+
     private MiniGameUnit createZombie(String type, int row, int column) {
         if (type.startsWith("Conehead")) {
-            return new MiniGameUnit(type, row, column, 320 + getLevel() * 80, 45, 0.04);
+            return new MiniGameUnit(type, row, column, 320 + getLevel() * 80,
+                45, 0.04);
         }
-        return new MiniGameUnit(type, row, column, 180 + getLevel() * 50, 35, 0.05);
+        return new MiniGameUnit(type, row, column, 180 + getLevel() * 50,
+            35, 0.05);
     }
 
     private void plantPacket(int packetId, int x, int y) {
@@ -112,13 +140,11 @@ public final class VasebreakerSession extends MiniGameSession {
             throw new IllegalArgumentException("Packet does not exist or has expired.");
         }
         GridPosition target = position(x, y);
-        if (target.getColumn() > 5) {
+        try {
+            validatePlantTarget(target);
+        } catch (RuntimeException exception) {
             packets.put(packetId, packet);
-            throw new IllegalArgumentException("Vasebreaker plants must be placed in columns 1 to 6.");
-        }
-        if (findPlant(target.getRow(), target.getColumn()) != null) {
-            packets.put(packetId, packet);
-            throw new IllegalStateException("That tile already contains a plant.");
+            throw exception;
         }
         int health = packet.plantType().contains("Wall") ? 700 : 250;
         int damage = packet.plantType().contains("Repeater") ? 50
@@ -128,19 +154,42 @@ public final class VasebreakerSession extends MiniGameSession {
         addScore(20);
     }
 
+    private void validatePlantTarget(GridPosition target) {
+        if (target.getColumn() > 5) {
+            throw new IllegalArgumentException(
+                "Vasebreaker plants must be placed in columns 1 to 6.");
+        }
+        if (findPlant(target.getRow(), target.getColumn()) != null) {
+            throw new IllegalStateException("That tile already contains a plant.");
+        }
+        if (vases.containsKey(target)) {
+            throw new IllegalStateException("Break the vase before planting on that tile.");
+        }
+    }
+
     @Override
     protected void onTick() {
         expirePackets();
+        tickPlants();
+        tickZombies();
+        plants.removeIf(MiniGamePlantUnit::isDead);
+        evaluateState();
+    }
+
+    private void tickPlants() {
         for (MiniGamePlantUnit plant : plants) {
             plant.tick();
             if (plant.ready()) {
                 MiniGameUnit target = nearestZombie(plant.getRow(), plant.getColumn());
                 if (target != null) {
                     target.damage(plant.getDamage());
-                    plant.setCooldown(10);
+                    plant.setCooldown(Game.TICKS_PER_SECOND);
                 }
             }
         }
+    }
+
+    private void tickZombies() {
         Iterator<MiniGameUnit> iterator = zombies.iterator();
         while (iterator.hasNext()) {
             MiniGameUnit zombie = iterator.next();
@@ -153,7 +202,10 @@ public final class VasebreakerSession extends MiniGameSession {
             }
             MiniGamePlantUnit blocker = blockingPlant(zombie);
             if (blocker != null) {
-                blocker.damage(Math.max(1, zombie.getDamage() / 10));
+                if (zombie.ready()) {
+                    blocker.damage(zombie.getDamage());
+                    zombie.setCooldown(Game.TICKS_PER_SECOND);
+                }
             } else {
                 zombie.setColumn(zombie.getColumn() - zombie.getSpeed());
                 if (zombie.getColumn() < -0.1) {
@@ -162,12 +214,11 @@ public final class VasebreakerSession extends MiniGameSession {
                 }
             }
         }
-        plants.removeIf(MiniGamePlantUnit::isDead);
-        evaluateState();
     }
 
     private void expirePackets() {
-        packets.entrySet().removeIf(entry -> entry.getValue().expiresAt() <= getElapsedTicks());
+        packets.entrySet().removeIf(entry -> entry.getValue().expiresAt()
+            <= getElapsedTicks());
     }
 
     private MiniGamePlantUnit blockingPlant(MiniGameUnit zombie) {
@@ -184,7 +235,8 @@ public final class VasebreakerSession extends MiniGameSession {
     private MiniGameUnit nearestZombie(int row, int column) {
         MiniGameUnit result = null;
         for (MiniGameUnit zombie : zombies) {
-            if (!zombie.isDead() && zombie.getRow() == row && zombie.getColumn() >= column
+            if (!zombie.isDead() && zombie.getRow() == row
+                && zombie.getColumn() >= column
                 && (result == null || zombie.getColumn() < result.getColumn())) {
                 result = zombie;
             }
@@ -194,7 +246,8 @@ public final class VasebreakerSession extends MiniGameSession {
 
     private MiniGamePlantUnit findPlant(int row, int column) {
         for (MiniGamePlantUnit plant : plants) {
-            if (!plant.isDead() && plant.getRow() == row && plant.getColumn() == column) {
+            if (!plant.isDead() && plant.getRow() == row
+                && plant.getColumn() == column) {
                 return plant;
             }
         }
@@ -211,26 +264,18 @@ public final class VasebreakerSession extends MiniGameSession {
     @Override
     protected String progressText() {
         return "vases=" + brokenVases + "/" + getTarget() + ", zombiesKilled="
-            + killedZombies + ", activeZombies=" + zombies.size() + ", packets=" + packets.size();
+            + killedZombies + ", activeZombies=" + zombies.size()
+            + ", packets=" + packets.size();
     }
 
     @Override
     public String boardView() {
         StringBuilder builder = new StringBuilder();
-        builder.append("Vasebreaker board (V=vase, P=plant, Z=zombie, .=empty)\n");
+        builder.append("Vasebreaker (??=normal vase, PV=plant vase, GV=Gargantuar vase, ")
+            .append("PL=plant, ZO=zombie, ..=empty)\n");
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLS; col++) {
-                char symbol = vases.containsKey(new GridPosition(row, col)) ? 'V' : '.';
-                if (findPlant(row, col) != null) {
-                    symbol = 'P';
-                }
-                for (MiniGameUnit zombie : zombies) {
-                    if (!zombie.isDead() && zombie.getRow() == row
-                        && Math.round(zombie.getColumn()) == col) {
-                        symbol = 'Z';
-                    }
-                }
-                builder.append(symbol).append(' ');
+                builder.append(cellSymbol(row, col)).append(' ');
             }
             builder.append('\n');
         }
@@ -242,6 +287,28 @@ public final class VasebreakerSession extends MiniGameSession {
             }
         }
         return builder.toString().stripTrailing();
+    }
+
+    private String cellSymbol(int row, int col) {
+        GridPosition position = new GridPosition(row, col);
+        Vase vase = vases.get(position);
+        if (vase != null) {
+            return switch (vase.kind()) {
+                case NORMAL -> "??";
+                case PLANT -> "PV";
+                case GIANT -> "GV";
+            };
+        }
+        if (findPlant(row, col) != null) {
+            return "PL";
+        }
+        for (MiniGameUnit zombie : zombies) {
+            if (!zombie.isDead() && zombie.getRow() == row
+                && Math.round(zombie.getColumn()) == col) {
+                return "ZO";
+            }
+        }
+        return "..";
     }
 
     private GridPosition position(int x, int y) {
@@ -263,6 +330,7 @@ public final class VasebreakerSession extends MiniGameSession {
     }
 
     private String normalize(String value) {
-        return value == null ? "" : value.toLowerCase().replace("-", "").replace("_", "");
+        return value == null ? "" : value.toLowerCase().replace("-", "")
+            .replace("_", "");
     }
 }

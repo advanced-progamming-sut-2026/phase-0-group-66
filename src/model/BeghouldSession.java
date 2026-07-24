@@ -8,14 +8,56 @@ import java.util.Random;
 import java.util.Set;
 
 public final class BeghouldSession extends MiniGameSession {
+    private enum AttackStyle { NONE, DIRECT, PIERCE, SPLASH }
+
+    private record CombatProfile(int maxHealth, int damage, int intervalTicks,
+                                 int projectileCount, AttackStyle style,
+                                 int splashDamage, int chillTicks) { }
+
+    private static final class CombatPlant {
+        private String type;
+        private CombatProfile profile;
+        private int health;
+        private int cooldown;
+
+        CombatPlant(String type, CombatProfile profile) {
+            this.type = type;
+            this.profile = profile;
+            health = profile.maxHealth();
+            cooldown = profile.intervalTicks();
+        }
+
+        void tick() {
+            if (cooldown > 0) {
+                cooldown--;
+            }
+        }
+
+        boolean ready() { return cooldown <= 0 && profile.damage() > 0; }
+        boolean isDead() { return health <= 0; }
+        void damage(int amount) { health = Math.max(0, health - Math.max(0, amount)); }
+        void resetCooldown() { cooldown = profile.intervalTicks(); }
+
+        void upgrade(String newType, CombatProfile newProfile) {
+            double ratio = profile.maxHealth() <= 0 ? 1.0
+                : health / (double) profile.maxHealth();
+            type = newType;
+            profile = newProfile;
+            health = Math.max(1, (int) Math.round(newProfile.maxHealth() * ratio));
+            cooldown = Math.min(cooldown, newProfile.intervalTicks());
+        }
+    }
+
     private static final int ROWS = 5;
     private static final int COLS = 9;
     private static final String[] TYPES = {
         "Peashooter", "Wall-nut", "Puff-shroom", "Cabbage-pult", "Melon-pult"
     };
-    private final String[][] grid = new String[ROWS][COLS];
+
+    private final CombatPlant[][] grid = new CombatPlant[ROWS][COLS];
     private final boolean[][] crater = new boolean[ROWS][COLS];
     private final ArrayList<MiniGameUnit> zombies = new ArrayList<>();
+    private final PlantFactory plantFactory;
     private final Random random;
     private int sun;
     private int matches;
@@ -23,6 +65,7 @@ public final class BeghouldSession extends MiniGameSession {
 
     public BeghouldSession(MiniGameDefinition definition, int level) {
         super(definition, level);
+        plantFactory = MiniGameData.plantFactory();
         random = new Random(40_000L + level * 1237L);
         fillBoard();
         removeInitialMatches();
@@ -35,30 +78,65 @@ public final class BeghouldSession extends MiniGameSession {
         String normalized = normalize(command);
         switch (normalized) {
             case "swap", "makematch" -> swap(intArg(arguments, 0) - 1,
-                intArg(arguments, 1) - 1, intArg(arguments, 2) - 1, intArg(arguments, 3) - 1);
+                intArg(arguments, 1) - 1, intArg(arguments, 2) - 1,
+                intArg(arguments, 3) - 1);
             case "upgrade" -> upgrade(arg(arguments, 0));
             case "advance" -> advanceTime(intArg(arguments, 0));
             default -> throw new IllegalArgumentException(
-                "Beghouled commands: swap <x1> <y1> <x2> <y2>, upgrade <plant>, advance <ticks>.");
+                "Beghouled commands: swap <x1> <y1> <x2> <y2>, "
+                    + "upgrade <plant>, advance <ticks>.");
         }
+    }
+
+    private CombatPlant createPlant(String type) {
+        return new CombatPlant(type, profile(type));
+    }
+
+    private CombatProfile profile(String type) {
+        Plant plant = plantFactory.createPlant(type);
+        PlantAbility ability = plant.getAbility();
+        AttackStyle style = attackStyle(ability, plant.getAttackPower());
+        int splash = style == AttackStyle.SPLASH
+            ? Math.max(1, plant.getAttackPower() / 2 + plant.getSplashDamageBonus()) : 0;
+        return new CombatProfile(plant.getMaxHealth(), plant.getEffectiveAttackPower(),
+            plant.getActionIntervalTicks(), plant.getProjectileCount(), style,
+            splash, plant.getChillDurationTicks());
+    }
+
+    private AttackStyle attackStyle(PlantAbility ability, int damage) {
+        if (damage <= 0) {
+            return AttackStyle.NONE;
+        }
+        if (ability == PlantAbility.SHORT_RANGE_SHROOM
+            || ability == PlantAbility.FUME_SHROOM) {
+            return AttackStyle.PIERCE;
+        }
+        if (ability == PlantAbility.CABBAGE_PULT || ability == PlantAbility.KERNEL_PULT
+            || ability == PlantAbility.MELON_PULT || ability == PlantAbility.WINTER_MELON
+            || ability == PlantAbility.PEPPER_PULT) {
+            return AttackStyle.SPLASH;
+        }
+        return AttackStyle.DIRECT;
     }
 
     private void fillBoard() {
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLS; col++) {
-                grid[row][col] = randomType();
+                if (!crater[row][col]) {
+                    grid[row][col] = createPlant(randomType());
+                }
             }
         }
     }
 
     private void removeInitialMatches() {
-        for (int attempts = 0; attempts < 20; attempts++) {
+        for (int attempts = 0; attempts < 40; attempts++) {
             Set<GridPosition> found = findMatches();
             if (found.isEmpty()) {
                 return;
             }
             for (GridPosition position : found) {
-                grid[position.getRow()][position.getColumn()] = randomType();
+                grid[position.getRow()][position.getColumn()] = createPlant(randomType());
             }
         }
     }
@@ -72,17 +150,23 @@ public final class BeghouldSession extends MiniGameSession {
         if (crater[y1][x1] || crater[y2][x2]) {
             throw new IllegalStateException("A crater cannot contain or receive a plant.");
         }
-        String first = grid[y1][x1];
-        grid[y1][x1] = grid[y2][x2];
-        grid[y2][x2] = first;
+        exchange(y1, x1, y2, x2);
         Set<GridPosition> found = findMatches();
         if (found.isEmpty()) {
-            first = grid[y1][x1];
-            grid[y1][x1] = grid[y2][x2];
-            grid[y2][x2] = first;
+            exchange(y1, x1, y2, x2);
             throw new IllegalStateException("The swap must create a match of at least three.");
         }
         resolveCascades(found);
+        evaluateMatchVictory();
+    }
+
+    private void exchange(int rowOne, int colOne, int rowTwo, int colTwo) {
+        CombatPlant first = grid[rowOne][colOne];
+        grid[rowOne][colOne] = grid[rowTwo][colTwo];
+        grid[rowTwo][colTwo] = first;
+    }
+
+    private void evaluateMatchVictory() {
         if (matches >= getTarget()) {
             zombies.clear();
             win();
@@ -112,7 +196,7 @@ public final class BeghouldSession extends MiniGameSession {
 
     private void collapse() {
         for (int col = 0; col < COLS; col++) {
-            ArrayDeque<String> values = new ArrayDeque<>();
+            ArrayDeque<CombatPlant> values = new ArrayDeque<>();
             for (int row = ROWS - 1; row >= 0; row--) {
                 if (!crater[row][col] && grid[row][col] != null) {
                     values.addLast(grid[row][col]);
@@ -122,7 +206,8 @@ public final class BeghouldSession extends MiniGameSession {
                 if (crater[row][col]) {
                     grid[row][col] = null;
                 } else {
-                    grid[row][col] = values.isEmpty() ? randomType() : values.removeFirst();
+                    grid[row][col] = values.isEmpty()
+                        ? createPlant(randomType()) : values.removeFirst();
                 }
             }
         }
@@ -130,12 +215,18 @@ public final class BeghouldSession extends MiniGameSession {
 
     private Set<GridPosition> findMatches() {
         HashSet<GridPosition> result = new HashSet<>();
+        findHorizontalMatches(result);
+        findVerticalMatches(result);
+        return result;
+    }
+
+    private void findHorizontalMatches(Set<GridPosition> result) {
         for (int row = 0; row < ROWS; row++) {
             int start = 0;
             while (start < COLS) {
-                String value = grid[row][start];
+                String value = typeAt(row, start);
                 int end = start + 1;
-                while (end < COLS && value != null && value.equals(grid[row][end])) {
+                while (end < COLS && value != null && value.equals(typeAt(row, end))) {
                     end++;
                 }
                 if (value != null && end - start >= 3) {
@@ -146,12 +237,15 @@ public final class BeghouldSession extends MiniGameSession {
                 start = end;
             }
         }
+    }
+
+    private void findVerticalMatches(Set<GridPosition> result) {
         for (int col = 0; col < COLS; col++) {
             int start = 0;
             while (start < ROWS) {
-                String value = grid[start][col];
+                String value = typeAt(start, col);
                 int end = start + 1;
-                while (end < ROWS && value != null && value.equals(grid[end][col])) {
+                while (end < ROWS && value != null && value.equals(typeAt(end, col))) {
                     end++;
                 }
                 if (value != null && end - start >= 3) {
@@ -162,74 +256,197 @@ public final class BeghouldSession extends MiniGameSession {
                 start = end;
             }
         }
-        return result;
+    }
+
+    private String typeAt(int row, int col) {
+        return grid[row][col] == null ? null : grid[row][col].type;
     }
 
     private void upgrade(String plantName) {
-        String normalized = PlantDefinition.normalizeKey(plantName);
-        String from;
-        String to;
-        int cost;
-        if (normalized.equals("peashooter")) {
-            from = "Peashooter"; to = "Repeater"; cost = 500;
-        } else if (normalized.equals("repeater")) {
-            from = "Repeater"; to = "Mega Gatling Pea"; cost = 1500;
-        } else if (normalized.equals("wallnut")) {
-            from = "Wall-nut"; to = "Tall-nut"; cost = 500;
-        } else if (normalized.equals("puffshroom")) {
-            from = "Puff-shroom"; to = "Fume-shroom"; cost = 250;
-        } else if (normalized.equals("cabbagepult")) {
-            from = "Cabbage-pult"; to = "Melon-pult"; cost = 1000;
-        } else if (normalized.equals("melonpult")) {
-            from = "Melon-pult"; to = "Winter Melon"; cost = 750;
-        } else {
-            throw new IllegalArgumentException("That plant has no Beghouled upgrade.");
-        }
-        if (sun < cost) {
+        Upgrade upgrade = resolveUpgrade(plantName);
+        if (sun < upgrade.cost()) {
             throw new IllegalStateException("Not enough sun for the upgrade.");
         }
         int changed = 0;
+        CombatProfile targetProfile = profile(upgrade.to());
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLS; col++) {
-                if (from.equals(grid[row][col])) {
-                    grid[row][col] = to;
+                CombatPlant plant = grid[row][col];
+                if (plant != null && upgrade.from().equals(plant.type)) {
+                    plant.upgrade(upgrade.to(), targetProfile);
                     changed++;
                 }
             }
         }
         if (changed == 0) {
-            throw new IllegalStateException("No " + from + " exists on the board.");
+            throw new IllegalStateException("No " + upgrade.from() + " exists on the board.");
         }
-        sun -= cost;
+        sun -= upgrade.cost();
         addScore(changed * 40);
+    }
+
+    private record Upgrade(String from, String to, int cost) { }
+
+    private Upgrade resolveUpgrade(String plantName) {
+        return switch (PlantDefinition.normalizeKey(plantName)) {
+            case "peashooter" -> new Upgrade("Peashooter", "Repeater", 500);
+            case "repeater" -> new Upgrade("Repeater", "Mega Gatling Pea", 1500);
+            case "wallnut" -> new Upgrade("Wall-nut", "Tall-nut", 500);
+            case "puffshroom" -> new Upgrade("Puff-shroom", "Fume-shroom", 250);
+            case "cabbagepult" -> new Upgrade("Cabbage-pult", "Melon-pult", 1000);
+            case "melonpult" -> new Upgrade("Melon-pult", "Winter Melon", 750);
+            default -> throw new IllegalArgumentException(
+                "That plant has no Beghouled upgrade.");
+        };
     }
 
     @Override
     protected void onTick() {
-        if (getElapsedTicks() >= nextZombieTick) {
-            zombies.add(new MiniGameUnit("Beghouled Zombie", random.nextInt(ROWS), 8.8,
-                300 + getLevel() * 80, 30, 0.025 + getLevel() * 0.004));
-            nextZombieTick += Math.max(20, 45 - getLevel() * 5);
+        spawnZombieIfNeeded();
+        tickPlantsAndAttack();
+        tickZombiesAndCombat();
+        cleanupDeadZombies();
+        if (matches >= getTarget()) {
+            evaluateMatchVictory();
         }
+    }
+
+    private void spawnZombieIfNeeded() {
+        if (getElapsedTicks() < nextZombieTick) {
+            return;
+        }
+        zombies.add(new MiniGameUnit("Beghouled Zombie", random.nextInt(ROWS), 8.8,
+            300 + getLevel() * 80, 30 + getLevel() * 5,
+            0.025 + getLevel() * 0.004));
+        nextZombieTick += Math.max(20, 45 - getLevel() * 5);
+    }
+
+    private void tickPlantsAndAttack() {
+        for (int row = 0; row < ROWS; row++) {
+            for (int col = 0; col < COLS; col++) {
+                CombatPlant plant = grid[row][col];
+                if (plant == null) {
+                    continue;
+                }
+                plant.tick();
+                if (plant.ready()) {
+                    attackFrom(row, col, plant);
+                }
+            }
+        }
+    }
+
+    private void attackFrom(int row, int col, CombatPlant plant) {
+        MiniGameUnit target = nearestZombieAhead(row, col);
+        if (target == null) {
+            return;
+        }
+        switch (plant.profile.style()) {
+            case DIRECT -> damageDirect(target, plant.profile);
+            case PIERCE -> damagePiercing(row, col, plant.profile);
+            case SPLASH -> damageSplash(target, plant.profile);
+            case NONE -> { return; }
+        }
+        plant.resetCooldown();
+    }
+
+    private void damageDirect(MiniGameUnit target, CombatProfile profile) {
+        target.damage(profile.damage() * profile.projectileCount());
+        applyChill(target, profile);
+    }
+
+    private void damagePiercing(int row, int col, CombatProfile profile) {
+        for (MiniGameUnit zombie : zombies) {
+            if (!zombie.isDead() && zombie.getRow() == row && zombie.getColumn() >= col) {
+                zombie.damage(profile.damage() * profile.projectileCount());
+                applyChill(zombie, profile);
+            }
+        }
+    }
+
+    private void damageSplash(MiniGameUnit target, CombatProfile profile) {
+        target.damage(profile.damage() * profile.projectileCount());
+        applyChill(target, profile);
+        for (MiniGameUnit zombie : zombies) {
+            if (zombie == target || zombie.isDead()) {
+                continue;
+            }
+            if (Math.abs(zombie.getRow() - target.getRow()) <= 1
+                && Math.abs(zombie.getColumn() - target.getColumn()) <= 1.25) {
+                zombie.damage(profile.splashDamage());
+                applyChill(zombie, profile);
+            }
+        }
+    }
+
+    private void applyChill(MiniGameUnit zombie, CombatProfile profile) {
+        if (profile.chillTicks() > 0) {
+            zombie.slow(0.5, profile.chillTicks());
+        }
+    }
+
+    private MiniGameUnit nearestZombieAhead(int row, int col) {
+        MiniGameUnit result = null;
+        for (MiniGameUnit zombie : zombies) {
+            if (zombie.isDead() || zombie.getRow() != row || zombie.getColumn() < col) {
+                continue;
+            }
+            if (result == null || zombie.getColumn() < result.getColumn()) {
+                result = zombie;
+            }
+        }
+        return result;
+    }
+
+    private void tickZombiesAndCombat() {
         for (MiniGameUnit zombie : zombies) {
             if (zombie.isDead()) {
                 continue;
             }
-            int row = zombie.getRow();
-            int col = Math.max(0, Math.min(COLS - 1, (int) Math.floor(zombie.getColumn())));
-            if (grid[row][col] != null) {
-                grid[row][col] = null;
-                crater[row][col] = true;
-                zombie.setColumn(zombie.getColumn() - 0.25);
-                addScore(-50);
+            zombie.tickAge();
+            CombatPlant blocker = blockingPlant(zombie);
+            if (blocker != null) {
+                attackPlant(zombie, blocker);
             } else {
                 zombie.setColumn(zombie.getColumn() - zombie.getSpeed());
-            }
-            if (zombie.getColumn() < -0.1) {
-                lose();
-                return;
+                if (zombie.getColumn() < -0.1) {
+                    lose();
+                    return;
+                }
             }
         }
+    }
+
+    private CombatPlant blockingPlant(MiniGameUnit zombie) {
+        int row = zombie.getRow();
+        int col = Math.max(0, Math.min(COLS - 1, (int) Math.floor(zombie.getColumn())));
+        CombatPlant plant = grid[row][col];
+        if (plant != null && zombie.getColumn() <= col + 0.85) {
+            return plant;
+        }
+        return null;
+    }
+
+    private void attackPlant(MiniGameUnit zombie, CombatPlant plant) {
+        if (!zombie.ready()) {
+            return;
+        }
+        plant.damage(zombie.getDamage());
+        zombie.setCooldown(Game.TICKS_PER_SECOND);
+        if (plant.isDead()) {
+            int row = zombie.getRow();
+            int col = Math.max(0, Math.min(COLS - 1,
+                (int) Math.floor(zombie.getColumn())));
+            grid[row][col] = null;
+            crater[row][col] = true;
+            addScore(-50);
+        }
+    }
+
+    private void cleanupDeadZombies() {
+        int before = zombies.size();
+        zombies.removeIf(MiniGameUnit::isDead);
+        addScore((before - zombies.size()) * 150);
     }
 
     private boolean hasPossibleMove() {
@@ -238,10 +455,12 @@ public final class BeghouldSession extends MiniGameSession {
                 if (crater[row][col]) {
                     continue;
                 }
-                if (col + 1 < COLS && !crater[row][col + 1] && createsMatch(row, col, row, col + 1)) {
+                if (col + 1 < COLS && !crater[row][col + 1]
+                    && createsMatch(row, col, row, col + 1)) {
                     return true;
                 }
-                if (row + 1 < ROWS && !crater[row + 1][col] && createsMatch(row, col, row + 1, col)) {
+                if (row + 1 < ROWS && !crater[row + 1][col]
+                    && createsMatch(row, col, row + 1, col)) {
                     return true;
                 }
             }
@@ -249,14 +468,10 @@ public final class BeghouldSession extends MiniGameSession {
         return false;
     }
 
-    private boolean createsMatch(int r1, int c1, int r2, int c2) {
-        String first = grid[r1][c1];
-        grid[r1][c1] = grid[r2][c2];
-        grid[r2][c2] = first;
+    private boolean createsMatch(int rowOne, int colOne, int rowTwo, int colTwo) {
+        exchange(rowOne, colOne, rowTwo, colTwo);
         boolean result = !findMatches().isEmpty();
-        first = grid[r1][c1];
-        grid[r1][c1] = grid[r2][c2];
-        grid[r2][c2] = first;
+        exchange(rowOne, colOne, rowTwo, colTwo);
         return result;
     }
 
@@ -274,25 +489,40 @@ public final class BeghouldSession extends MiniGameSession {
 
     @Override
     public String boardView() {
-        StringBuilder builder = new StringBuilder("Beghouled board (#=crater)\n");
+        StringBuilder builder = new StringBuilder(
+            "Beghouled board (#=crater, Z=nearest zombie marker)\n");
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLS; col++) {
-                if (crater[row][col]) {
+                if (hasZombieAt(row, col)) {
+                    builder.append("Z ");
+                } else if (crater[row][col]) {
                     builder.append("# ");
                 } else {
-                    builder.append(symbol(grid[row][col])).append(' ');
+                    builder.append(symbol(typeAt(row, col))).append(' ');
                 }
             }
             builder.append('\n');
         }
-        builder.append("Legend: P=Peashooter, W=Wall-nut, F=Puff-shroom, C=Cabbage-pult, M=Melon-pult\n")
+        builder.append("Legend: P=Pea line, W=Wall line, F=Fume line, C=Cabbage, M=Melon\n")
             .append("Sun=").append(sun).append(", matches=").append(matches)
             .append('/').append(getTarget());
         return builder.toString();
     }
 
+    private boolean hasZombieAt(int row, int col) {
+        for (MiniGameUnit zombie : zombies) {
+            if (!zombie.isDead() && zombie.getRow() == row
+                && Math.round(zombie.getColumn()) == col) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private char symbol(String type) {
-        if (type == null) { return '.'; }
+        if (type == null) {
+            return '.';
+        }
         return switch (PlantDefinition.normalizeKey(type)) {
             case "peashooter", "repeater", "megagatlingpea" -> 'P';
             case "wallnut", "tallnut" -> 'W';
@@ -319,13 +549,29 @@ public final class BeghouldSession extends MiniGameSession {
     }
 
     private int intArg(List<String> args, int index) {
-        try { return Integer.parseInt(arg(args, index)); }
-        catch (NumberFormatException exception) {
+        try {
+            return Integer.parseInt(arg(args, index));
+        } catch (NumberFormatException exception) {
             throw new IllegalArgumentException("Expected an integer argument.");
         }
     }
 
     private String normalize(String value) {
-        return value == null ? "" : value.toLowerCase().replace("-", "").replace("_", "");
+        return value == null ? "" : value.toLowerCase().replace("-", "")
+            .replace("_", "");
+    }
+
+    void setSunForTest(int amount) { sun = Math.max(0, amount); }
+    void setPlantForTest(int row, int col, String type) { grid[row][col] = createPlant(type); }
+    void addZombieForTest(int row, double col, int health) {
+        zombies.add(new MiniGameUnit("Test Zombie", row, col, health, 30, 0));
+    }
+    int firstZombieHealthForTest() { return zombies.isEmpty() ? 0 : zombies.get(0).getHealth(); }
+    void disableZombieSpawnsForTest() { nextZombieTick = Integer.MAX_VALUE; }
+    int plantHealthForTest(int row, int col) {
+        return grid[row][col] == null ? 0 : grid[row][col].health;
+    }
+    String plantTypeForTest(int row, int col) {
+        return grid[row][col] == null ? "" : grid[row][col].type;
     }
 }

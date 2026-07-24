@@ -1,21 +1,34 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 public final class ZombotanySession extends MiniGameSession {
-    private final ArrayList<MiniGamePlantUnit> plants = new ArrayList<>();
-    private final ArrayList<MiniGameUnit> zombies = new ArrayList<>();
+    private enum ZombiePower { PEASHOOTER, WALL_NUT, JALAPENO, SQUASH }
+
+    private final Game game;
     private final Random random;
-    private int sun = 300;
-    private int kills;
+    private final Map<Zombie, ZombiePower> powers = new IdentityHashMap<>();
+    private final Set<Zombie> jalapenoTriggered = Collections.newSetFromMap(
+        new IdentityHashMap<>());
     private int nextSpawnTick;
+    private boolean battleStarted;
 
     public ZombotanySession(MiniGameDefinition definition, int level) {
         super(definition, level);
         random = new Random(50_000L + level * 1877L);
+        game = new Game(MiniGameData.plantFactory(), MiniGameData.zombieFactory(),
+            3, Map.of(), new Inventory(), new Wallet(), 60_000L + level * 733L);
+        Level battleLevel = new Level("zombotany-" + level, SeasonType.ANCIENT_EGYPT,
+            level, SpecialLevelType.NORMAL, 8, 300);
+        game.prepareLevel(null, battleLevel);
+        game.setExternalWinControlled(true);
         nextSpawnTick = 10;
     }
 
@@ -24,197 +37,300 @@ public final class ZombotanySession extends MiniGameSession {
         ensureRunning();
         String normalized = normalize(command);
         switch (normalized) {
+            case "select", "addplant" -> selectPlant(arg(arguments, 0));
+            case "remove", "removeplant" -> removePlant(arg(arguments, 0));
+            case "start", "startgame" -> startBattle();
             case "plant" -> plant(arg(arguments, 0), intArg(arguments, 1) - 1,
                 intArg(arguments, 2) - 1);
-            case "advance", "defeatzombie" -> advanceTime(intArg(arguments, 0));
-            default -> throw new IllegalArgumentException(
-                "Zombotany commands: plant <peashooter|wallnut|sunflower|snowpea> <x> <y>, advance <ticks>.");
+            case "collect", "collectsun" -> collectSun(intArg(arguments, 0) - 1,
+                intArg(arguments, 1) - 1);
+            case "feed" -> feedPlant(intArg(arguments, 0) - 1,
+                intArg(arguments, 1) - 1);
+            case "advance", "defeatzombie" -> advanceBattle(intArg(arguments, 0));
+            default -> throw new IllegalArgumentException(commandHelp());
         }
     }
 
-    private void plant(String typeText, int col, int row) {
-        if (row < 0 || row >= 5 || col < 0 || col >= 9) {
-            throw new IllegalArgumentException("Position must be inside the 9x5 board.");
+    private String commandHelp() {
+        return "Zombotany commands: select <plant>, remove <plant>, start, "
+            + "plant <type> <x> <y>, collect <x> <y>, feed <x> <y>, advance <ticks>.";
+    }
+
+    private void selectPlant(String type) {
+        requireSelectionPhase();
+        game.selectPlant(type);
+    }
+
+    private void removePlant(String type) {
+        requireSelectionPhase();
+        game.removeSelectedPlant(type);
+    }
+
+    private void requireSelectionPhase() {
+        if (battleStarted) {
+            throw new IllegalStateException("Plant selection is already finished.");
         }
-        if (findPlant(row, col) != null) {
-            throw new IllegalStateException("That tile already contains a plant.");
+    }
+
+    private void startBattle() {
+        requireSelectionPhase();
+        game.startGame();
+        game.setExternalWinControlled(true);
+        removeAdventureTerrainOverlays();
+        battleStarted = true;
+    }
+
+    private void removeAdventureTerrainOverlays() {
+        game.tombs.clear();
+        for (int row = 0; row < game.board.getRows(); row++) {
+            for (int col = 0; col < game.board.getCols(); col++) {
+                Tile tile = game.board.getTile(row, col);
+                if (tile.getType() == TileType.TOMB) {
+                    tile.setTileType(TileType.NORMAL);
+                }
+            }
         }
-        String normalized = normalize(typeText);
-        String type;
-        int cost;
-        int health;
-        int damage;
-        switch (normalized) {
-            case "peashooter" -> { type = "Peashooter"; cost = 100; health = 300; damage = 40; }
-            case "wallnut" -> { type = "Wall-nut"; cost = 50; health = 1200; damage = 0; }
-            case "sunflower" -> { type = "Sunflower"; cost = 50; health = 250; damage = 0; }
-            case "snowpea" -> { type = "Snow Pea"; cost = 150; health = 300; damage = 35; }
-            default -> throw new IllegalArgumentException("Unknown Zombotany plant.");
+    }
+
+    private void plant(String type, int col, int row) {
+        requireBattleStarted();
+        game.plant(type, row, col);
+    }
+
+    private void collectSun(int col, int row) {
+        requireBattleStarted();
+        game.collectSun(row, col);
+    }
+
+    private void feedPlant(int col, int row) {
+        requireBattleStarted();
+        game.feedPlant(row, col);
+    }
+
+    private void advanceBattle(int ticks) {
+        requireBattleStarted();
+        advanceTime(ticks);
+    }
+
+    private void requireBattleStarted() {
+        if (!battleStarted) {
+            throw new IllegalStateException("Select plants and use 'start' first.");
         }
-        if (sun < cost) {
-            throw new IllegalStateException("Not enough sun.");
-        }
-        sun -= cost;
-        plants.add(new MiniGamePlantUnit(type, row, col, health, damage));
     }
 
     @Override
     protected void onTick() {
-        if (getElapsedTicks() >= nextSpawnTick) {
-            spawnZombie();
-            nextSpawnTick += Math.max(15, 35 - getLevel() * 4);
+        spawnZombieIfNeeded();
+        applySquashCollisions();
+        applyPeashooterShots();
+        applyJalapenoExplosions();
+        game.advanceTime(1);
+        removeFinishedPowerMappings();
+        evaluateBattleState();
+    }
+
+    private void spawnZombieIfNeeded() {
+        if (game.getElapsedTicks() < nextSpawnTick) {
+            return;
         }
-        tickPlants();
-        Iterator<MiniGameUnit> iterator = zombies.iterator();
-        while (iterator.hasNext()) {
-            MiniGameUnit zombie = iterator.next();
-            zombie.tickAge();
-            if (zombie.isDead()) {
-                iterator.remove();
-                kills++;
-                addScore(175);
-                if (kills >= getTarget()) {
-                    win();
-                    addScore(1500 + sun);
-                    return;
-                }
+        ZombiePower power = ZombiePower.values()[random.nextInt(ZombiePower.values().length)];
+        Zombie zombie = createPoweredZombie(power);
+        zombie.setPosition(new BoardPosition(random.nextInt(5), 8.8));
+        game.board.addZombie(zombie);
+        powers.put(zombie, power);
+        nextSpawnTick += Math.max(18, 38 - getLevel() * 4);
+    }
+
+    private Zombie createPoweredZombie(ZombiePower power) {
+        String displayName;
+        int health;
+        int damage;
+        double speed;
+        switch (power) {
+            case PEASHOOTER -> {
+                displayName = "Peashooter Zombie";
+                health = 380 + getLevel() * 60;
+                damage = 100;
+                speed = 0.185;
+            }
+            case WALL_NUT -> {
+                displayName = "Wall-nut Zombie";
+                health = 1500 + getLevel() * 200;
+                damage = 100;
+                speed = 0.100;
+            }
+            case JALAPENO -> {
+                displayName = "Jalapeno Zombie";
+                health = 420 + getLevel() * 70;
+                damage = 100;
+                speed = 0.185;
+            }
+            case SQUASH -> {
+                displayName = "Squash Zombie";
+                health = 260 + getLevel() * 40;
+                damage = 100;
+                speed = 0.420;
+            }
+            default -> throw new IllegalStateException("Unsupported Zombotany power.");
+        }
+        String key = PlantDefinition.normalizeKey(displayName);
+        ZombieDefinition definition = new ZombieDefinition(key, key, displayName,
+            health, damage, speed, 100, 1, false, ZombieAbility.GENERIC,
+            List.of(SeasonType.ANCIENT_EGYPT), List.of(), List.of(), Map.of());
+        return new GenericZombie(definition, List.of());
+    }
+
+    private void applyPeashooterShots() {
+        for (Map.Entry<Zombie, ZombiePower> entry : new ArrayList<>(powers.entrySet())) {
+            Zombie zombie = entry.getKey();
+            if (entry.getValue() != ZombiePower.PEASHOOTER || zombie.isDead()
+                || zombie.getPosition() == null || zombie.getAgeTicks() == 0
+                || zombie.getAgeTicks() % 15 != 0) {
                 continue;
             }
-            applyZombiePlantPower(zombie);
-            MiniGamePlantUnit blocker = blockingPlant(zombie);
-            if (blocker != null) {
-                if (zombie.getType().equals("Squash Zombie")) {
-                    blocker.damage(blocker.getHealth());
-                    zombie.damage(zombie.getHealth());
-                } else {
-                    blocker.damage(Math.max(1, zombie.getDamage() / 10));
-                }
-            } else {
-                zombie.setColumn(zombie.getColumn() - zombie.getSpeed());
-                if (zombie.getColumn() < -0.1) {
-                    lose();
-                    return;
-                }
-            }
-        }
-        plants.removeIf(MiniGamePlantUnit::isDead);
-    }
-
-    private void tickPlants() {
-        for (MiniGamePlantUnit plant : plants) {
-            plant.tick();
-            if (plant.getType().equals("Sunflower") && getElapsedTicks() % 50 == 0) {
-                sun += 25;
-            }
-            if (plant.getDamage() > 0 && plant.ready()) {
-                MiniGameUnit target = nearestZombie(plant.getRow(), plant.getColumn());
-                if (target != null) {
-                    target.damage(plant.getDamage());
-                    plant.setCooldown(10);
-                }
-            }
-        }
-    }
-
-    private void spawnZombie() {
-        String[] types = {"Peashooter Zombie", "Wall-nut Zombie", "Jalapeno Zombie", "Squash Zombie"};
-        String type = types[random.nextInt(types.length)];
-        int health = switch (type) {
-            case "Wall-nut Zombie" -> 1200;
-            case "Squash Zombie" -> 240;
-            default -> 420 + getLevel() * 80;
-        };
-        double speed = type.equals("Squash Zombie") ? 0.10 : type.equals("Wall-nut Zombie") ? 0.02 : 0.04;
-        zombies.add(new MiniGameUnit(type, random.nextInt(5), 8.8, health, 40, speed));
-    }
-
-    private void applyZombiePlantPower(MiniGameUnit zombie) {
-        if (zombie.getType().equals("Peashooter Zombie") && zombie.getAgeTicks() % 12 == 0) {
-            MiniGamePlantUnit target = nearestPlantToLeft(zombie);
+            Plant target = nearestPlantToLeft(zombie);
             if (target != null) {
-                target.damage(35 + getLevel() * 5);
+                target.takeDamage(20 + getLevel() * 5);
             }
-        }
-        if (zombie.getType().equals("Jalapeno Zombie") && zombie.getAgeTicks() == 100) {
-            for (MiniGamePlantUnit plant : plants) {
-                if (plant.getRow() == zombie.getRow()) {
-                    plant.damage(plant.getHealth());
-                }
-            }
-            zombie.damage(zombie.getHealth());
         }
     }
 
-    private MiniGamePlantUnit nearestPlantToLeft(MiniGameUnit zombie) {
-        MiniGamePlantUnit result = null;
-        for (MiniGamePlantUnit plant : plants) {
-            if (plant.isDead() || plant.getRow() != zombie.getRow()
-                || plant.getColumn() > zombie.getColumn()) {
+    private Plant nearestPlantToLeft(Zombie zombie) {
+        Plant result = null;
+        double bestColumn = -1;
+        for (Plant plant : game.board.getPlantsInRow(zombie.getPosition().getRow())) {
+            if (plant.isDestroyed() || plant.getPosition() == null
+                || plant.getPosition().getColumn() > zombie.getPosition().getColumn()) {
                 continue;
             }
-            if (result == null || plant.getColumn() > result.getColumn()) {
+            if (plant.getPosition().getColumn() > bestColumn) {
+                bestColumn = plant.getPosition().getColumn();
                 result = plant;
             }
         }
         return result;
     }
 
-    private MiniGamePlantUnit blockingPlant(MiniGameUnit zombie) {
-        for (MiniGamePlantUnit plant : plants) {
-            if (!plant.isDead() && plant.getRow() == zombie.getRow()
-                && zombie.getColumn() <= plant.getColumn() + 0.75
-                && zombie.getColumn() >= plant.getColumn() - 0.05) {
+    private void applyJalapenoExplosions() {
+        for (Map.Entry<Zombie, ZombiePower> entry : new ArrayList<>(powers.entrySet())) {
+            Zombie zombie = entry.getKey();
+            if (entry.getValue() != ZombiePower.JALAPENO || zombie.isDead()
+                || zombie.getPosition() == null || zombie.getAgeTicks() < 100
+                || !jalapenoTriggered.add(zombie)) {
+                continue;
+            }
+            for (Plant plant : new ArrayList<>(
+                game.board.getPlantsInRow(zombie.getPosition().getRow()))) {
+                plant.takeDamage(plant.getHealth());
+            }
+            zombie.kill();
+        }
+    }
+
+    private void applySquashCollisions() {
+        for (Map.Entry<Zombie, ZombiePower> entry : new ArrayList<>(powers.entrySet())) {
+            Zombie zombie = entry.getKey();
+            if (entry.getValue() != ZombiePower.SQUASH || zombie.isDead()
+                || zombie.getPosition() == null) {
+                continue;
+            }
+            Plant target = collidingPlant(zombie);
+            if (target != null) {
+                target.takeDamage(target.getHealth());
+                zombie.kill();
+            }
+        }
+    }
+
+    private Plant collidingPlant(Zombie zombie) {
+        for (Plant plant : game.board.getPlantsInRow(zombie.getPosition().getRow())) {
+            if (!plant.isDestroyed() && plant.getPosition() != null
+                && Math.abs(plant.getPosition().getColumn()
+                    - zombie.getPosition().getColumn()) <= 0.70) {
                 return plant;
             }
         }
         return null;
     }
 
-    private MiniGameUnit nearestZombie(int row, int column) {
-        MiniGameUnit result = null;
-        for (MiniGameUnit zombie : zombies) {
-            if (!zombie.isDead() && zombie.getRow() == row && zombie.getColumn() >= column
-                && (result == null || zombie.getColumn() < result.getColumn())) {
-                result = zombie;
-            }
-        }
-        return result;
+    private void removeFinishedPowerMappings() {
+        powers.entrySet().removeIf(entry -> entry.getKey().isDead()
+            || !game.board.getZombies().contains(entry.getKey()));
+        jalapenoTriggered.removeIf(zombie -> !powers.containsKey(zombie));
     }
 
-    private MiniGamePlantUnit findPlant(int row, int col) {
-        for (MiniGamePlantUnit plant : plants) {
-            if (!plant.isDead() && plant.getRow() == row && plant.getColumn() == col) {
-                return plant;
-            }
+    private void evaluateBattleState() {
+        if (game.getGameState() == GameState.LOST) {
+            lose();
+            return;
         }
-        return null;
+        if (game.getZombieKillCount() >= getTarget()) {
+            win();
+            addScore(1500 + game.getSunAmount() + game.getLawnMowerKills() * 100);
+        } else {
+            addScore(Math.max(0, game.getZombieKillCount() * 5 - getScore()));
+        }
     }
 
     @Override
     protected String progressText() {
-        return "kills=" + kills + "/" + getTarget() + ", sun=" + sun
-            + ", plants=" + plants.size() + ", zombies=" + zombies.size();
+        if (!battleStarted) {
+            return "selection=" + game.getSelectedPlants().size() + "/8, battle=NOT_STARTED";
+        }
+        return "kills=" + game.getZombieKillCount() + "/" + getTarget()
+            + ", sun=" + game.getSunAmount() + ", plants=" + game.board.getPlants().size()
+            + ", zombies=" + game.board.getZombies().size() + ", mowersUsed="
+            + game.getLawnMowerKills();
     }
 
     @Override
     public String boardView() {
-        StringBuilder builder = new StringBuilder("Zombotany (P=plant, Z=plant-powered zombie)\n");
-        for (int row = 0; row < 5; row++) {
-            for (int col = 0; col < 9; col++) {
-                char symbol = findPlant(row, col) == null ? '.' : 'P';
-                for (MiniGameUnit zombie : zombies) {
-                    if (!zombie.isDead() && zombie.getRow() == row
-                        && Math.round(zombie.getColumn()) == col) {
-                        symbol = 'Z';
-                    }
-                }
-                builder.append(symbol).append(' ');
+        if (!battleStarted) {
+            return "Zombotany plant selection\nSelected: " + game.getSelectedPlants()
+                + "\nUse select <plant>, remove <plant>, then start.";
+        }
+        StringBuilder builder = new StringBuilder(
+            "Zombotany uses the Adventure battle engine (M=mower ready, x=mower used).\n");
+        for (int row = 0; row < game.board.getRows(); row++) {
+            LawnMower mower = game.board.getLawnMower(row);
+            builder.append(mower.isActivated() ? 'x' : 'M').append(" | ");
+            for (int col = 0; col < game.board.getCols(); col++) {
+                builder.append(symbolAt(row, col)).append(' ');
             }
             builder.append('\n');
         }
-        builder.append("Sun=").append(sun).append(", kills=").append(kills)
+        builder.append("Selected=").append(game.getSelectedPlants())
+            .append(" | Sun=").append(game.getSunAmount())
+            .append(" | Kills=").append(game.getZombieKillCount())
             .append('/').append(getTarget());
         return builder.toString();
+    }
+
+    private char symbolAt(int row, int col) {
+        Tile tile = game.board.getTile(row, col);
+        if (!tile.getZombies().isEmpty()) {
+            return poweredZombieSymbol(tile.getZombies().get(0));
+        }
+        if (tile.getPlant() != null) {
+            return 'P';
+        }
+        if (tile.getType() == TileType.TOMB) {
+            return 'T';
+        }
+        return '.';
+    }
+
+    private char poweredZombieSymbol(Zombie zombie) {
+        ZombiePower power = powers.get(zombie);
+        if (power == null) {
+            return 'Z';
+        }
+        return switch (power) {
+            case PEASHOOTER -> 'p';
+            case WALL_NUT -> 'w';
+            case JALAPENO -> 'j';
+            case SQUASH -> 's';
+        };
     }
 
     private String arg(List<String> args, int index) {
@@ -225,14 +341,25 @@ public final class ZombotanySession extends MiniGameSession {
     }
 
     private int intArg(List<String> args, int index) {
-        try { return Integer.parseInt(arg(args, index)); }
-        catch (NumberFormatException exception) {
+        try {
+            return Integer.parseInt(arg(args, index));
+        } catch (NumberFormatException exception) {
             throw new IllegalArgumentException("Expected an integer argument.");
         }
     }
 
     private String normalize(String value) {
-        return value == null ? "" : value.toLowerCase().replace("-", "").replace("_", "")
-            .replace(" ", "");
+        return value == null ? "" : value.toLowerCase().replace("-", "")
+            .replace("_", "").replace(" ", "");
+    }
+
+    Game gameForTest() { return game; }
+    boolean battleStartedForTest() { return battleStarted; }
+    void spawnPowerForTest(String power, int row, double column) {
+        ZombiePower type = ZombiePower.valueOf(power.toUpperCase());
+        Zombie zombie = createPoweredZombie(type);
+        zombie.setPosition(new BoardPosition(row, column));
+        game.board.addZombie(zombie);
+        powers.put(zombie, type);
     }
 }

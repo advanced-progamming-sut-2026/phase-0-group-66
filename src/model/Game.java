@@ -56,6 +56,7 @@ public class Game {
     int sunProducerPlantsPlanted;
     int nextConveyorTick;
     boolean zombieWavesStarted;
+    boolean externalWinControlled;
 
     public Game(PlantFactory plantFactory, ZombieFactory zombieFactory) {
         this(plantFactory, zombieFactory, 3, Map.of(), new Inventory(), new Wallet(),
@@ -174,6 +175,7 @@ public class Game {
     public List<String> getPlantedPlantNames() { return LevelSetupSystem.getPlantedPlantNames(this); }
     public List<String> getPlantedPlantFamilies() { return LevelSetupSystem.getPlantedPlantFamilies(this); }
     public boolean areZombieWavesStarted() { return LevelSetupSystem.areZombieWavesStarted(this); }
+    void setExternalWinControlled(boolean controlled) { externalWinControlled = controlled; }
     Map<String, Integer> normalizePlantLevels(Map<String, Integer> levels) {
         return LevelSetupSystem.normalizePlantLevels(this, levels);
     }
