@@ -7,12 +7,10 @@ import model.SeasonType;
 import model.Tile;
 import model.TileType;
 
-import java.util.Random;
-
+/** Legacy beach-tide adapter. Wave-start Frostbite and Dark Ages effects live in Game. */
 public class SeasonController {
     private final Board board;
     private final AdvancedLevel currentLevel;
-    private final Random random = new Random();
 
     public SeasonController(Board board, AdvancedLevel currentLevel) {
         if (board == null || currentLevel == null) {
@@ -23,23 +21,9 @@ public class SeasonController {
     }
 
     public void processEnvironmentalEffects(int currentTick) {
-        SeasonType season = currentLevel.getSeason();
-        if (season == SeasonType.FROSTBITE_CAVES && currentTick % 200 == 0) {
-            applyFreezingWind();
-        } else if (season == SeasonType.BIG_WAVE_BEACH && currentTick % 150 == 0) {
+        if (currentLevel.getSeason() == SeasonType.BIG_WAVE_BEACH
+            && currentTick % 150 == 0) {
             updateWaterTides(currentTick);
-        } else if (season == SeasonType.DARK_AGES && currentTick % 200 == 0) {
-            spawnRandomTomb();
-        }
-    }
-
-    private void applyFreezingWind() {
-        int affectedRow = random.nextInt(board.getRows());
-        for (int col = 0; col < board.getCols(); col++) {
-            Tile tile = board.getTile(affectedRow, col);
-            if (tile.getPlant() == null && tile.getType() == TileType.NORMAL) {
-                tile.setTileType(TileType.ICE);
-            }
         }
     }
 
@@ -57,18 +41,6 @@ public class SeasonController {
                 } else if (tile.getType() == TileType.WATER) {
                     tile.setTileType(TileType.NORMAL);
                 }
-            }
-        }
-    }
-
-    private void spawnRandomTomb() {
-        for (int attempt = 0; attempt < 20; attempt++) {
-            int row = random.nextInt(board.getRows());
-            int col = 2 + random.nextInt(Math.max(1, board.getCols() - 4));
-            Tile tile = board.getTile(row, col);
-            if (tile.getType() == TileType.NORMAL && tile.getPlant() == null) {
-                tile.setTileType(TileType.TOMB);
-                return;
             }
         }
     }
