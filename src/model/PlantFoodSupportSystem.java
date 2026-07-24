@@ -37,7 +37,9 @@ final class PlantFoodSupportSystem {
                 }
                 Tile tile = game.board.getTile(row, col);
                 if (tile.getPlant() == null && tile.getType().isPlantable()) {
-                    Plant clone = game.plantFactory.createPlant(source.getName(), source.getPlantLevel());
+                    Plant clone = game.plantFactory.createPlant(
+                        source.getName(), source.getPlantLevel());
+                    clone.applyDifficultyTiming(game.difficultyLevel);
                     clone.usePlantFood();
                     game.board.placePlant(clone, row, col);
                     created++;
@@ -146,7 +148,9 @@ final class PlantFoodSupportSystem {
                 boolean water = tile.getType() == TileType.WATER
                     || tile.getType() == TileType.LOW_TIDE;
                 if (water && tile.getSupportPlant() == null && tile.getMainPlant() == null) {
-                    Plant clone = game.plantFactory.createPlant("Lily Pad", plant.getPlantLevel());
+                    Plant clone = game.plantFactory.createPlant(
+                        "Lily Pad", plant.getPlantLevel());
+                    clone.applyDifficultyTiming(game.difficultyLevel);
                     game.board.placePlant(clone, row, col);
                     created++;
                 }

@@ -18,7 +18,7 @@ public abstract class Plant {
     protected int attackPower;
     protected int cooldown;
     private final int plantLevel;
-    private final int actionIntervalTicks;
+    private int actionIntervalTicks;
     private int rechargeTicks;
     private final int sunProductionBonus;
     private final boolean doubleSunChance;
@@ -51,6 +51,7 @@ public abstract class Plant {
         new IdentityHashMap<>());
     private String transformedBy;
     private boolean trappedInIceTile;
+    private boolean difficultyTimingApplied;
 
     protected Plant(PlantDefinition definition) {
         this(definition, 1);
@@ -100,6 +101,17 @@ public abstract class Plant {
                 + getUpgradeTraitInt("LIFESPAN_10S", 0);
             lifetimeTicksRemaining = Math.max(1, seconds) * Game.TICKS_PER_SECOND;
         }
+    }
+
+    public void applyDifficultyTiming(int difficultyLevel) {
+        if (difficultyTimingApplied) {
+            return;
+        }
+        actionIntervalTicks = DifficultyScaling.scaleDurationTicks(
+            actionIntervalTicks, difficultyLevel);
+        rechargeTicks = DifficultyScaling.scaleDurationTicks(rechargeTicks, difficultyLevel);
+        actionTicksRemaining = actionIntervalTicks;
+        difficultyTimingApplied = true;
     }
 
     public void attack() {

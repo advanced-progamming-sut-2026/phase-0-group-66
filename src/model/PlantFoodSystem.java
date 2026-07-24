@@ -123,7 +123,9 @@ final class PlantFoodSystem {
                 }
                 Tile tile = engine.board.getTile(row, col);
                 if (tile.getPlant() == null && tile.getType().isPlantable()) {
-                    Plant clone = engine.plantFactory.createPlant(plant.getName(), plant.getPlantLevel());
+                    Plant clone = engine.plantFactory.createPlant(
+                        plant.getName(), plant.getPlantLevel());
+                    clone.applyDifficultyTiming(engine.difficultyLevel);
                     clone.usePlantFood();
                     engine.board.placePlant(clone, row, col);
                     clones++;
@@ -188,7 +190,9 @@ final class PlantFoodSystem {
                 boolean water = tile.getType() == TileType.WATER
                     || tile.getType() == TileType.LOW_TIDE;
                 if (water && tile.getSupportPlant() == null && tile.getMainPlant() == null) {
-                    Plant clone = engine.plantFactory.createPlant("Lily Pad", plant.getPlantLevel());
+                    Plant clone = engine.plantFactory.createPlant(
+                        "Lily Pad", plant.getPlantLevel());
+                    clone.applyDifficultyTiming(engine.difficultyLevel);
                     engine.board.placePlant(clone, row, col);
                     created++;
                 }
@@ -255,9 +259,17 @@ final class PlantFoodSystem {
         }
     }
     static Plant createPlantForPlacement(Game engine, PlantDefinition definition, int level) {
+        Plant plant;
         if (PlantAbility.fromDefinition(definition) != PlantAbility.IMITATER) {
-            return engine.plantFactory.createPlant(definition.getName(), level);
+            plant = engine.plantFactory.createPlant(definition.getName(), level);
+        } else {
+            plant = createImitaterCopy(engine, definition, level);
         }
+        plant.applyDifficultyTiming(engine.difficultyLevel);
+        return plant;
+    }
+
+    private static Plant createImitaterCopy(Game engine, PlantDefinition definition, int level) {
         List<String> selectedPlants = new ArrayList<>(engine.selectedPlants);
         Collections.reverse(selectedPlants);
         for (String selected : selectedPlants) {

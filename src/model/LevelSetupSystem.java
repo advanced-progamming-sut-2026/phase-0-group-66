@@ -24,6 +24,18 @@ final class LevelSetupSystem {
     static int getSunProducerPlantsPlanted(Game engine) { return engine.sunProducerPlantsPlanted; }
     static List<String> getPlantedPlantNames(Game engine) { return List.copyOf(engine.plantedPlantNames); }
     static List<String> getPlantedPlantFamilies(Game engine) { return List.copyOf(engine.plantedPlantFamilies); }
+    static boolean wasRowEverPlanted(Game engine, int row) {
+        validateRow(engine, row);
+        return engine.plantedPositions.stream().anyMatch(position -> position.getRow() == row);
+    }
+    static boolean wasColumnEverPlanted(Game engine, int column) {
+        validateColumn(engine, column);
+        return engine.plantedPositions.stream()
+            .anyMatch(position -> position.getColumn() == column);
+    }
+    static boolean wasCrossEverPlanted(Game engine, int row, int column) {
+        return wasRowEverPlanted(engine, row) || wasColumnEverPlanted(engine, column);
+    }
     static boolean areZombieWavesStarted(Game engine) { return engine.zombieWavesStarted; }
     static Map<String, Integer> normalizePlantLevels(Game engine, Map<String, Integer> levels) {
         LinkedHashMap<String, Integer> result = new LinkedHashMap<>();
@@ -38,7 +50,7 @@ final class LevelSetupSystem {
         return Collections.unmodifiableMap(result);
     }
     static int adjustedWaveCost(Game engine, int baseCost) {
-        double multiplier = engine.difficultyLevel / 3.0;
+        double multiplier = DifficultyScaling.intensityFactor(engine.difficultyLevel);
         return Math.max(100, (int) Math.round(baseCost * multiplier));
     }
     static void configureZombieDifficultyAndDrops(Game engine, Wave wave) {
@@ -75,6 +87,7 @@ final class LevelSetupSystem {
         zombie.applyDifficulty(engine.difficultyLevel);
         zombie.setIceImmune(true);
         engine.board.addFrozenZombie(zombie, row, col);
+        engine.recordZombieEncounter(zombie);
         engine.addEvent("A " + zombie.getName() + " is trapped in 600 HP ice at "
             + new GridPosition(row, col) + ".");
     }
@@ -328,12 +341,28 @@ final class LevelSetupSystem {
                 new GridPosition(4, 2));
         }
         for (GridPosition position : positions) {
-            Plant protectedPlant = engine.plantFactory.createPlant(engine.currentLevel.getProtectedPlantType(),
+            Plant protectedPlant = engine.plantFactory.createPlant(
+                engine.currentLevel.getProtectedPlantType(),
                 engine.plantLevels.getOrDefault(PlantDefinition.normalizeKey(
                     engine.currentLevel.getProtectedPlantType()), 1));
+            protectedPlant.applyDifficultyTiming(engine.difficultyLevel);
             engine.board.placePlant(protectedPlant, position.getRow(), position.getColumn());
             engine.endangeredPositions.add(position);
         }
         engine.addEvent("Protected seed plants were placed at " + positions + ".");
     }
+    private static void validateRow(Game engine, int row) {
+        int rows = engine.board == null ? Board.DEFAULT_ROWS : engine.board.getRows();
+        if (row < 0 || row >= rows) {
+            throw new IllegalArgumentException("Row is outside the board.");
+        }
+    }
+
+    private static void validateColumn(Game engine, int column) {
+        int columns = engine.board == null ? Board.DEFAULT_COLUMNS : engine.board.getCols();
+        if (column < 0 || column >= columns) {
+            throw new IllegalArgumentException("Column is outside the board.");
+        }
+    }
+
 }

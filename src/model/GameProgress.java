@@ -1,5 +1,7 @@
 package model;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -16,40 +18,22 @@ public class GameProgress implements Serializable {
     private int completedMiniGames;
     private int lastChapterNumber;
     private int lastLevelNumber;
-    private final LinkedHashSet<String> unlockedChapters;
-    private final LinkedHashSet<String> unlockedLevels;
-    private final LinkedHashSet<String> completedLevelIds;
+    private LinkedHashSet<String> unlockedChapters;
+    private LinkedHashSet<String> unlockedLevels;
+    private LinkedHashSet<String> completedLevelIds;
+    private LinkedHashSet<String> unlockedMiniGameLevels;
+    private LinkedHashSet<String> completedMiniGameLevels;
 
     public GameProgress() {
-        unlockedChapters = new LinkedHashSet<>();
-        unlockedLevels = new LinkedHashSet<>();
-        completedLevelIds = new LinkedHashSet<>();
+        initializeCollections();
     }
 
-    public int getGamesPlayed() {
-        return gamesPlayed;
-    }
-
-    public int getCompletedLevels() {
-        return completedLevelIds.size();
-    }
-
-    public int getBestMiniGameScore() {
-        return bestMiniGameScore;
-    }
-
-    public int getBestMeowPoints() {
-        return bestMeowPoints;
-    }
-
-    public int getCompletedDailyQuests() {
-        return completedDailyQuests;
-    }
-
-    public int getCompletedOtherQuests() {
-        return completedOtherQuests;
-    }
-
+    public int getGamesPlayed() { return gamesPlayed; }
+    public int getCompletedLevels() { return completedLevelIds.size(); }
+    public int getBestMiniGameScore() { return bestMiniGameScore; }
+    public int getBestMeowPoints() { return bestMeowPoints; }
+    public int getCompletedDailyQuests() { return completedDailyQuests; }
+    public int getCompletedOtherQuests() { return completedOtherQuests; }
     public int getCompletedMiniGames() { return completedMiniGames; }
     public int getLastChapterNumber() { return lastChapterNumber; }
     public int getLastLevelNumber() { return lastLevelNumber; }
@@ -62,6 +46,13 @@ public class GameProgress implements Serializable {
         return Collections.unmodifiableSet(unlockedLevels);
     }
 
+    public Set<String> getUnlockedMiniGameLevels() {
+        return Collections.unmodifiableSet(unlockedMiniGameLevels);
+    }
+
+    public Set<String> getCompletedMiniGameLevels() {
+        return Collections.unmodifiableSet(completedMiniGameLevels);
+    }
 
     public void unlockChapterName(String chapterName) {
         if (chapterName != null && !chapterName.isBlank()) {
@@ -83,9 +74,34 @@ public class GameProgress implements Serializable {
         return levelId != null && unlockedLevels.contains(levelId);
     }
 
-    public void recordGamePlayed() {
-        gamesPlayed++;
+    public boolean unlockMiniGameLevel(MiniGameType type, int level) {
+        validateMiniGameLevel(type, level);
+        return unlockedMiniGameLevels.add(miniGameKey(type, level));
     }
+
+    public boolean isMiniGameLevelUnlocked(MiniGameType type, int level) {
+        validateMiniGameLevel(type, level);
+        return unlockedMiniGameLevels.contains(miniGameKey(type, level));
+    }
+
+    public boolean isMiniGameLevelCompleted(MiniGameType type, int level) {
+        validateMiniGameLevel(type, level);
+        return completedMiniGameLevels.contains(miniGameKey(type, level));
+    }
+
+    public boolean completeMiniGameLevel(MiniGameType type, int level, int score) {
+        validateMiniGameLevel(type, level);
+        updateBestScore(score);
+        String key = miniGameKey(type, level);
+        unlockedMiniGameLevels.add(key);
+        boolean firstCompletion = completedMiniGameLevels.add(key);
+        if (firstCompletion) {
+            completedMiniGames++;
+        }
+        return firstCompletion;
+    }
+
+    public void recordGamePlayed() { gamesPlayed++; }
 
     public void unlockChapter(Chapter chapter) {
         if (chapter != null) {
@@ -107,6 +123,7 @@ public class GameProgress implements Serializable {
         }
     }
 
+    /** Legacy compatibility for older callers that did not identify the mini-game level. */
     public void recordCompletedMiniGame(int score) {
         completedMiniGames++;
         updateBestScore(score);
@@ -134,5 +151,39 @@ public class GameProgress implements Serializable {
         } else {
             completedOtherQuests++;
         }
+    }
+
+    private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+        input.defaultReadObject();
+        initializeCollections();
+        completedMiniGames = Math.max(completedMiniGames, completedMiniGameLevels.size());
+    }
+
+    private void initializeCollections() {
+        if (unlockedChapters == null) {
+            unlockedChapters = new LinkedHashSet<>();
+        }
+        if (unlockedLevels == null) {
+            unlockedLevels = new LinkedHashSet<>();
+        }
+        if (completedLevelIds == null) {
+            completedLevelIds = new LinkedHashSet<>();
+        }
+        if (unlockedMiniGameLevels == null) {
+            unlockedMiniGameLevels = new LinkedHashSet<>();
+        }
+        if (completedMiniGameLevels == null) {
+            completedMiniGameLevels = new LinkedHashSet<>();
+        }
+    }
+
+    private void validateMiniGameLevel(MiniGameType type, int level) {
+        if (type == null || level < 1 || level > 3) {
+            throw new IllegalArgumentException("Mini-game type and level 1-3 are required.");
+        }
+    }
+
+    private String miniGameKey(MiniGameType type, int level) {
+        return type.name() + ":" + level;
     }
 }

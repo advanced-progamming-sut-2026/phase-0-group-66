@@ -187,6 +187,7 @@ final class ZombieObjectSystem {
             imp.setPosition(new BoardPosition(barrel.getPosition().getRow(),
                 barrel.getPosition().getColumn() + index * 0.08));
             engine.board.addZombie(imp);
+        engine.recordZombieEncounter(imp);
         }
     }
 

@@ -58,6 +58,8 @@ public final class QuestDataLoader {
             questCondition,
             enumValue(RewardType.class, reward.get("kind"), "reward.kind"),
             requireInt(reward.get("amount"), "reward.amount"),
+            optionalEnumValue(QuestRewardFormula.class, reward.get("formula"),
+                QuestRewardFormula.FIXED, "reward.formula"),
             enumValue(QuestPriority.class, entry.get("priority"), "priority")
         );
     }
@@ -69,6 +71,15 @@ public final class QuestDataLoader {
         } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException(fieldName + " has an unknown value: " + text);
         }
+    }
+
+
+    private <T extends Enum<T>> T optionalEnumValue(Class<T> type, Object value,
+                                                     T defaultValue, String fieldName) {
+        if (value == null) {
+            return defaultValue;
+        }
+        return enumValue(type, value, fieldName);
     }
 
     @SuppressWarnings("unchecked")

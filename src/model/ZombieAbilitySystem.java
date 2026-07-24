@@ -67,6 +67,7 @@ final class ZombieAbilitySystem {
         int row = gargantuar.getPosition().getRow();
         imp.setPosition(new BoardPosition(row, 2.0));
         engine.board.addZombie(imp);
+        engine.recordZombieEncounter(imp);
         gargantuar.markImpThrown();
         engine.addEvent("Gargantuar threw an Imp into column 3.");
     }
@@ -414,6 +415,7 @@ final class ZombieAbilitySystem {
         ally.hypnotize();
         applyHypnoUpgradeBuffs(ally, hypnoShroom);
         engine.board.addZombie(ally);
+        engine.recordZombieEncounter(ally);
         engine.addEvent("Hypno-shroom transformed its eater into an allied Gargantuar.");
     }
 

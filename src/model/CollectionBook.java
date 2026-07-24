@@ -27,10 +27,8 @@ public class CollectionBook implements Serializable {
         }
     }
 
-    public void unlockZombie(String zombieName) {
-        if (zombieName != null && !zombieName.isBlank()) {
-            seenZombies.add(zombieName);
-        }
+    public boolean unlockZombie(String zombieName) {
+        return zombieName != null && !zombieName.isBlank() && seenZombies.add(zombieName);
     }
 
     public void upgradePlant(String plantName) {

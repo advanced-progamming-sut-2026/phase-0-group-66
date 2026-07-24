@@ -43,6 +43,7 @@ final class BattleQuerySystem {
         zombie.setGlowing(zombie.getDefinition().canSpawnPlantFood() && engine.random.nextInt(100) < 5);
         zombie.setPosition(new BoardPosition(row, column));
         engine.board.addZombie(zombie);
+        engine.recordZombieEncounter(zombie);
         ZombieObjectSystem.ensureZombieCompanions(engine);
         engine.addEvent("Cheat spawned " + zombie.getName() + " at ("
             + engine.formatColumn(column) + ", " + (row + 1) + ").");

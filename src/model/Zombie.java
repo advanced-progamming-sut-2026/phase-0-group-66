@@ -77,7 +77,7 @@ public abstract class Zombie {
         if (difficultyLevel < 1 || difficultyLevel > 5) {
             throw new IllegalArgumentException("Difficulty level must be between 1 and 5.");
         }
-        double factor = difficultyLevel / 3.0;
+        double factor = DifficultyScaling.intensityFactor(difficultyLevel);
         health = Math.max(1, (int) Math.round(health * factor));
         maximumHealth = health;
         if (damage > 0) {

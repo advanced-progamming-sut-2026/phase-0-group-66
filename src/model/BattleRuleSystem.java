@@ -159,7 +159,8 @@ final class BattleRuleSystem {
     static int calculateSkySunIntervalTicks(Game engine) {
         double seconds = engine.elapsedTicks / (double) Game.TICKS_PER_SECOND;
         double baseInterval = Math.min(12.0, 6.0 + 0.05 * seconds);
-        double intervalSeconds = baseInterval * engine.difficultyLevel / 3.0;
+        double intervalSeconds = baseInterval
+            * DifficultyScaling.intensityFactor(engine.difficultyLevel);
         return Math.max(1, (int) Math.round(intervalSeconds * Game.TICKS_PER_SECOND));
     }
     static void addForcedPlantSelections(Game engine) {
@@ -206,11 +207,20 @@ final class BattleRuleSystem {
             && engine.currentLevel.getRuleStrategy().isPreWaveSetup(engine);
     }
     static void recordPlantUsage(Game engine, Plant plant) {
+        if (plant == null || plant.getPosition() == null) {
+            return;
+        }
+        GridPosition position = plant.getPosition();
+        recordPlantUsage(engine, plant, position.getRow(), position.getColumn());
+    }
+
+    static void recordPlantUsage(Game engine, Plant plant, int row, int column) {
         if (plant == null) {
             return;
         }
         engine.plantedPlantNames.add(plant.getName());
         engine.plantedPlantFamilies.add(plant.getDefinition().getCategory());
+        engine.plantedPositions.add(new GridPosition(row, column));
         if (plant.isSunProducer()) {
             engine.sunProducerPlantsPlanted++;
         }

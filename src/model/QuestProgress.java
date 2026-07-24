@@ -9,11 +9,23 @@ public class QuestProgress implements Serializable {
 
     private int progress;
     private boolean rewardClaimed;
+    private int rewardAmountOverride;
+    private boolean rewardAmountOverrideSet;
     private LinkedHashMap<String, Integer> bucketProgress = new LinkedHashMap<>();
 
     public int getProgress() { return progress; }
     public boolean isRewardClaimed() { return rewardClaimed; }
     public Map<String, Integer> getBucketProgress() { return Map.copyOf(buckets()); }
+    public int resolveRewardAmount(int baseAmount) {
+        return rewardAmountOverrideSet ? rewardAmountOverride : baseAmount;
+    }
+
+    public void setRewardAmountOverride(int amount) {
+        if (!rewardClaimed) {
+            rewardAmountOverride = Math.max(0, amount);
+            rewardAmountOverrideSet = true;
+        }
+    }
 
     public void addProgress(int amount, int target) {
         if (amount > 0 && !rewardClaimed) {
@@ -52,6 +64,8 @@ public class QuestProgress implements Serializable {
         if (!rewardClaimed) {
             progress = 0;
             buckets().clear();
+            rewardAmountOverride = 0;
+            rewardAmountOverrideSet = false;
         }
     }
 

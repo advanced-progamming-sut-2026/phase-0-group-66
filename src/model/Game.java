@@ -29,6 +29,8 @@ public class Game {
     final  LinkedHashMap<String, Integer> plantKillCounts;
     final  LinkedHashSet<String> plantedPlantNames;
     final  LinkedHashSet<String> plantedPlantFamilies;
+    final  LinkedHashSet<GridPosition> plantedPositions;
+    final  LinkedHashSet<String> encounteredZombieNames;
     final  LinkedHashMap<GridPosition, Tomb> tombs;
     final  LinkedHashSet<GridPosition> warmedIcePositions;
     final  ArrayList<String> events;
@@ -98,6 +100,8 @@ public class Game {
         this.plantKillCounts = new LinkedHashMap<>();
         this.plantedPlantNames = new LinkedHashSet<>();
         this.plantedPlantFamilies = new LinkedHashSet<>();
+        this.plantedPositions = new LinkedHashSet<>();
+        this.encounteredZombieNames = new LinkedHashSet<>();
         this.tombs = new LinkedHashMap<>();
         this.warmedIcePositions = new LinkedHashSet<>();
         this.events = new ArrayList<>();
@@ -143,6 +147,9 @@ public class Game {
     public boolean checkLoseCondition() { return BattleQuerySystem.checkLoseCondition(this); }
     public List<String> drainEvents() { return BattleQuerySystem.drainEvents(this); }
     public List<String> getSelectedPlants() { return BattleQuerySystem.getSelectedPlants(this); }
+    public List<String> getEncounteredZombieNames() {
+        return List.copyOf(encounteredZombieNames);
+    }
     public boolean isPlantAvailableForSelection(String plantType) {
         return BattleQuerySystem.isPlantAvailableForSelection(this, plantType);
     }
@@ -174,6 +181,18 @@ public class Game {
     public int getSunProducerPlantsPlanted() { return LevelSetupSystem.getSunProducerPlantsPlanted(this); }
     public List<String> getPlantedPlantNames() { return LevelSetupSystem.getPlantedPlantNames(this); }
     public List<String> getPlantedPlantFamilies() { return LevelSetupSystem.getPlantedPlantFamilies(this); }
+    public boolean wasRowEverPlanted(int row) {
+        return LevelSetupSystem.wasRowEverPlanted(this, row);
+    }
+    public boolean wasColumnEverPlanted(int column) {
+        return LevelSetupSystem.wasColumnEverPlanted(this, column);
+    }
+    public boolean wasCrossEverPlanted(int row, int column) {
+        return LevelSetupSystem.wasCrossEverPlanted(this, row, column);
+    }
+    public double getDifficultySpeedMultiplier() {
+        return DifficultyScaling.intensityFactor(difficultyLevel);
+    }
     public boolean areZombieWavesStarted() { return LevelSetupSystem.areZombieWavesStarted(this); }
     void setExternalWinControlled(boolean controlled) { externalWinControlled = controlled; }
     Map<String, Integer> normalizePlantLevels(Map<String, Integer> levels) {
@@ -378,10 +397,18 @@ public class Game {
     }
     boolean isPreWaveSetup() { return BattleRuleSystem.isPreWaveSetup(this); }
     void recordPlantUsage(Plant plant) { BattleRuleSystem.recordPlantUsage(this, plant); }
+    void recordPlantUsage(Plant plant, int row, int column) {
+        BattleRuleSystem.recordPlantUsage(this, plant, row, column);
+    }
     void autoSelectStarterPlants() { BattleRuleSystem.autoSelectStarterPlants(this); }
     void requirePlantSelection() { BattleRuleSystem.requirePlantSelection(this); }
     void requireRunning() { BattleRuleSystem.requireRunning(this); }
     void addEvent(String event) { BattleRuleSystem.addEvent(this, event); }
+    void recordZombieEncounter(Zombie zombie) {
+        if (zombie != null && zombie.getName() != null && !zombie.getName().isBlank()) {
+            encounteredZombieNames.add(zombie.getName());
+        }
+    }
     String display(int row, int col) { return BattleRuleSystem.display(this, row, col); }
     String formatSeconds(int ticks) { return BattleRuleSystem.formatSeconds(this, ticks); }
     String formatColumn(double column) { return BattleRuleSystem.formatColumn(this, column); }

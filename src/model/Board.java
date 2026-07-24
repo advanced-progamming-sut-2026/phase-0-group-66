@@ -512,6 +512,30 @@ public class Board {
         return true;
     }
 
+    public boolean isStrictlyAsymmetricExceptMiddleRow() {
+        boolean hasPlantOutsideMiddleRow = false;
+        for (int row = 0; row < rows / 2; row++) {
+            int mirroredRow = rows - 1 - row;
+            for (int col = 0; col < cols; col++) {
+                String upper = plantStackSignatureAt(row, col);
+                String lower = plantStackSignatureAt(mirroredRow, col);
+                boolean upperOccupied = !isEmptyPlantStackSignature(upper);
+                boolean lowerOccupied = !isEmptyPlantStackSignature(lower);
+                if (upperOccupied || lowerOccupied) {
+                    hasPlantOutsideMiddleRow = true;
+                }
+                if (upperOccupied && lowerOccupied && upper.equals(lower)) {
+                    return false;
+                }
+            }
+        }
+        return hasPlantOutsideMiddleRow;
+    }
+
+    private boolean isEmptyPlantStackSignature(String signature) {
+        return "||".equals(signature);
+    }
+
     public boolean hasEmptyRow() {
         for (int row = 0; row < rows; row++) {
             if (isRowEmpty(row)) {
@@ -558,6 +582,16 @@ public class Board {
 
     private String plantNameAt(int row, int col) {
         Plant plant = tiles[row][col].getPlant();
+        return plant == null ? "" : plant.getName();
+    }
+
+    private String plantStackSignatureAt(int row, int col) {
+        Tile tile = tiles[row][col];
+        return plantName(tile.getSupportPlant()) + "|"
+            + plantName(tile.getMainPlant()) + "|" + plantName(tile.getCoverPlant());
+    }
+
+    private String plantName(Plant plant) {
         return plant == null ? "" : plant.getName();
     }
 

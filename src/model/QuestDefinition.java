@@ -12,11 +12,13 @@ public final class QuestDefinition {
     private final QuestCondition condition;
     private final RewardType rewardType;
     private final int rewardAmount;
+    private final QuestRewardFormula rewardFormula;
     private final QuestPriority priority;
 
     public QuestDefinition(int id, String key, String title, QuestCategory category,
                            String description, QuestCondition condition,
-                           RewardType rewardType, int rewardAmount, QuestPriority priority) {
+                           RewardType rewardType, int rewardAmount,
+                           QuestRewardFormula rewardFormula, QuestPriority priority) {
         if (id <= 0 || rewardAmount < 0) {
             throw new IllegalArgumentException("Invalid quest numeric data.");
         }
@@ -28,6 +30,7 @@ public final class QuestDefinition {
         this.condition = requireValue(condition, "Quest condition");
         this.rewardType = requireValue(rewardType, "Reward type");
         this.rewardAmount = rewardAmount;
+        this.rewardFormula = requireValue(rewardFormula, "Quest reward formula");
         this.priority = requireValue(priority, "Quest priority");
     }
 
@@ -41,6 +44,16 @@ public final class QuestDefinition {
     public int getTarget() { return condition.getTarget(); }
     public RewardType getRewardType() { return rewardType; }
     public int getRewardAmount() { return rewardAmount; }
+    public QuestRewardFormula getRewardFormula() { return rewardFormula; }
+    public int calculateRewardAmount(int lostPlants) {
+        if (lostPlants < 0) {
+            throw new IllegalArgumentException("Lost plant count cannot be negative.");
+        }
+        return switch (rewardFormula) {
+            case FIXED -> rewardAmount;
+            case BASE_MINUS_LOST_PLANTS -> Math.max(0, rewardAmount - lostPlants);
+        };
+    }
     public QuestPriority getPriority() { return priority; }
     public String getParameter() { return condition.getQualifier(); }
     public String getNormalizedTitle() { return normalize(title); }
