@@ -48,6 +48,7 @@ public abstract class Zombie {
     private int jugglingTicks;
     private double flightDistanceRemaining;
     private int specialAbilityUses;
+    private boolean trappedInIceTile;
 
     protected Zombie(ZombieDefinition definition, List<Armor> armors) {
         if (definition == null) {
@@ -94,7 +95,7 @@ public abstract class Zombie {
     }
 
     public void moveOneTick() {
-        if (position == null || stunnedTicks > 0) {
+        if (position == null || stunnedTicks > 0 || trappedInIceTile) {
             return;
         }
         double actualSpeed = chilledTicks > 0 ? speed * 0.5 : speed;
@@ -389,6 +390,7 @@ public abstract class Zombie {
     public boolean isJuggling() { return jugglingTicks > 0; }
     public int getJugglingTicks() { return jugglingTicks; }
     public boolean isFlying() { return flightDistanceRemaining > 0; }
+    public boolean isTrappedInIceTile() { return trappedInIceTile; }
     public double getFlightDistanceRemaining() { return flightDistanceRemaining; }
     public int getSpecialAbilityUses() { return specialAbilityUses; }
     public String getLastDamageSourcePlant() { return lastDamageSourcePlant; }
@@ -423,6 +425,7 @@ public abstract class Zombie {
     public void startFlight(double distance) {
         flightDistanceRemaining = Math.max(flightDistanceRemaining, Math.max(0, distance));
     }
+    public void setTrappedInIceTile(boolean trapped) { trappedInIceTile = trapped; }
 
     private void rememberDamageSource(String sourcePlant) {
         lastDamageSourcePlant = normalizeSource(sourcePlant);

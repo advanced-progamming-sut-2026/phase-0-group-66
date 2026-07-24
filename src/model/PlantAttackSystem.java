@@ -18,7 +18,8 @@ final class PlantAttackSystem {
             if (plant == helper || plant.getPosition() == null || plant.isDestroyed()) {
                 continue;
             }
-            if (plant.getFrozenHealth() <= 0 && plant.getOctopusHealth() <= 0) {
+            if (plant.getFrozenHealth() <= 0 && plant.getOctopusHealth() <= 0
+                && !plant.isTrappedInIceTile()) {
                 continue;
             }
             int rowDistance = Math.abs(plant.getPosition().getRow()
@@ -38,7 +39,13 @@ final class PlantAttackSystem {
             return false;
         }
         int damage = Math.max(1, helper.getEffectiveAttackPower());
-        if (target.getFrozenHealth() > 0) {
+        if (target.isTrappedInIceTile()) {
+            GridPosition position = target.getPosition();
+            Tile tile = engine.board.getTile(position.getRow(), position.getColumn());
+            tile.damageIce(damage, helper.getDefinition().hasTag("Fire"));
+            engine.addEvent(helper.getName() + " damaged tile ice covering "
+                + target.getName() + "; remaining=" + tile.getIceHealth() + ".");
+        } else if (target.getFrozenHealth() > 0) {
             target.damageIce(damage, helper.getDefinition().hasTag("Fire"));
             engine.addEvent(helper.getName() + " damaged the ice covering " + target.getName() + ".");
         } else {
@@ -420,7 +427,7 @@ final class PlantAttackSystem {
         }
     }
     static void damageZombieFromPlant(Game engine, Zombie zombie, Plant plant, int damage, boolean lobbed) {
-        if (zombie == null || zombie.isDead()) {
+        if (zombie == null || zombie.isDead() || zombie.isTrappedInIceTile()) {
             return;
         }
         zombie.takeProjectileDamage(Math.max(0, damage), plant.getProjectileElementType(),
@@ -429,7 +436,8 @@ final class PlantAttackSystem {
     static ArrayList<Zombie> hostileZombies(Game engine) {
         ArrayList<Zombie> result = new ArrayList<>();
         for (Zombie zombie : engine.board.getZombies()) {
-            if (!zombie.isDead() && !zombie.isHypnotized() && zombie.getPosition() != null) {
+            if (!zombie.isDead() && !zombie.isHypnotized() && zombie.getPosition() != null
+                && !zombie.isTrappedInIceTile()) {
                 result.add(zombie);
             }
         }

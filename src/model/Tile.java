@@ -33,21 +33,86 @@ public class Tile {
     }
 
     public void setTileType(TileType tileType) {
-        this.tileType = tileType == null ? TileType.NORMAL : tileType;
+        TileType nextType = tileType == null ? TileType.NORMAL : tileType;
+        if (this.tileType == TileType.ICE && nextType != TileType.ICE) {
+            releaseIcePrisoners();
+        }
+        this.tileType = nextType;
         this.iceHealth = this.tileType == TileType.ICE ? 600 : 0;
+        if (this.tileType == TileType.ICE) {
+            encaseCurrentOccupants();
+        }
     }
 
     public void damageIce(int damage, boolean fire) {
         if (tileType != TileType.ICE) {
             return;
         }
-        iceHealth = fire ? 0 : Math.max(0, iceHealth - Math.max(0, damage));
+        iceHealth = Math.max(0, iceHealth - Math.max(0, damage));
         if (iceHealth == 0) {
             tileType = TileType.NORMAL;
+            releaseIcePrisoners();
+        }
+    }
+
+    public void encasePlant(Plant plant) {
+        if (plant == null) {
+            throw new IllegalArgumentException("Frozen plant cannot be null.");
+        }
+        if (mainPlant != null || supportPlant != null || coverPlant != null) {
+            throw new IllegalStateException("The frozen tile already contains a plant.");
+        }
+        mainPlant = plant;
+        plant.setPosition(position);
+        setTileType(TileType.ICE);
+    }
+
+    public void encaseZombie(Zombie zombie) {
+        if (zombie == null) {
+            throw new IllegalArgumentException("Frozen zombie cannot be null.");
+        }
+        addZombie(zombie);
+        zombie.setTrappedInIceTile(true);
+        tileType = TileType.ICE;
+        iceHealth = 600;
+    }
+
+    private void encaseCurrentOccupants() {
+        for (Plant plant : getPlants()) {
+            plant.setTrappedInIceTile(true);
+        }
+        for (Zombie zombie : zombies) {
+            zombie.setTrappedInIceTile(true);
+        }
+    }
+
+    private void releaseIcePrisoners() {
+        for (Plant plant : getPlants()) {
+            plant.setTrappedInIceTile(false);
+        }
+        for (Zombie zombie : zombies) {
+            zombie.setTrappedInIceTile(false);
         }
     }
 
     public int getIceHealth() { return iceHealth; }
+
+    public boolean hasTrappedEntity() {
+        if (tileType != TileType.ICE) {
+            return false;
+        }
+        for (Plant plant : getPlants()) {
+            if (plant.isTrappedInIceTile()) {
+                return true;
+            }
+        }
+        for (Zombie zombie : zombies) {
+            if (zombie.isTrappedInIceTile()) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /** Returns the main interactive plant, falling back to support or cover. */
     public Plant getPlant() {

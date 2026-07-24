@@ -50,6 +50,7 @@ public abstract class Plant {
     private final Set<Plant> mintEmpoweredPlants = Collections.newSetFromMap(
         new IdentityHashMap<>());
     private String transformedBy;
+    private boolean trappedInIceTile;
 
     protected Plant(PlantDefinition definition) {
         this(definition, 1);
@@ -202,7 +203,8 @@ public abstract class Plant {
 
     public boolean isOperational() {
         return !isDestroyed() && disabledTicks <= 0 && digestionTicks <= 0
-            && frozenHealth <= 0 && octopusHealth <= 0 && transformedBy == null;
+            && frozenHealth <= 0 && octopusHealth <= 0 && transformedBy == null
+            && !trappedInIceTile;
     }
 
     public boolean isSunProducer() {
@@ -559,6 +561,8 @@ public abstract class Plant {
     public int getDigestionTicks() { return digestionTicks; }
     public int getIceHits() { return iceHits; }
     public int getFrozenHealth() { return frozenHealth; }
+    public boolean isTrappedInIceTile() { return trappedInIceTile; }
+    public void setTrappedInIceTile(boolean trapped) { trappedInIceTile = trapped; }
     public int getOctopusHealth() { return octopusHealth; }
     public int getArmTicksRemaining() { return armTicksRemaining; }
     public int getLifetimeTicksRemaining() { return lifetimeTicksRemaining; }

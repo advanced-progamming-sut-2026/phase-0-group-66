@@ -96,9 +96,11 @@ final class ZombieAbilitySystem {
             int col = 2 + engine.random.nextInt(Math.max(1, engine.board.getCols() - 3));
             GridPosition position = new GridPosition(row, col);
             Tile tile = engine.board.getTile(row, col);
-            if (tile.getPlant() == null && tile.getType() == TileType.NORMAL
+            boolean validGround = tile.getType() == TileType.NORMAL
+                || tile.getType() == TileType.NECROMANCY;
+            if (tile.getPlant() == null && validGround && tile.getZombies().isEmpty()
                 && !engine.tombs.containsKey(position)) {
-                engine.tombs.put(position, new Tomb(row, col, false, false));
+                engine.tombs.put(position, new Tomb(row, col, false, false, tile.getType()));
                 tile.setTileType(TileType.TOMB);
                 created++;
             }

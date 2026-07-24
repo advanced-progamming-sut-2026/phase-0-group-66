@@ -302,7 +302,7 @@ final class PlantFoodSystem {
             if (tomb == null) {
                 throw new IllegalStateException("There is no tomb on this tile.");
             }
-            tile.setTileType(TileType.NORMAL);
+            tile.setTileType(tomb.getUnderlyingTileType());
             explodeUtilityPlantIfUpgraded(engine, plant, position);
             engine.addEvent("Grave Buster removed the tomb at " + position + ".");
             return true;
@@ -363,8 +363,10 @@ final class PlantFoodSystem {
                 continue;
             }
             GridPosition position = other.getPosition();
-            if (Math.abs(position.getRow() - center.getRow()) <= radius
-                && Math.abs(position.getColumn() - center.getColumn()) <= radius) {
+            if (other.getFrozenHealth() > 0
+                && Math.abs(position.getRow() - center.getRow()) <= radius
+                && Math.abs(position.getColumn() - center.getColumn()) <= radius
+                && engine.markIceWarmed(position)) {
                 other.damageIce(60, false);
             }
         }
@@ -373,7 +375,8 @@ final class PlantFoodSystem {
             for (int col = Math.max(0, center.getColumn() - radius);
                  col <= Math.min(engine.board.getCols() - 1, center.getColumn() + radius); col++) {
                 Tile tile = engine.board.getTile(row, col);
-                if (tile.getType() == TileType.ICE) {
+                if (tile.getType() == TileType.ICE
+                    && engine.markIceWarmed(tile.getPosition())) {
                     tile.damageIce(60, false);
                 }
             }
