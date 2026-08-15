@@ -26,7 +26,7 @@ public final class SpecialLevelRuleFactory {
         register(rules, new TimedWarRule());
         register(rules, new NightOpsRule());
         register(rules, new DeadLineRule());
-        register(rules, new LoveYourPlantsRule());
+        register(rules, new model.MeowPointTracker.LoveYourPlantsRule());
         register(rules, new PlantWhatYouGetRule());
         return Map.copyOf(rules);
     }

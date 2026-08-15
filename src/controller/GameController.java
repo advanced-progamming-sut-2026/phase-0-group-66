@@ -310,6 +310,20 @@ public class GameController {
         return "Diamonds: " + user.getWallet().getGems();
     }
 
+    public ActionResult unlockAllLevels() {
+        User user = authController.getCurrentUser();
+        if (user == null) {
+            return ActionResult.failure("Login is required.");
+        }
+        user.getProgress().unlockAllLevels(adventureFactory.getChapters());
+        ActionResult saveResult = authController.saveCurrentState();
+        if (!saveResult.isSuccessful()) {
+            return saveResult;
+        }
+        return ActionResult.success(
+            "Cheat activated: all adventure and mini-game levels are now unlocked.");
+    }
+
     public List<String> getChapterDescriptions() {
         User user = authController.getCurrentUser();
         ArrayList<String> result = new ArrayList<>();

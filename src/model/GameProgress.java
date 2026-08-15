@@ -115,6 +115,22 @@ public class GameProgress implements Serializable {
         }
     }
 
+    public void unlockAllLevels(Iterable<Chapter> chapters) {
+        if (chapters != null) {
+            for (Chapter chapter : chapters) {
+                unlockChapter(chapter);
+                for (Level level : chapter.getLevels()) {
+                    unlockLevel(level);
+                }
+            }
+        }
+        for (MiniGameType type : MiniGameType.values()) {
+            for (int level = 1; level <= 3; level++) {
+                unlockMiniGameLevel(type, level);
+            }
+        }
+    }
+
     public void completeLevel(Level level) {
         if (level != null) {
             String levelId = level.getLevelId();

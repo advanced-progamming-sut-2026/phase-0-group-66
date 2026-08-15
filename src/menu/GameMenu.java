@@ -50,6 +50,7 @@ public class GameMenu extends Menu {
         System.out.println("menu greenhouse | menu travel-log | menu leaderboard");
         System.out.println("menu coin-wallet | menu gem-wallet");
         System.out.println("menu cheat add <n> <coin|diamond>");
+        System.out.println("menu cheat unlock-all-levels");
     }
 
     @Override
@@ -82,6 +83,8 @@ public class GameMenu extends Menu {
         } else if (wallet != null) {
             System.out.println(controller.addWalletCurrency(
                 Integer.parseInt(wallet.group("count")), wallet.group("type")).getMessage());
+        } else if (command.equals("menu cheat unlock-all-levels")) {
+            System.out.println(controller.unlockAllLevels().getMessage());
         } else if (command.equals("show commands")) {
             showCommands();
         } else {
