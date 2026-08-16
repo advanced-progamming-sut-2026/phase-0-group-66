@@ -12,7 +12,7 @@ import pvz.skin.BorderedTable;
 
 public final class LoginScreen extends BaseUiScreen {
     private static final float PANEL_WIDTH = 620f;
-    private static final float PANEL_HEIGHT = 555f;
+    private static final float PANEL_HEIGHT = 590f;
     private static final float LOGIN_FIELD_WIDTH = 430f;
 
     private final TextField username;
@@ -31,6 +31,7 @@ public final class LoginScreen extends BaseUiScreen {
 
     private void buildUi() {
         BorderedTable panel = theme.dialogPanel();
+        panel.padTop(30f).padBottom(16f);
         addHeader(panel);
         addLoginField(panel, "Username", username);
         addLoginField(panel, "Password", password);

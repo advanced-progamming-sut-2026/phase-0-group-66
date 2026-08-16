@@ -29,9 +29,11 @@ public final class MainMenuScreen extends BaseUiScreen {
     private void buildUi() {
         Table screen = new Table();
         screen.top();
-        screen.add(buildTopHud()).growX().pad(18f, 24f, 0f, 24f);
+        screen.add().height(38f);
         screen.row();
-        screen.add(buildMenuArea()).expand().center().padTop(8f);
+        screen.add(buildTopHud()).growX().pad(0f, 24f, 0f, 24f);
+        screen.row();
+        screen.add(buildMenuArea()).expand().center().padTop(16f);
         screen.row();
         screen.add(buildFooter()).growX().pad(0f, 24f, 16f, 24f);
         root.add(screen).grow();

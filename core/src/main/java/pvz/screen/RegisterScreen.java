@@ -12,7 +12,7 @@ import pvz.skin.BorderedTable;
 
 public final class RegisterScreen extends BaseUiScreen {
     private static final float PANEL_WIDTH = 850f;
-    private static final float PANEL_HEIGHT = 625f;
+    private static final float PANEL_HEIGHT = 650f;
     private static final float COLUMN_WIDTH = 370f;
 
     private final TextField username;
@@ -37,6 +37,7 @@ public final class RegisterScreen extends BaseUiScreen {
 
     private void buildUi() {
         BorderedTable panel = theme.dialogPanel();
+        panel.padTop(18f).padBottom(10f);
         panel.defaults().center();
 
         Image logo = theme.pvzLogo();

@@ -13,7 +13,7 @@ import pvz.skin.BorderedTable;
 
 public final class SecurityQuestionScreen extends BaseUiScreen {
     private static final float PANEL_WIDTH = 700f;
-    private static final float PANEL_HEIGHT = 570f;
+    private static final float PANEL_HEIGHT = 605f;
     private static final float CONTENT_WIDTH = 500f;
 
     private final SelectBox<String> questions;
@@ -37,6 +37,7 @@ public final class SecurityQuestionScreen extends BaseUiScreen {
 
     private void buildUi() {
         BorderedTable panel = theme.dialogPanel();
+        panel.padTop(26f).padBottom(14f);
         addHeader(panel);
         panel.add(theme.fieldLabel("Recovery question")).left().width(CONTENT_WIDTH);
         panel.row().padTop(4f);

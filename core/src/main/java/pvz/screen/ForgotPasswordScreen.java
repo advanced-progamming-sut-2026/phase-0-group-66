@@ -11,7 +11,7 @@ import pvz.skin.BorderedTable;
 
 public final class ForgotPasswordScreen extends BaseUiScreen {
     private static final float PANEL_WIDTH = 690f;
-    private static final float PANEL_HEIGHT = 550f;
+    private static final float PANEL_HEIGHT = 585f;
     private static final float CONTENT_WIDTH = 500f;
 
     private enum Step {
@@ -33,6 +33,7 @@ public final class ForgotPasswordScreen extends BaseUiScreen {
     private void rebuild() {
         root.clearChildren();
         BorderedTable panel = theme.dialogPanel();
+        panel.padTop(26f).padBottom(14f);
         addHeader(panel);
         if (step == Step.ACCOUNT) {
             buildAccountStep(panel);
