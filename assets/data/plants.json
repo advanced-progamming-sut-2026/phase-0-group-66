@@ -1,0 +1,3589 @@
+[
+  {
+    "id": 1,
+    "key": "sunflower",
+    "displayName": "Sunflower",
+    "family": "SUN_PRODUCER",
+    "tags": [
+      "DAY"
+    ],
+    "stats": {
+      "sunCost": 50,
+      "maxHealth": 300,
+      "damage": 0,
+      "actionInterval": 24.0,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "SUNFLOWER",
+      "power": 50,
+      "description": "Produces 50 sun every 24 seconds.",
+      "parameters": {
+        "sun": 50
+      }
+    },
+    "plantFood": {
+      "kind": "SUN_BURST",
+      "power": 150,
+      "description": "Immediately produces 150 sun.",
+      "parameters": {
+        "sun": 150
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ACTION_INTERVAL_DELTA",
+        "amount": -2.0
+      },
+      {
+        "level": 3,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 150.0
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 0.0,
+        "trait": "DOUBLE_SUN_CHANCE"
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 2,
+    "key": "twin-sunflower",
+    "displayName": "Twin Sunflower",
+    "family": "SUN_PRODUCER",
+    "tags": [
+      "DAY"
+    ],
+    "stats": {
+      "sunCost": 125,
+      "maxHealth": 300,
+      "damage": 0,
+      "actionInterval": 24.0,
+      "recharge": 15.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "TWIN_SUNFLOWER",
+      "power": 100,
+      "description": "Produces 100 sun each production cycle.",
+      "parameters": {
+        "sun": 100
+      }
+    },
+    "plantFood": {
+      "kind": "SUN_BURST",
+      "power": 250,
+      "description": "Immediately produces 250 sun.",
+      "parameters": {
+        "sun": 250
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ACTION_INTERVAL_DELTA",
+        "amount": -2.0
+      },
+      {
+        "level": 3,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 150.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 3,
+    "key": "sun-shroom",
+    "displayName": "Sun-shroom",
+    "family": "SUN_PRODUCER",
+    "tags": [
+      "SHROOM",
+      "WRAMP_UP",
+      "NIGHT"
+    ],
+    "stats": {
+      "sunCost": 25,
+      "maxHealth": 300,
+      "damage": 0,
+      "actionInterval": 24.0,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "SUN_SHROOM",
+      "power": 25,
+      "description": "Grows through three stages and produces 25, 50, then 75 sun.",
+      "parameters": {
+        "stage2Seconds": 24,
+        "stage3Seconds": 72,
+        "stage1Sun": 25,
+        "stage2Sun": 50,
+        "stage3Sun": 75
+      }
+    },
+    "plantFood": {
+      "kind": "SUN_BURST",
+      "power": 225,
+      "description": "Immediately reaches the final growth stage and produces 225 sun.",
+      "parameters": {
+        "sun": 225
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": -5.0,
+        "trait": "GROW_TIME_DELTA"
+      },
+      {
+        "level": 3,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 150.0
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 0.0,
+        "trait": "DOUBLE_SUN_CHANCE"
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 4,
+    "key": "primal-sunflower",
+    "displayName": "Primal Sunflower",
+    "family": "SUN_PRODUCER",
+    "tags": [],
+    "stats": {
+      "sunCost": 75,
+      "maxHealth": 300,
+      "damage": 0,
+      "actionInterval": 24.0,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "PRIMAL_SUNFLOWER",
+      "power": 75,
+      "description": "Produces a 75-sun orb from the first cycle.",
+      "parameters": {
+        "sun": 75
+      }
+    },
+    "plantFood": {
+      "kind": "SUN_BURST",
+      "power": 225,
+      "description": "Immediately produces 225 sun.",
+      "parameters": {
+        "sun": 225
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ACTION_INTERVAL_DELTA",
+        "amount": -2.0
+      },
+      {
+        "level": 3,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 150.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 5,
+    "key": "gold-bloom",
+    "displayName": "Gold Bloom",
+    "family": "SUN_PRODUCER",
+    "tags": [],
+    "stats": {
+      "sunCost": 0,
+      "maxHealth": 0,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 75.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "GOLD_BLOOM",
+      "power": 375,
+      "description": "Immediately produces 375 sun once and then disappears.",
+      "parameters": {
+        "sun": 375
+      }
+    },
+    "plantFood": {
+      "kind": "NONE",
+      "power": 0,
+      "description": "No separate plant-food effect; this is an instant plant.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 3,
+        "effect": "SUN_OUTPUT_DELTA",
+        "amount": 50.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 6,
+    "key": "peashooter",
+    "displayName": "Peashooter",
+    "family": "SHOOTER",
+    "tags": [
+      "PEA"
+    ],
+    "stats": {
+      "sunCost": 100,
+      "maxHealth": 300,
+      "damage": 20,
+      "actionInterval": 1.5,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "20"
+    },
+    "ability": {
+      "kind": "BASIC_SHOOTER",
+      "power": 20,
+      "description": "Fires one direct pea.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "SHOOTER_VOLLEY",
+      "power": 0,
+      "description": "Fires a rapid pea barrage.",
+      "parameters": {
+        "shots": 10
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "DAMAGE_DELTA",
+        "amount": 10.0
+      },
+      {
+        "level": 3,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 150.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 7,
+    "key": "repeater",
+    "displayName": "Repeater",
+    "family": "SHOOTER",
+    "tags": [
+      "PEA"
+    ],
+    "stats": {
+      "sunCost": 200,
+      "maxHealth": 300,
+      "damage": 20,
+      "actionInterval": 1.5,
+      "recharge": 5.0,
+      "projectileCount": 2,
+      "damageDisplay": "20x2"
+    },
+    "ability": {
+      "kind": "REPEATER",
+      "power": 20,
+      "description": "Fires two direct peas in succession.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "REPEATER_GIANT_VOLLEY",
+      "power": 0,
+      "description": "Fires a heavy barrage followed by one giant pea dealing 20x damage.",
+      "parameters": {
+        "volleyShots": 10,
+        "giantMultiplier": 20
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "DAMAGE_DELTA",
+        "amount": 10.0
+      },
+      {
+        "level": 3,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 200.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 8,
+    "key": "threepeater",
+    "displayName": "Threepeater",
+    "family": "SHOOTER",
+    "tags": [
+      "PEA"
+    ],
+    "stats": {
+      "sunCost": 300,
+      "maxHealth": 300,
+      "damage": 20,
+      "actionInterval": 1.5,
+      "recharge": 5.0,
+      "projectileCount": 3,
+      "damageDisplay": "20"
+    },
+    "ability": {
+      "kind": "THREEPEATER",
+      "power": 20,
+      "description": "Fires one pea into its lane and the two adjacent lanes.",
+      "parameters": {
+        "laneRadius": 1
+      }
+    },
+    "plantFood": {
+      "kind": "THREEPEATER_FAN_VOLLEY",
+      "power": 0,
+      "description": "Fires repeated fan volleys through every lane.",
+      "parameters": {
+        "volleys": 5
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      },
+      {
+        "level": 3,
+        "effect": "DAMAGE_DELTA",
+        "amount": 10.0
+      },
+      {
+        "level": 4,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 200.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 9,
+    "key": "snow-pea",
+    "displayName": "Snow Pea",
+    "family": "SHOOTER",
+    "tags": [
+      "ICE",
+      "PEA"
+    ],
+    "stats": {
+      "sunCost": 150,
+      "maxHealth": 300,
+      "damage": 20,
+      "actionInterval": 1.5,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "20"
+    },
+    "ability": {
+      "kind": "SNOW_PEA",
+      "power": 20,
+      "description": "Fires a direct chilling pea that slows zombies.",
+      "parameters": {
+        "chillSeconds": 5
+      }
+    },
+    "plantFood": {
+      "kind": "SNOW_PEA_LANE_FREEZE",
+      "power": 0,
+      "description": "Freezes its lane and fires an icy barrage.",
+      "parameters": {
+        "volleys": 8,
+        "freezeSeconds": 5,
+        "chillSeconds": 10
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "DAMAGE_DELTA",
+        "amount": 10.0
+      },
+      {
+        "level": 3,
+        "effect": "CHILL_DURATION_DELTA",
+        "amount": 2.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 10,
+    "key": "rotobaga",
+    "displayName": "Rotobaga",
+    "family": "SHOOTER",
+    "tags": [],
+    "stats": {
+      "sunCost": 150,
+      "maxHealth": 300,
+      "damage": 10,
+      "actionInterval": 1.5,
+      "recharge": 5.0,
+      "projectileCount": 3,
+      "damageDisplay": "10x3"
+    },
+    "ability": {
+      "kind": "ROTOBAGA",
+      "power": 10,
+      "description": "Fires three shots in each of four diagonal directions.",
+      "parameters": {
+        "directions": 4,
+        "shotsPerDirection": 3
+      }
+    },
+    "plantFood": {
+      "kind": "ROTOBAGA_DIAGONAL_VOLLEY",
+      "power": 0,
+      "description": "Fires repeated barrages in all four diagonal directions.",
+      "parameters": {
+        "volleys": 5
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "DAMAGE_DELTA",
+        "amount": 10.0
+      },
+      {
+        "level": 3,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 150.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 11,
+    "key": "pea-pod",
+    "displayName": "Pea Pod",
+    "family": "SHOOTER",
+    "tags": [
+      "PEA",
+      "STACK"
+    ],
+    "stats": {
+      "sunCost": 125,
+      "maxHealth": 300,
+      "damage": 20,
+      "actionInterval": 1.5,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "20/40/60/80/100"
+    },
+    "ability": {
+      "kind": "PEA_POD",
+      "power": 20,
+      "description": "Fires one pea per stacked head, up to five heads.",
+      "parameters": {
+        "maxStacks": 5
+      }
+    },
+    "plantFood": {
+      "kind": "PEA_POD_GIANT_VOLLEY",
+      "power": 0,
+      "description": "Fires one 20x-damage giant pea for every Pea Pod head.",
+      "parameters": {
+        "giantMultiplier": 20
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "DAMAGE_DELTA",
+        "amount": 10.0
+      },
+      {
+        "level": 3,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 200.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": false
+  },
+  {
+    "id": 12,
+    "key": "split-pea",
+    "displayName": "Split Pea",
+    "family": "SHOOTER",
+    "tags": [
+      "PEA"
+    ],
+    "stats": {
+      "sunCost": 125,
+      "maxHealth": 300,
+      "damage": 20,
+      "actionInterval": 1.5,
+      "recharge": 5.0,
+      "projectileCount": 3,
+      "damageDisplay": "20"
+    },
+    "ability": {
+      "kind": "SPLIT_PEA",
+      "power": 20,
+      "description": "Fires one pea forward and two peas backward.",
+      "parameters": {
+        "forwardShots": 1,
+        "backwardShots": 2
+      }
+    },
+    "plantFood": {
+      "kind": "SPLIT_PEA_DUAL_VOLLEY",
+      "power": 0,
+      "description": "Fires simultaneous rapid volleys forward and backward.",
+      "parameters": {
+        "volleys": 8
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "DAMAGE_DELTA",
+        "amount": 10.0
+      },
+      {
+        "level": 3,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 200.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 13,
+    "key": "citron",
+    "displayName": "Citron",
+    "family": "SHOOTER",
+    "tags": [
+      "CHARGE"
+    ],
+    "stats": {
+      "sunCost": 350,
+      "maxHealth": 300,
+      "damage": 800,
+      "actionInterval": 9.0,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "800"
+    },
+    "ability": {
+      "kind": "CITRON",
+      "power": 800,
+      "description": "Charges and fires one heavy 800-damage plasma shot.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "CLEAR_LANE",
+      "power": 0,
+      "description": "Fires a plasma ball that clears its entire lane.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ACTION_INTERVAL_DELTA",
+        "amount": -1.0
+      },
+      {
+        "level": 3,
+        "effect": "DAMAGE_DELTA",
+        "amount": 150.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -50.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 14,
+    "key": "caulipower",
+    "displayName": "Caulipower",
+    "family": "HOMING",
+    "tags": [
+      "MAGIC",
+      "CHARGE"
+    ],
+    "stats": {
+      "sunCost": 250,
+      "maxHealth": 300,
+      "damage": 99999,
+      "actionInterval": 12.0,
+      "recharge": 15.0,
+      "projectileCount": 1,
+      "damageDisplay": "Insta-kill"
+    },
+    "ability": {
+      "kind": "CAULIPOWER",
+      "power": 1,
+      "description": "Targets a random zombie through obstacles and hypnotizes it.",
+      "parameters": {
+        "targets": 1
+      }
+    },
+    "plantFood": {
+      "kind": "HYPNOTIZE_RANDOM",
+      "power": 3,
+      "description": "Hypnotizes several random zombies in the garden.",
+      "parameters": {
+        "targets": 3
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "RECHARGE_DELTA",
+        "amount": -2.0
+      },
+      {
+        "level": 3,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 150.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -50.0
+      }
+    ],
+    "required": false
+  },
+  {
+    "id": 15,
+    "key": "electric-blueberry",
+    "displayName": "Electric Blueberry",
+    "family": "HOMING",
+    "tags": [
+      "CHARGE"
+    ],
+    "stats": {
+      "sunCost": 150,
+      "maxHealth": 300,
+      "damage": 5000,
+      "actionInterval": 12.0,
+      "recharge": 15.0,
+      "projectileCount": 1,
+      "damageDisplay": "5000"
+    },
+    "ability": {
+      "kind": "ELECTRIC_BLUEBERRY",
+      "power": 5000,
+      "description": "Calls lightning on a random zombie and destroys it.",
+      "parameters": {
+        "targets": 1
+      }
+    },
+    "plantFood": {
+      "kind": "ELIMINATE_RANDOM",
+      "power": 3,
+      "description": "Destroys three random zombies.",
+      "parameters": {
+        "targets": 3
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "RECHARGE_DELTA",
+        "amount": -2.0
+      },
+      {
+        "level": 3,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "TARGET_PRIORITY_UP"
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": false
+  },
+  {
+    "id": 16,
+    "key": "bowling-bulb",
+    "displayName": "Bowling Bulb",
+    "family": "SHOOTER",
+    "tags": [
+      "CHARGE"
+    ],
+    "stats": {
+      "sunCost": 200,
+      "maxHealth": 300,
+      "damage": 40,
+      "actionInterval": 2.0,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "40/120/180"
+    },
+    "ability": {
+      "kind": "BOWLING_BULB",
+      "power": 40,
+      "description": "Regenerates and launches cyan, blue, and orange bouncing bulbs.",
+      "parameters": {
+        "cyanDamage": 40,
+        "blueDamage": 120,
+        "orangeDamage": 180,
+        "cyanRegenSeconds": 2,
+        "blueRegenSeconds": 5,
+        "orangeRegenSeconds": 10,
+        "maxBounces": 3
+      }
+    },
+    "plantFood": {
+      "kind": "BOWLING_EXPLOSIVE_BULBS",
+      "power": 0,
+      "description": "Launches three large explosive bouncing bulbs.",
+      "parameters": {
+        "bulbs": 3,
+        "damageMultiplier": 5,
+        "splashDamageFactor": 0.5,
+        "rowRadius": 1,
+        "columnRadius": 1.5
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": -1.0,
+        "trait": "BULB_REGEN_DELTA"
+      },
+      {
+        "level": 3,
+        "effect": "DAMAGE_DELTA",
+        "amount": 15.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 17,
+    "key": "cactus",
+    "displayName": "Cactus",
+    "family": "STRIKE_THROUGH",
+    "tags": [],
+    "stats": {
+      "sunCost": 175,
+      "maxHealth": 300,
+      "damage": 30,
+      "actionInterval": 1.5,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "30"
+    },
+    "ability": {
+      "kind": "CACTUS",
+      "power": 30,
+      "description": "Fires a direct spike that can pierce three zombies.",
+      "parameters": {
+        "maxHits": 3
+      }
+    },
+    "plantFood": {
+      "kind": "CACTUS_ELECTRIC_PIERCE",
+      "power": 0,
+      "description": "Fires a high-damage electric spike with unlimited piercing.",
+      "parameters": {
+        "damageMultiplier": 10,
+        "maxHits": 999
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "PIERCE_DELTA",
+        "amount": 1.0
+      },
+      {
+        "level": 3,
+        "effect": "DAMAGE_DELTA",
+        "amount": 10.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 18,
+    "key": "fire-peashooter",
+    "displayName": "Fire Peashooter",
+    "family": "SHOOTER",
+    "tags": [
+      "FIRE",
+      "PEA"
+    ],
+    "stats": {
+      "sunCost": 175,
+      "maxHealth": 300,
+      "damage": 40,
+      "actionInterval": 1.5,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "40"
+    },
+    "ability": {
+      "kind": "FIRE_PEASHOOTER",
+      "power": 40,
+      "description": "Fires a double-damage fire pea that melts ice and removes chill.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "FIRE_LANE_VOLLEY",
+      "power": 0,
+      "description": "Fires a fire barrage through its entire lane.",
+      "parameters": {
+        "volleys": 10
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "DAMAGE_DELTA",
+        "amount": 10.0
+      },
+      {
+        "level": 3,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 200.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 19,
+    "key": "starfruit",
+    "displayName": "Starfruit",
+    "family": "SHOOTER",
+    "tags": [],
+    "stats": {
+      "sunCost": 150,
+      "maxHealth": 300,
+      "damage": 20,
+      "actionInterval": 1.5,
+      "recharge": 5.0,
+      "projectileCount": 5,
+      "damageDisplay": "20"
+    },
+    "ability": {
+      "kind": "STARFRUIT",
+      "power": 20,
+      "description": "Fires in five star-shaped directions, including backward diagonals.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "STARFRUIT_OMNI_VOLLEY",
+      "power": 0,
+      "description": "Fires repeated star volleys in every direction.",
+      "parameters": {
+        "volleys": 5
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ACTION_SPEED_PERCENT",
+        "amount": 10.0
+      },
+      {
+        "level": 3,
+        "effect": "DAMAGE_DELTA",
+        "amount": 10.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": false
+  },
+  {
+    "id": 20,
+    "key": "goo-peashooter",
+    "displayName": "Goo Peashooter",
+    "family": "SHOOTER",
+    "tags": [
+      "POISON"
+    ],
+    "stats": {
+      "sunCost": 125,
+      "maxHealth": 300,
+      "damage": 20,
+      "actionInterval": 1.5,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "20"
+    },
+    "ability": {
+      "kind": "GOO_PEASHOOTER",
+      "power": 20,
+      "description": "Fires a poisonous pea that ignores armor and deals damage over time.",
+      "parameters": {
+        "poisonSeconds": 5,
+        "poisonDamageFactor": 0.25
+      }
+    },
+    "plantFood": {
+      "kind": "POISON_VOLLEY",
+      "power": 0,
+      "description": "Fires a toxic barrage that immediately poisons every target hit.",
+      "parameters": {
+        "volleys": 10,
+        "poisonSeconds": 10,
+        "poisonDamageFactor": 0.5
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": 5.0,
+        "trait": "POISON_TICK_BONUS"
+      },
+      {
+        "level": 3,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 150.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": false
+  },
+  {
+    "id": 21,
+    "key": "mega-gatling-pea",
+    "displayName": "Mega Gatling Pea",
+    "family": "SHOOTER",
+    "tags": [
+      "PEA"
+    ],
+    "stats": {
+      "sunCost": 400,
+      "maxHealth": 300,
+      "damage": 20,
+      "actionInterval": 1.5,
+      "recharge": 5.0,
+      "projectileCount": 4,
+      "damageDisplay": "20x4"
+    },
+    "ability": {
+      "kind": "MEGA_GATLING_PEA",
+      "power": 20,
+      "description": "Fires four direct peas in rapid succession.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "GATLING_MEGA_VOLLEY",
+      "power": 0,
+      "description": "Fires a massive long barrage plus four 20x-damage giant peas.",
+      "parameters": {
+        "volleyShots": 24,
+        "giantShots": 4,
+        "giantMultiplier": 20
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "DAMAGE_DELTA",
+        "amount": 10.0
+      },
+      {
+        "level": 3,
+        "effect": "ENABLE_TRAIT",
+        "amount": 5.0,
+        "trait": "PLANT_FOOD_CHANCE_5"
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -50.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 22,
+    "key": "sea-shroom",
+    "displayName": "Sea-shroom",
+    "family": "SHOOTER",
+    "tags": [
+      "SHROOM",
+      "WATER"
+    ],
+    "stats": {
+      "sunCost": 0,
+      "maxHealth": 300,
+      "damage": 20,
+      "actionInterval": 1.5,
+      "recharge": 15.0,
+      "projectileCount": 1,
+      "damageDisplay": "20"
+    },
+    "ability": {
+      "kind": "SHORT_RANGE_SHROOM",
+      "power": 20,
+      "description": "Fires at short range and expires after 60 seconds.",
+      "parameters": {
+        "rangeTiles": 3,
+        "lifetimeSeconds": 60
+      }
+    },
+    "plantFood": {
+      "kind": "SHROOM_VOLLEY_RESET",
+      "power": 60,
+      "description": "Fires a barrage and resets the lifetime of every Sea-shroom.",
+      "parameters": {
+        "volleys": 8
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "RANGE_1_TILE"
+      },
+      {
+        "level": 3,
+        "effect": "DAMAGE_DELTA",
+        "amount": 5.0
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 10.0,
+        "trait": "LIFESPAN_10S"
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 23,
+    "key": "puff-shroom",
+    "displayName": "Puff-shroom",
+    "family": "SHOOTER",
+    "tags": [
+      "SHROOM"
+    ],
+    "stats": {
+      "sunCost": 0,
+      "maxHealth": 300,
+      "damage": 20,
+      "actionInterval": 1.5,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "20"
+    },
+    "ability": {
+      "kind": "SHORT_RANGE_SHROOM",
+      "power": 20,
+      "description": "Fires at short range and expires after 60 seconds.",
+      "parameters": {
+        "rangeTiles": 3,
+        "lifetimeSeconds": 60
+      }
+    },
+    "plantFood": {
+      "kind": "SHROOM_VOLLEY_RESET",
+      "power": 60,
+      "description": "Fires a barrage and resets the lifetime of every Puff-shroom.",
+      "parameters": {
+        "volleys": 8
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": 10.0,
+        "trait": "LIFESPAN_10S"
+      },
+      {
+        "level": 3,
+        "effect": "DAMAGE_DELTA",
+        "amount": 10.0
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "RANGE_1_TILE"
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 24,
+    "key": "fume-shroom",
+    "displayName": "Fume-shroom",
+    "family": "STRIKE_THROUGH",
+    "tags": [
+      "SHROOM"
+    ],
+    "stats": {
+      "sunCost": 125,
+      "maxHealth": 300,
+      "damage": 20,
+      "actionInterval": 1.5,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "20"
+    },
+    "ability": {
+      "kind": "FUME_SHROOM",
+      "power": 20,
+      "description": "Fires a medium-range cloud that pierces every zombie in its path.",
+      "parameters": {
+        "rangeTiles": 4
+      }
+    },
+    "plantFood": {
+      "kind": "KNOCKBACK_BLAST",
+      "power": 0,
+      "description": "Releases a massive smoke cloud that damages and pushes back its lane.",
+      "parameters": {
+        "damageMultiplier": 5,
+        "knockbackTiles": 1.5
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "RANGE_1_TILE"
+      },
+      {
+        "level": 3,
+        "effect": "DAMAGE_DELTA",
+        "amount": 10.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 25,
+    "key": "cabbage-pult",
+    "displayName": "Cabbage-pult",
+    "family": "LOBBER",
+    "tags": [],
+    "stats": {
+      "sunCost": 100,
+      "maxHealth": 300,
+      "damage": 40,
+      "actionInterval": 2.9,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "40"
+    },
+    "ability": {
+      "kind": "CABBAGE_PULT",
+      "power": 40,
+      "description": "Lobs cabbage over obstacles.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "LOBBER_RANDOM_BARRAGE",
+      "power": 5,
+      "description": "Lobs cabbages at several random zombies.",
+      "parameters": {
+        "targets": 5,
+        "damageMultiplier": 2
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "DAMAGE_DELTA",
+        "amount": 10.0
+      },
+      {
+        "level": 3,
+        "effect": "ACTION_SPEED_PERCENT",
+        "amount": 15.0
+      },
+      {
+        "level": 4,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 150.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 26,
+    "key": "kernel-pult",
+    "displayName": "Kernel-pult",
+    "family": "LOBBER",
+    "tags": [],
+    "stats": {
+      "sunCost": 100,
+      "maxHealth": 300,
+      "damage": 20,
+      "actionInterval": 2.9,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "20/40"
+    },
+    "ability": {
+      "kind": "KERNEL_PULT",
+      "power": 20,
+      "description": "Lobs kernels and sometimes butter that stuns the target.",
+      "parameters": {
+        "butterChancePercent": 25,
+        "butterDamage": 40,
+        "butterStunSeconds": 3
+      }
+    },
+    "plantFood": {
+      "kind": "BUTTER_ALL",
+      "power": 0,
+      "description": "Drops butter on every zombie in the garden.",
+      "parameters": {
+        "stunSeconds": 5
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": 5.0,
+        "trait": "BUTTER_5"
+      },
+      {
+        "level": 3,
+        "effect": "DAMAGE_DELTA",
+        "amount": 10.0
+      },
+      {
+        "level": 4,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 150.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 27,
+    "key": "melon-pult",
+    "displayName": "Melon-pult",
+    "family": "LOBBER",
+    "tags": [
+      "AOE"
+    ],
+    "stats": {
+      "sunCost": 325,
+      "maxHealth": 300,
+      "damage": 80,
+      "actionInterval": 2.9,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "80"
+    },
+    "ability": {
+      "kind": "MELON_PULT",
+      "power": 80,
+      "description": "Lobs a heavy melon that damages nearby zombies.",
+      "parameters": {
+        "splashDamageFactor": 0.5
+      }
+    },
+    "plantFood": {
+      "kind": "MELON_RANDOM_BARRAGE",
+      "power": 3,
+      "description": "Drops giant melons on random zombies with splash damage.",
+      "parameters": {
+        "targets": 3,
+        "damageMultiplier": 3,
+        "splashDamageFactor": 1.0
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      },
+      {
+        "level": 3,
+        "effect": "ENABLE_TRAIT",
+        "amount": 15.0,
+        "trait": "AOE_DAMAGE_BONUS"
+      },
+      {
+        "level": 4,
+        "effect": "DAMAGE_DELTA",
+        "amount": 30.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 28,
+    "key": "winter-melon",
+    "displayName": "Winter Melon",
+    "family": "LOBBER",
+    "tags": [
+      "ICE",
+      "AOE"
+    ],
+    "stats": {
+      "sunCost": 500,
+      "maxHealth": 300,
+      "damage": 80,
+      "actionInterval": 2.9,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "80"
+    },
+    "ability": {
+      "kind": "WINTER_MELON",
+      "power": 80,
+      "description": "Lobs an icy melon that damages nearby zombies and chills them.",
+      "parameters": {
+        "splashDamageFactor": 0.5
+      }
+    },
+    "plantFood": {
+      "kind": "WINTER_MELON_RANDOM_BARRAGE",
+      "power": 3,
+      "description": "Drops giant icy melons on random zombies with splash damage and chill.",
+      "parameters": {
+        "targets": 3,
+        "damageMultiplier": 3,
+        "splashDamageFactor": 1.0,
+        "chillSeconds": 10
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "SUN_COST_DELTA",
+        "amount": -50.0
+      },
+      {
+        "level": 3,
+        "effect": "ENABLE_TRAIT",
+        "amount": 15.0,
+        "trait": "AOE_DAMAGE_BONUS"
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 29,
+    "key": "pepper-pult",
+    "displayName": "Pepper-pult",
+    "family": "LOBBER",
+    "tags": [
+      "FIRE",
+      "AOE"
+    ],
+    "stats": {
+      "sunCost": 200,
+      "maxHealth": 300,
+      "damage": 50,
+      "actionInterval": 2.9,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "50"
+    },
+    "ability": {
+      "kind": "PEPPER_PULT",
+      "power": 50,
+      "description": "Lobs a fiery pepper with splash damage and warms nearby plants.",
+      "parameters": {
+        "splashDamageFactor": 0.5
+      }
+    },
+    "plantFood": {
+      "kind": "PEPPER_RANDOM_BARRAGE",
+      "power": 3,
+      "description": "Drops large peppers on three random zombies with fire splash damage.",
+      "parameters": {
+        "targets": 3,
+        "damageMultiplier": 3,
+        "splashDamageFactor": 1.0
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "DAMAGE_DELTA",
+        "amount": 15.0
+      },
+      {
+        "level": 3,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "WARMTH_RADIUS_1"
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 30,
+    "key": "potato-mine",
+    "displayName": "Potato Mine",
+    "family": "EXPLOSIVE",
+    "tags": [
+      "TRAP",
+      "CHARGE"
+    ],
+    "stats": {
+      "sunCost": 25,
+      "maxHealth": 300,
+      "damage": 1800,
+      "actionInterval": 0.0,
+      "recharge": 25.0,
+      "projectileCount": 1,
+      "damageDisplay": "1800"
+    },
+    "ability": {
+      "kind": "POTATO_MINE",
+      "power": 1800,
+      "description": "Arms after 15 seconds and explodes when a zombie reaches it.",
+      "parameters": {
+        "armSeconds": 15
+      }
+    },
+    "plantFood": {
+      "kind": "ARM_AND_CLONE",
+      "power": 2,
+      "description": "Arms immediately and creates two armed clone mines.",
+      "parameters": {
+        "clones": 2
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ACTION_INTERVAL_DELTA",
+        "amount": -3.0
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 4,
+        "effect": "DAMAGE_DELTA",
+        "amount": 600.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 31,
+    "key": "primal-potato-mine",
+    "displayName": "Primal Potato Mine",
+    "family": "EXPLOSIVE",
+    "tags": [
+      "TRAP",
+      "CHARGE"
+    ],
+    "stats": {
+      "sunCost": 50,
+      "maxHealth": 300,
+      "damage": 2400,
+      "actionInterval": 0.0,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "2400"
+    },
+    "ability": {
+      "kind": "PRIMAL_POTATO_MINE",
+      "power": 2400,
+      "description": "Arms after 5 seconds and explodes in a 3x3 area.",
+      "parameters": {
+        "armSeconds": 5
+      }
+    },
+    "plantFood": {
+      "kind": "ARM_AND_CLONE",
+      "power": 2,
+      "description": "Arms immediately and creates two armed clone mines on random free tiles.",
+      "parameters": {
+        "clones": 2
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ACTION_INTERVAL_DELTA",
+        "amount": -1.0
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -3.0
+      },
+      {
+        "level": 4,
+        "effect": "DAMAGE_DELTA",
+        "amount": 400.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 32,
+    "key": "cherry-bomb",
+    "displayName": "Cherry Bomb",
+    "family": "EXPLOSIVE",
+    "tags": [],
+    "stats": {
+      "sunCost": 150,
+      "maxHealth": 0,
+      "damage": 1800,
+      "actionInterval": 0.0,
+      "recharge": 35.0,
+      "projectileCount": 1,
+      "damageDisplay": "1800"
+    },
+    "ability": {
+      "kind": "CHERRY_BOMB",
+      "power": 1800,
+      "description": "Immediately explodes in a 3x3 area.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "NONE",
+      "power": 0,
+      "description": "No separate plant-food effect; this is an instant plant.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 3,
+        "effect": "DAMAGE_DELTA",
+        "amount": 600.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 33,
+    "key": "squash",
+    "displayName": "Squash",
+    "family": "EXPLOSIVE",
+    "tags": [
+      "TRAP"
+    ],
+    "stats": {
+      "sunCost": 50,
+      "maxHealth": 300,
+      "damage": 1800,
+      "actionInterval": 0.0,
+      "recharge": 20.0,
+      "projectileCount": 1,
+      "damageDisplay": "1800"
+    },
+    "ability": {
+      "kind": "SQUASH",
+      "power": 1800,
+      "description": "Crushes the first nearby zombie.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "MULTI_SMASH",
+      "power": 2,
+      "description": "Crushes two random ground zombies.",
+      "parameters": {
+        "targets": 2
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "RECHARGE_DELTA",
+        "amount": -3.0
+      },
+      {
+        "level": 3,
+        "effect": "DAMAGE_DELTA",
+        "amount": 600.0
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 2.0,
+        "trait": "CAN_CRUSH_2X"
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 34,
+    "key": "grapeshot",
+    "displayName": "Grapeshot",
+    "family": "EXPLOSIVE",
+    "tags": [],
+    "stats": {
+      "sunCost": 150,
+      "maxHealth": 0,
+      "damage": 1800,
+      "actionInterval": 0.0,
+      "recharge": 35.0,
+      "projectileCount": 1,
+      "damageDisplay": "1800"
+    },
+    "ability": {
+      "kind": "GRAPESHOT",
+      "power": 1800,
+      "description": "Explodes in a 3x3 area and launches bouncing fragments for five seconds.",
+      "parameters": {
+        "fragmentCount": 8,
+        "fragmentDamage": 100,
+        "fragmentLifetimeSeconds": 5
+      }
+    },
+    "plantFood": {
+      "kind": "NONE",
+      "power": 0,
+      "description": "No separate plant-food effect; this is an instant plant.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "DAMAGE_DELTA",
+        "amount": 600.0
+      },
+      {
+        "level": 3,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "BOUNCES_1"
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": false
+  },
+  {
+    "id": 35,
+    "key": "jalapeno",
+    "displayName": "Jalapeno",
+    "family": "EXPLOSIVE",
+    "tags": [
+      "FIRE"
+    ],
+    "stats": {
+      "sunCost": 125,
+      "maxHealth": 0,
+      "damage": 1800,
+      "actionInterval": 0.0,
+      "recharge": 35.0,
+      "projectileCount": 1,
+      "damageDisplay": "1800"
+    },
+    "ability": {
+      "kind": "JALAPENO",
+      "power": 1800,
+      "description": "Burns every zombie in its lane and melts ice.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "NONE",
+      "power": 0,
+      "description": "No separate plant-food effect; this is an instant plant.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 3,
+        "effect": "DAMAGE_DELTA",
+        "amount": 600.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 36,
+    "key": "doom-shroom",
+    "displayName": "Doom-shroom",
+    "family": "EXPLOSIVE",
+    "tags": [
+      "SHROOM"
+    ],
+    "stats": {
+      "sunCost": 125,
+      "maxHealth": 0,
+      "damage": 1800,
+      "actionInterval": 0.0,
+      "recharge": 15.0,
+      "projectileCount": 1,
+      "damageDisplay": "1800"
+    },
+    "ability": {
+      "kind": "DOOM_SHROOM",
+      "power": 1800,
+      "description": "Damages every zombie in the garden and leaves an unplantable crater.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "NONE",
+      "power": 0,
+      "description": "No separate plant-food effect; this is an instant plant.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 3,
+        "effect": "DAMAGE_DELTA",
+        "amount": 800.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -50.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 37,
+    "key": "tangle-kelp",
+    "displayName": "Tangle Kelp",
+    "family": "EXPLOSIVE",
+    "tags": [
+      "TRAP",
+      "WATER"
+    ],
+    "stats": {
+      "sunCost": 25,
+      "maxHealth": 300,
+      "damage": 99999,
+      "actionInterval": 0.0,
+      "recharge": 15.0,
+      "projectileCount": 1,
+      "damageDisplay": "Insta-kill"
+    },
+    "ability": {
+      "kind": "TANGLE_KELP",
+      "power": 1,
+      "description": "Pulls the first water zombie underwater and destroys it.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "DROWN_TARGETS",
+      "power": 3,
+      "description": "Pulls several random water zombies underwater.",
+      "parameters": {
+        "targets": 3
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 3,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "TARGETS_1"
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 38,
+    "key": "iceberg-lettuce",
+    "displayName": "Iceberg Lettuce",
+    "family": "EXPLOSIVE",
+    "tags": [
+      "TRAP",
+      "ICE"
+    ],
+    "stats": {
+      "sunCost": 0,
+      "maxHealth": 300,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 20.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "ICEBERG_LETTUCE",
+      "power": 1,
+      "description": "Freezes the first zombie that steps on it.",
+      "parameters": {
+        "freezeSeconds": 5,
+        "chillSeconds": 10
+      }
+    },
+    "plantFood": {
+      "kind": "MAP_FREEZE",
+      "power": 10,
+      "description": "Freezes every zombie currently on the board.",
+      "parameters": {
+        "freezeSeconds": 5,
+        "chillSeconds": 10
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "RECHARGE_DELTA",
+        "amount": -2.0
+      },
+      {
+        "level": 3,
+        "effect": "CHILL_DURATION_DELTA",
+        "amount": 2.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -0.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 39,
+    "key": "bonk-choy",
+    "displayName": "Bonk Choy",
+    "family": "MELEE",
+    "tags": [],
+    "stats": {
+      "sunCost": 150,
+      "maxHealth": 300,
+      "damage": 15,
+      "actionInterval": 0.25,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "15"
+    },
+    "ability": {
+      "kind": "BONK_CHOY",
+      "power": 15,
+      "description": "Punches zombies directly in front of and behind it.",
+      "parameters": {
+        "rowRadius": 0,
+        "rangeTiles": 1.25
+      }
+    },
+    "plantFood": {
+      "kind": "BONK_AREA_BARRAGE",
+      "power": 0,
+      "description": "Rapidly punches every zombie in the surrounding 3x3 area.",
+      "parameters": {
+        "repetitions": 10,
+        "damageMultiplier": 1,
+        "rowRadius": 1,
+        "columnRadius": 1.5
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "DAMAGE_DELTA",
+        "amount": 5.0
+      },
+      {
+        "level": 3,
+        "effect": "ACTION_SPEED_PERCENT",
+        "amount": 10.0
+      },
+      {
+        "level": 4,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 200.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 40,
+    "key": "phat-beet",
+    "displayName": "Phat Beet",
+    "family": "MELEE",
+    "tags": [
+      "AOE"
+    ],
+    "stats": {
+      "sunCost": 150,
+      "maxHealth": 300,
+      "damage": 15,
+      "actionInterval": 2.0,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "15"
+    },
+    "ability": {
+      "kind": "PHAT_BEET",
+      "power": 15,
+      "description": "Creates a damaging sound pulse in the surrounding 3x3 area.",
+      "parameters": {
+        "rowRadius": 1,
+        "rangeTiles": 1.5
+      }
+    },
+    "plantFood": {
+      "kind": "PHAT_BEET_SHOCKWAVE",
+      "power": 0,
+      "description": "Creates a very powerful sound wave against all nearby zombies.",
+      "parameters": {
+        "damageMultiplier": 10,
+        "rowRadius": 1,
+        "columnRadius": 1.5
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "DAMAGE_DELTA",
+        "amount": 10.0
+      },
+      {
+        "level": 3,
+        "effect": "ACTION_SPEED_PERCENT",
+        "amount": 10.0
+      },
+      {
+        "level": 4,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 200.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 41,
+    "key": "chomper",
+    "displayName": "Chomper",
+    "family": "MELEE",
+    "tags": [],
+    "stats": {
+      "sunCost": 150,
+      "maxHealth": 300,
+      "damage": 99999,
+      "actionInterval": 40.0,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "Insta-kill"
+    },
+    "ability": {
+      "kind": "CHOMPER",
+      "power": 1,
+      "description": "Instantly swallows one nearby zombie, then digests for 40 seconds.",
+      "parameters": {
+        "digestSeconds": 40,
+        "rangeTiles": 1.25
+      }
+    },
+    "plantFood": {
+      "kind": "CHOMPER_MULTI_SWALLOW",
+      "power": 3,
+      "description": "Swallows three random zombies at range.",
+      "parameters": {
+        "targets": 3
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": -2.0,
+        "trait": "DIGEST_SECONDS_DELTA"
+      },
+      {
+        "level": 3,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 200.0
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": -3.0,
+        "trait": "DIGEST_SECONDS_DELTA"
+      }
+    ],
+    "required": false
+  },
+  {
+    "id": 42,
+    "key": "wasabi-whip",
+    "displayName": "Wasabi Whip",
+    "family": "MELEE",
+    "tags": [
+      "FIRE"
+    ],
+    "stats": {
+      "sunCost": 150,
+      "maxHealth": 300,
+      "damage": 40,
+      "actionInterval": 2.0,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "40"
+    },
+    "ability": {
+      "kind": "WASABI_WHIP",
+      "power": 40,
+      "description": "Whips zombies in front and behind it and warms nearby plants.",
+      "parameters": {
+        "rowRadius": 0,
+        "rangeTiles": 1.25,
+        "warmthRadiusTiles": 1
+      }
+    },
+    "plantFood": {
+      "kind": "WASABI_SPIN",
+      "power": 0,
+      "description": "Spins its whip and damages the surrounding 3x3 area.",
+      "parameters": {
+        "damageMultiplier": 8,
+        "rowRadius": 1,
+        "columnRadius": 1.5
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "DAMAGE_DELTA",
+        "amount": 10.0
+      },
+      {
+        "level": 3,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "RANGE_1_TILE"
+      },
+      {
+        "level": 4,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 200.0
+      }
+    ],
+    "required": false
+  },
+  {
+    "id": 43,
+    "key": "kiwibeast",
+    "displayName": "Kiwibeast",
+    "family": "MELEE",
+    "tags": [
+      "AOE",
+      "WRAMP_UP"
+    ],
+    "stats": {
+      "sunCost": 175,
+      "maxHealth": 300,
+      "damage": 15,
+      "actionInterval": 2.0,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "15/30/45"
+    },
+    "ability": {
+      "kind": "KIWIBEAST",
+      "power": 15,
+      "description": "Creates an area sound wave and grows into three stronger stages.",
+      "parameters": {
+        "stage2Seconds": 24,
+        "stage3Seconds": 72,
+        "rowRadius": 1,
+        "rangeTiles": 1.5
+      }
+    },
+    "plantFood": {
+      "kind": "KIWIBEAST_SLAM",
+      "power": 0,
+      "description": "Leaps and slams the ground for heavy area damage.",
+      "parameters": {
+        "damageMultiplier": 10,
+        "rowRadius": 2,
+        "columnRadius": 2.5
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 200.0
+      },
+      {
+        "level": 3,
+        "effect": "DAMAGE_DELTA",
+        "amount": 15.0
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "MAX_SIZE_1"
+      }
+    ],
+    "required": false
+  },
+  {
+    "id": 44,
+    "key": "wall-nut",
+    "displayName": "Wall-nut",
+    "family": "WALL_NUT",
+    "tags": [],
+    "stats": {
+      "sunCost": 50,
+      "maxHealth": 4000,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 20.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "WALL_NUT",
+      "power": 1,
+      "description": "A high-health defensive barrier.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "REINFORCE",
+      "power": 4000,
+      "description": "Gains a permanent 4000-health armor layer.",
+      "parameters": {
+        "shield": 4000
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 1000.0
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 4,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 1500.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 45,
+    "key": "tall-nut",
+    "displayName": "Tall-nut",
+    "family": "WALL_NUT",
+    "tags": [],
+    "stats": {
+      "sunCost": 125,
+      "maxHealth": 8000,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 20.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "TALL_NUT",
+      "power": 1,
+      "description": "A very high barrier that Dodo riders cannot fly over.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "REINFORCE",
+      "power": 8000,
+      "description": "Gains a permanent 8000-health armor layer.",
+      "parameters": {
+        "shield": 8000
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 2000.0
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 4,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 3000.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 46,
+    "key": "endurian",
+    "displayName": "Endurian",
+    "family": "WALL_NUT",
+    "tags": [],
+    "stats": {
+      "sunCost": 100,
+      "maxHealth": 3000,
+      "damage": 20,
+      "actionInterval": 0.0,
+      "recharge": 15.0,
+      "projectileCount": 1,
+      "damageDisplay": "20"
+    },
+    "ability": {
+      "kind": "ENDURIAN",
+      "power": 20,
+      "description": "A defensive barrier that reflects damage to attackers.",
+      "parameters": {
+        "reflectDamage": 20
+      }
+    },
+    "plantFood": {
+      "kind": "ENDURIAN_REINFORCE",
+      "power": 3000,
+      "description": "Gains metal armor and stronger reflected damage.",
+      "parameters": {
+        "shield": 3000,
+        "reflectMultiplier": 2
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "DAMAGE_DELTA",
+        "amount": 5.0
+      },
+      {
+        "level": 3,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 1000.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 47,
+    "key": "garlic",
+    "displayName": "Garlic",
+    "family": "WALL_NUT",
+    "tags": [
+      "MOVEZOMBIES"
+    ],
+    "stats": {
+      "sunCost": 50,
+      "maxHealth": 300,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 20.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "GARLIC",
+      "power": 1,
+      "description": "Forces a zombie that bites it into an adjacent lane.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "REDIRECT_LANE",
+      "power": 0,
+      "description": "Forces every zombie in its lane into adjacent lanes.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 150.0
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -3.0
+      },
+      {
+        "level": 4,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 250.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 48,
+    "key": "sweet-potato",
+    "displayName": "Sweet Potato",
+    "family": "WALL_NUT",
+    "tags": [
+      "MOVEZOMBIES"
+    ],
+    "stats": {
+      "sunCost": 150,
+      "maxHealth": 3000,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 20.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "SWEET_POTATO",
+      "power": 1,
+      "description": "Pulls zombies from adjacent lanes toward its own lane.",
+      "parameters": {
+        "pullRadiusTiles": 3
+      }
+    },
+    "plantFood": {
+      "kind": "PULL_TO_DEFENDER",
+      "power": 0,
+      "description": "Pulls all nearby zombies into its lane and fully heals.",
+      "parameters": {
+        "pullRadiusTiles": 4
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 1000.0
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 4,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 1500.0
+      }
+    ],
+    "required": false
+  },
+  {
+    "id": 49,
+    "key": "explode-o-nut",
+    "displayName": "Explode-o-nut",
+    "family": "WALL_NUT",
+    "tags": [
+      "EXPLOSIVE"
+    ],
+    "stats": {
+      "sunCost": 50,
+      "maxHealth": 4000,
+      "damage": 1800,
+      "actionInterval": 0.0,
+      "recharge": 20.0,
+      "projectileCount": 1,
+      "damageDisplay": "1800"
+    },
+    "ability": {
+      "kind": "EXPLODE_O_NUT",
+      "power": 1800,
+      "description": "A defensive barrier that explodes when destroyed.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "EXPLODING_REINFORCE",
+      "power": 4000,
+      "description": "Gains metal armor that also explodes when the armor is destroyed.",
+      "parameters": {
+        "shield": 4000,
+        "explosionDamage": 1800
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 1000.0
+      },
+      {
+        "level": 3,
+        "effect": "DAMAGE_DELTA",
+        "amount": 200.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 50,
+    "key": "pumpkin",
+    "displayName": "Pumpkin",
+    "family": "WALL_NUT",
+    "tags": [
+      "STACK"
+    ],
+    "stats": {
+      "sunCost": 150,
+      "maxHealth": 4000,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 20.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "PUMPKIN",
+      "power": 1,
+      "description": "Covers another plant and absorbs damage for it.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "REINFORCE",
+      "power": 4000,
+      "description": "Gains a powerful permanent armor layer.",
+      "parameters": {
+        "shield": 4000
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 1000.0
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 4,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 1500.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 51,
+    "key": "sun-bean",
+    "displayName": "Sun Bean",
+    "family": "WALL_NUT",
+    "tags": [
+      "SUN"
+    ],
+    "stats": {
+      "sunCost": 50,
+      "maxHealth": 1000,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 20.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "SUN_BEAN",
+      "power": 1,
+      "description": "A defensive bean that produces 5 sun every time it is hit.",
+      "parameters": {
+        "sunPerHit": 5
+      }
+    },
+    "plantFood": {
+      "kind": "REINFORCE",
+      "power": 4000,
+      "description": "Gains a powerful permanent armor layer.",
+      "parameters": {
+        "shield": 4000
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "SUN_OUTPUT_DELTA",
+        "amount": 5.0
+      },
+      {
+        "level": 3,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 150.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 52,
+    "key": "torchwood",
+    "displayName": "Torchwood",
+    "family": "MODIFIER",
+    "tags": [
+      "FIRE"
+    ],
+    "stats": {
+      "sunCost": 175,
+      "maxHealth": 300,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "TORCHWOOD",
+      "power": 1,
+      "description": "Turns pea projectiles that cross it into double-damage fire peas.",
+      "parameters": {
+        "peaDamageMultiplier": 2,
+        "deathExplosionDamage": 500
+      }
+    },
+    "plantFood": {
+      "kind": "TORCHWOOD_FLAME",
+      "power": 3,
+      "description": "Ignites a blue flame that triples pea projectile damage.",
+      "parameters": {
+        "peaDamageMultiplier": 3
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 300.0
+      },
+      {
+        "level": 3,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "AOE_ON_DEATH"
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 53,
+    "key": "magnet-shroom",
+    "displayName": "Magnet-shroom",
+    "family": "HOMING",
+    "tags": [
+      "SHROOM",
+      "MAGIC"
+    ],
+    "stats": {
+      "sunCost": 100,
+      "maxHealth": 300,
+      "damage": 0,
+      "actionInterval": 10.0,
+      "recharge": 15.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "MAGNET_SHROOM",
+      "power": 1,
+      "description": "Removes metallic armor from zombies.",
+      "parameters": {
+        "actionSeconds": 10,
+        "rangeTiles": 3
+      }
+    },
+    "plantFood": {
+      "kind": "REMOVE_ARMOR",
+      "power": 0,
+      "description": "Removes metallic armor from all zombies at once.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "RANGE_1_TILE"
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 4,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 200.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 54,
+    "key": "hypno-shroom",
+    "displayName": "Hypno-shroom",
+    "family": "MODIFIER",
+    "tags": [
+      "SHROOM",
+      "MAGIC"
+    ],
+    "stats": {
+      "sunCost": 125,
+      "maxHealth": 300,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 20.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "HYPNO_SHROOM",
+      "power": 1,
+      "description": "Hypnotizes the zombie that eats it.",
+      "parameters": {
+        "hypnotizedHealthBuffPercent": 50,
+        "hypnotizedDamageBuffPercent": 50
+      }
+    },
+    "plantFood": {
+      "kind": "HYPNO_GARGANTUAR",
+      "power": 1,
+      "description": "The zombie that eats it is replaced by a hypnotized allied Gargantuar.",
+      "parameters": {
+        "targets": 1
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      },
+      {
+        "level": 3,
+        "effect": "ENABLE_TRAIT",
+        "amount": 50.0,
+        "trait": "ZOMBIE_HP_BUFF"
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 50.0,
+        "trait": "ZOMBIE_DMG_BUFF"
+      }
+    ],
+    "required": false
+  },
+  {
+    "id": 55,
+    "key": "cat-tail",
+    "displayName": "Cat-tail",
+    "family": "HOMING",
+    "tags": [],
+    "stats": {
+      "sunCost": 175,
+      "maxHealth": 300,
+      "damage": 15,
+      "actionInterval": 1.5,
+      "recharge": 20.0,
+      "projectileCount": 1,
+      "damageDisplay": "15"
+    },
+    "ability": {
+      "kind": "CAT_TAIL",
+      "power": 15,
+      "description": "Fires a homing shot at the nearest zombie anywhere on the board.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "HOMING_VOLLEY",
+      "power": 0,
+      "description": "Fires a rapid homing barrage.",
+      "parameters": {
+        "shots": 10
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "DAMAGE_DELTA",
+        "amount": 10.0
+      },
+      {
+        "level": 3,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 200.0
+      },
+      {
+        "level": 4,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      }
+    ],
+    "required": false
+  },
+  {
+    "id": 56,
+    "key": "imitater",
+    "displayName": "Imitater",
+    "family": "MODIFIER",
+    "tags": [],
+    "stats": {
+      "sunCost": 0,
+      "maxHealth": 0,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 0.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "IMITATER",
+      "power": 1,
+      "description": "Copies another selected plant and behaves exactly like the copy.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "NONE",
+      "power": 0,
+      "description": "Uses the copied plant's plant-food behavior.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "RECHARGE_DELTA",
+        "amount": -2.0
+      },
+      {
+        "level": 3,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "PLANT_FOOD_ON_ENTERANCE"
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 57,
+    "key": "ice-shroom",
+    "displayName": "Ice-shroom",
+    "family": "EXPLOSIVE",
+    "tags": [
+      "SHROOM",
+      "ICE"
+    ],
+    "stats": {
+      "sunCost": 75,
+      "maxHealth": 0,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 50.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "ICE_SHROOM",
+      "power": 1,
+      "description": "Immediately freezes and stops all zombies on the board.",
+      "parameters": {
+        "freezeSeconds": 5,
+        "chillSeconds": 10
+      }
+    },
+    "plantFood": {
+      "kind": "NONE",
+      "power": 0,
+      "description": "No separate plant-food effect; this is an instant plant.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "CHILL_DURATION_DELTA",
+        "amount": 2.0
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 4,
+        "effect": "DAMAGE_DELTA",
+        "amount": 50.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 58,
+    "key": "lily-pad",
+    "displayName": "Lily Pad",
+    "family": "MODIFIER",
+    "tags": [
+      "WATER",
+      "STACK"
+    ],
+    "stats": {
+      "sunCost": 25,
+      "maxHealth": 300,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "LILY_PAD",
+      "power": 1,
+      "description": "Provides a support tile for planting non-water plants on water.",
+      "parameters": {}
+    },
+    "plantFood": {
+      "kind": "CLONE_SUPPORTS",
+      "power": 3,
+      "description": "Creates several Lily Pad copies on empty water tiles.",
+      "parameters": {
+        "clones": 3
+      }
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "SUN_COST_DELTA",
+        "amount": -25.0
+      },
+      {
+        "level": 3,
+        "effect": "MAX_HEALTH_DELTA",
+        "amount": 200.0
+      },
+      {
+        "level": 4,
+        "effect": "RECHARGE_DELTA",
+        "amount": -2.0
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 59,
+    "key": "hot-potato",
+    "displayName": "Hot Potato",
+    "family": "EXPLOSIVE",
+    "tags": [
+      "FIRE"
+    ],
+    "stats": {
+      "sunCost": 0,
+      "maxHealth": 0,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 5.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "HOT_POTATO",
+      "power": 1,
+      "description": "Immediately melts the ice on its target tile.",
+      "parameters": {
+        "finishExplosionDamage": 500
+      }
+    },
+    "plantFood": {
+      "kind": "NONE",
+      "power": 0,
+      "description": "No separate plant-food effect; this is an instant plant.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "RECHARGE_DELTA",
+        "amount": -2.0
+      },
+      {
+        "level": 3,
+        "effect": "ENABLE_TRAIT",
+        "amount": 3.0,
+        "trait": "MELT_AREA_3X3"
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "EXPLODE_ON_FINISH"
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 60,
+    "key": "grave-buster",
+    "displayName": "Grave Buster",
+    "family": "EXPLOSIVE",
+    "tags": [],
+    "stats": {
+      "sunCost": 0,
+      "maxHealth": 0,
+      "damage": 99999,
+      "actionInterval": 0.0,
+      "recharge": 10.0,
+      "projectileCount": 1,
+      "damageDisplay": "Insta-kill"
+    },
+    "ability": {
+      "kind": "GRAVE_BUSTER",
+      "power": 1,
+      "description": "Consumes and removes a tomb.",
+      "parameters": {
+        "finishExplosionDamage": 500
+      }
+    },
+    "plantFood": {
+      "kind": "NONE",
+      "power": 0,
+      "description": "No separate plant-food effect; this is an instant plant.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": -1.0,
+        "trait": "EAT_TIME_DELTA"
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -2.0
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "EXPLODE_ON_FINISH"
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 61,
+    "key": "enlighten-mint",
+    "displayName": "Enlighten-mint",
+    "family": "SUN_PRODUCER",
+    "tags": [],
+    "stats": {
+      "sunCost": 0,
+      "maxHealth": 0,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 85.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "ENLIGHTEN_MINT",
+      "power": 1,
+      "description": "Applies plant food to every Sun Producer plant, then disappears.",
+      "parameters": {
+        "durationSeconds": 3
+      }
+    },
+    "plantFood": {
+      "kind": "NONE",
+      "power": 0,
+      "description": "No separate effect; the mint already applies plant food to its family.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "DURATION_1S"
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 0.0,
+        "trait": "RESET_FAMILY_COOLDOWNS"
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 62,
+    "key": "appease-mint",
+    "displayName": "Appease-mint",
+    "family": "SHOOTER",
+    "tags": [],
+    "stats": {
+      "sunCost": 0,
+      "maxHealth": 0,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 85.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "APPEASE_MINT",
+      "power": 1,
+      "description": "Applies plant food to every Shooter plant, then disappears.",
+      "parameters": {
+        "durationSeconds": 3
+      }
+    },
+    "plantFood": {
+      "kind": "NONE",
+      "power": 0,
+      "description": "No separate effect; the mint already applies plant food to its family.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "DURATION_1S"
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 0.0,
+        "trait": "RESET_FAMILY_COOLDOWNS"
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 63,
+    "key": "arma-mint",
+    "displayName": "Arma-mint",
+    "family": "LOBBER",
+    "tags": [],
+    "stats": {
+      "sunCost": 0,
+      "maxHealth": 0,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 85.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "ARMA_MINT",
+      "power": 1,
+      "description": "Applies plant food to every Lobber plant, then disappears.",
+      "parameters": {
+        "durationSeconds": 3
+      }
+    },
+    "plantFood": {
+      "kind": "NONE",
+      "power": 0,
+      "description": "No separate effect; the mint already applies plant food to its family.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "DURATION_1S"
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 0.0,
+        "trait": "RESET_FAMILY_COOLDOWNS"
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 64,
+    "key": "bombard-mint",
+    "displayName": "Bombard-mint",
+    "family": "EXPLOSIVE",
+    "tags": [],
+    "stats": {
+      "sunCost": 0,
+      "maxHealth": 0,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 85.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "BOMBARD_MINT",
+      "power": 1,
+      "description": "Applies plant food to every Explosive plant, then disappears.",
+      "parameters": {
+        "durationSeconds": 3
+      }
+    },
+    "plantFood": {
+      "kind": "NONE",
+      "power": 0,
+      "description": "No separate effect; the mint already applies plant food to its family.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "DURATION_1S"
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 0.0,
+        "trait": "RESET_FAMILY_COOLDOWNS"
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 65,
+    "key": "enforce-mint",
+    "displayName": "Enforce-mint",
+    "family": "MELEE",
+    "tags": [],
+    "stats": {
+      "sunCost": 0,
+      "maxHealth": 0,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 85.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "ENFORCE_MINT",
+      "power": 1,
+      "description": "Applies plant food to every Melee plant, then disappears.",
+      "parameters": {
+        "durationSeconds": 3
+      }
+    },
+    "plantFood": {
+      "kind": "NONE",
+      "power": 0,
+      "description": "No separate effect; the mint already applies plant food to its family.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "DURATION_1S"
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 0.0,
+        "trait": "RESET_FAMILY_COOLDOWNS"
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 66,
+    "key": "reinforce-mint",
+    "displayName": "Reinforce-mint",
+    "family": "WALL_NUT",
+    "tags": [],
+    "stats": {
+      "sunCost": 0,
+      "maxHealth": 0,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 85.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "REINFORCE_MINT",
+      "power": 1,
+      "description": "Applies plant food to every Wall-nut plant, then disappears.",
+      "parameters": {
+        "durationSeconds": 3
+      }
+    },
+    "plantFood": {
+      "kind": "NONE",
+      "power": 0,
+      "description": "No separate effect; the mint already applies plant food to its family.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "DURATION_1S"
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 0.0,
+        "trait": "RESET_FAMILY_COOLDOWNS"
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 67,
+    "key": "enchant-mint",
+    "displayName": "Enchant-mint",
+    "family": "MODIFIER",
+    "tags": [],
+    "stats": {
+      "sunCost": 0,
+      "maxHealth": 0,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 85.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "ENCHANT_MINT",
+      "power": 1,
+      "description": "Applies plant food to every Modifier plant, then disappears.",
+      "parameters": {
+        "durationSeconds": 3
+      }
+    },
+    "plantFood": {
+      "kind": "NONE",
+      "power": 0,
+      "description": "No separate effect; the mint already applies plant food to its family.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "DURATION_1S"
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 0.0,
+        "trait": "RESET_FAMILY_COOLDOWNS"
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 68,
+    "key": "pierce-mint",
+    "displayName": "Pierce-mint",
+    "family": "STRIKE_THROUGH",
+    "tags": [],
+    "stats": {
+      "sunCost": 0,
+      "maxHealth": 0,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 85.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "PIERCE_MINT",
+      "power": 1,
+      "description": "Applies plant food to every Strike-through plant, then disappears.",
+      "parameters": {
+        "durationSeconds": 3
+      }
+    },
+    "plantFood": {
+      "kind": "NONE",
+      "power": 0,
+      "description": "No separate effect; the mint already applies plant food to its family.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "DURATION_1S"
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 0.0,
+        "trait": "RESET_FAMILY_COOLDOWNS"
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 69,
+    "key": "cattail-mint",
+    "displayName": "catTail-mint",
+    "family": "HOMING",
+    "tags": [],
+    "stats": {
+      "sunCost": 0,
+      "maxHealth": 0,
+      "damage": 0,
+      "actionInterval": 0.0,
+      "recharge": 85.0,
+      "projectileCount": 1,
+      "damageDisplay": "0"
+    },
+    "ability": {
+      "kind": "CATTAIL_MINT",
+      "power": 1,
+      "description": "Applies plant food to every Homing plant, then disappears.",
+      "parameters": {
+        "durationSeconds": 3
+      }
+    },
+    "plantFood": {
+      "kind": "NONE",
+      "power": 0,
+      "description": "No separate effect; the mint already applies plant food to its family.",
+      "parameters": {}
+    },
+    "upgrades": [
+      {
+        "level": 2,
+        "effect": "ENABLE_TRAIT",
+        "amount": 1.0,
+        "trait": "DURATION_1S"
+      },
+      {
+        "level": 3,
+        "effect": "RECHARGE_DELTA",
+        "amount": -5.0
+      },
+      {
+        "level": 4,
+        "effect": "ENABLE_TRAIT",
+        "amount": 0.0,
+        "trait": "RESET_FAMILY_COOLDOWNS"
+      }
+    ],
+    "required": true
+  }
+]

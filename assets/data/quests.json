@@ -1,0 +1,343 @@
+[
+  {
+    "id": 1,
+    "key": "daily-sun-collector",
+    "title": "Daily Sun Collector",
+    "category": "DAILY",
+    "description": "Collect 3000 sun during one day.",
+    "condition": {
+      "event": "SUN_COLLECTED",
+      "target": 3000,
+      "qualifier": ""
+    },
+    "reward": {
+      "kind": "COINS",
+      "amount": 30
+    },
+    "priority": "MEDIUM"
+  },
+  {
+    "id": 2,
+    "key": "chapter-hunter",
+    "title": "Chapter Hunter",
+    "category": "MAIN",
+    "description": "Defeat 50 zombies from one adventure chapter.",
+    "condition": {
+      "event": "ZOMBIE_KILLED",
+      "target": 50,
+      "qualifier": "ANY_CHAPTER"
+    },
+    "reward": {
+      "kind": "SEED_PACKETS",
+      "amount": 10
+    },
+    "priority": "HIGH"
+  },
+  {
+    "id": 3,
+    "key": "single-plant-specialist",
+    "title": "Single Plant Specialist",
+    "category": "DAILY",
+    "description": "Defeat 10 zombies using exactly one attacking plant type; planting or killing with any other plant resets the attempt.",
+    "condition": {
+      "event": "ZOMBIE_KILLED",
+      "target": 10,
+      "qualifier": "ANY_PLANT"
+    },
+    "reward": {
+      "kind": "RANDOM_PLANT",
+      "amount": 1
+    },
+    "priority": "HIGH"
+  },
+  {
+    "id": 4,
+    "key": "cactus-only",
+    "title": "Cactus Only",
+    "category": "DAILY",
+    "description": "Defeat 10 zombies using only Cactus; planting any other plant or getting any other kill resets the attempt.",
+    "condition": {
+      "event": "ZOMBIE_KILLED",
+      "target": 10,
+      "qualifier": "CACTUS"
+    },
+    "reward": {
+      "kind": "GEMS",
+      "amount": 20
+    },
+    "priority": "HIGH"
+  },
+  {
+    "id": 5,
+    "key": "careful-gardener",
+    "title": "Careful Gardener",
+    "category": "MAIN",
+    "description": "Win a level while losing n plants, where 0 <= n <= 5.",
+    "condition": {
+      "event": "LEVEL_WON",
+      "target": 1,
+      "qualifier": "MAX_LOSSES_5"
+    },
+    "reward": {
+      "kind": "SEED_PACKETS",
+      "amount": 20,
+      "formula": "BASE_MINUS_LOST_PLANTS"
+    },
+    "priority": "HIGH"
+  },
+  {
+    "id": 6,
+    "key": "perfect-budget",
+    "title": "Perfect Budget",
+    "category": "EPIC",
+    "description": "Finish a level with exactly zero sun remaining.",
+    "condition": {
+      "event": "LEVEL_WON",
+      "target": 1,
+      "qualifier": "FINAL_SUN_0"
+    },
+    "reward": {
+      "kind": "GEMS",
+      "amount": 200
+    },
+    "priority": "CRITICAL"
+  },
+  {
+    "id": 7,
+    "key": "rapid-response",
+    "title": "Rapid Response",
+    "category": "MAIN",
+    "description": "Defeat 10 zombies within 30 seconds of the first wave.",
+    "condition": {
+      "event": "ZOMBIE_KILLED",
+      "target": 10,
+      "qualifier": "TIME_LIMIT_30_SECONDS"
+    },
+    "reward": {
+      "kind": "COINS",
+      "amount": 500
+    },
+    "priority": "MEDIUM"
+  },
+  {
+    "id": 8,
+    "key": "demolition-expert",
+    "title": "Demolition Expert",
+    "category": "DAILY",
+    "description": "Use three explosive plants in one level.",
+    "condition": {
+      "event": "EXPLOSIVE_PLANT_USED",
+      "target": 3,
+      "qualifier": ""
+    },
+    "reward": {
+      "kind": "COINS",
+      "amount": 100
+    },
+    "priority": "LOW"
+  },
+  {
+    "id": 9,
+    "key": "perfect-symmetry",
+    "title": "Perfect Symmetry",
+    "category": "DAILY",
+    "description": "Win a level with a symmetric garden.",
+    "condition": {
+      "event": "LEVEL_WON",
+      "target": 1,
+      "qualifier": "SYMMETRIC_GARDEN"
+    },
+    "reward": {
+      "kind": "COINS",
+      "amount": 500
+    },
+    "priority": "HIGH"
+  },
+  {
+    "id": 10,
+    "key": "one-family-army",
+    "title": "One Family Army",
+    "category": "DAILY",
+    "description": "Win a level using plants from only one family.",
+    "condition": {
+      "event": "LEVEL_WON",
+      "target": 1,
+      "qualifier": "SINGLE_FAMILY"
+    },
+    "reward": {
+      "kind": "COINS",
+      "amount": 1000
+    },
+    "priority": "MEDIUM"
+  },
+  {
+    "id": 11,
+    "key": "restricted-bloom",
+    "title": "Restricted Bloom",
+    "category": "DAILY",
+    "description": "Win without using the daily banned plant family.",
+    "condition": {
+      "event": "LEVEL_WON",
+      "target": 1,
+      "qualifier": "BANNED_FAMILY"
+    },
+    "reward": {
+      "kind": "GEMS",
+      "amount": 100
+    },
+    "priority": "HIGH"
+  },
+  {
+    "id": 12,
+    "key": "mushrooms-in-daylight",
+    "title": "Mushrooms in Daylight",
+    "category": "EPIC",
+    "description": "Win a daytime level using only mushroom plants.",
+    "condition": {
+      "event": "LEVEL_WON",
+      "target": 1,
+      "qualifier": "MUSHROOMS_ONLY"
+    },
+    "reward": {
+      "kind": "GEMS",
+      "amount": 20
+    },
+    "priority": "HIGH"
+  },
+  {
+    "id": 13,
+    "key": "difficulty-five-streak",
+    "title": "Difficulty Five Streak",
+    "category": "DAILY",
+    "description": "Win five levels at difficulty 5.",
+    "condition": {
+      "event": "LEVEL_WON",
+      "target": 5,
+      "qualifier": "DIFFICULTY_5"
+    },
+    "reward": {
+      "kind": "COINS",
+      "amount": 5000
+    },
+    "priority": "MEDIUM"
+  },
+  {
+    "id": 14,
+    "key": "last-line-defense",
+    "title": "Last-Line Defense",
+    "category": "DAILY",
+    "description": "Defeat 10 zombies in the first column of a lane with no lawn mower.",
+    "condition": {
+      "event": "ZOMBIE_KILLED",
+      "target": 10,
+      "qualifier": "FIRST_COLUMN_NO_MOWER"
+    },
+    "reward": {
+      "kind": "COINS",
+      "amount": 300
+    },
+    "priority": "MEDIUM"
+  },
+  {
+    "id": 15,
+    "key": "embrace-asymmetry",
+    "title": "Embrace Asymmetry",
+    "category": "DAILY",
+    "description": "Win with no mirrored plant pair across the middle row; the middle row is ignored.",
+    "condition": {
+      "event": "LEVEL_WON",
+      "target": 1,
+      "qualifier": "ASYMMETRIC_GARDEN"
+    },
+    "reward": {
+      "kind": "COINS",
+      "amount": 800
+    },
+    "priority": "MEDIUM"
+  },
+  {
+    "id": 16,
+    "key": "cloudy-day",
+    "title": "Cloudy Day",
+    "category": "DAILY",
+    "description": "Win while planting no more than three sun producers.",
+    "condition": {
+      "event": "LEVEL_WON",
+      "target": 1,
+      "qualifier": "MAX_SUN_PRODUCERS_3"
+    },
+    "reward": {
+      "kind": "GEMS",
+      "amount": 10
+    },
+    "priority": "HIGH"
+  },
+  {
+    "id": 17,
+    "key": "empty-column",
+    "title": "Leave One Column Empty",
+    "category": "DAILY",
+    "description": "Win without ever planting in the daily selected column.",
+    "condition": {
+      "event": "LEVEL_WON",
+      "target": 1,
+      "qualifier": "EMPTY_COLUMN"
+    },
+    "reward": {
+      "kind": "GEMS",
+      "amount": 10
+    },
+    "priority": "HIGH"
+  },
+  {
+    "id": 18,
+    "key": "empty-row",
+    "title": "Leave One Row Empty",
+    "category": "DAILY",
+    "description": "Win without ever planting in the daily selected row.",
+    "condition": {
+      "event": "LEVEL_WON",
+      "target": 1,
+      "qualifier": "EMPTY_ROW"
+    },
+    "reward": {
+      "kind": "GEMS",
+      "amount": 20
+    },
+    "priority": "HIGH"
+  },
+  {
+    "id": 19,
+    "key": "empty-cross",
+    "title": "Empty Cross",
+    "category": "DAILY",
+    "description": "Win without ever planting in the daily selected row or column.",
+    "condition": {
+      "event": "LEVEL_WON",
+      "target": 1,
+      "qualifier": "EMPTY_CROSS"
+    },
+    "reward": {
+      "kind": "GEMS",
+      "amount": 25
+    },
+    "priority": "HIGH"
+  },
+  {
+    "id": 20,
+    "key": "mower-time",
+    "title": "Mower Time",
+    "category": "EPIC",
+    "description": "Defeat at least 10 zombies with lawn mowers.",
+    "condition": {
+      "event": "LAWN_MOWER_KILL",
+      "target": 10,
+      "qualifier": ""
+    },
+    "reward": {
+      "kind": "GEMS",
+      "amount": 10
+    },
+    "priority": "MEDIUM"
+  }
+]

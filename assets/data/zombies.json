@@ -1,0 +1,1221 @@
+[
+  {
+    "key": "basic-zombie",
+    "alias": "ZombieDefault",
+    "displayName": "Basic Zombie",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 100,
+      "selectionWeight": 1000
+    },
+    "ability": "BASIC",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "Cost": 150,
+      "GroundTrackName": "ground_swatch"
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
+  },
+  {
+    "key": "conehead-zombie",
+    "alias": "ZombieArmor1",
+    "displayName": "Conehead Zombie",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 200,
+      "selectionWeight": 3000
+    },
+    "ability": "ARMORED",
+    "canDropPlantFood": true,
+    "armors": [
+      "ConeDefault"
+    ],
+    "properties": {
+      "Cost": 150,
+      "GroundTrackName": "ground_swatch"
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
+  },
+  {
+    "key": "buckethead-zombie",
+    "alias": "ZombieArmor2",
+    "displayName": "Buckethead Zombie",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 400,
+      "selectionWeight": 4000
+    },
+    "ability": "ARMORED",
+    "canDropPlantFood": true,
+    "armors": [
+      "BucketDefault"
+    ],
+    "properties": {
+      "Cost": 150,
+      "GroundTrackName": "ground_swatch"
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
+  },
+  {
+    "key": "brickhead-zombie",
+    "alias": "ZombieArmor4",
+    "displayName": "Brickhead Zombie",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 700,
+      "selectionWeight": 3000
+    },
+    "ability": "ARMORED",
+    "canDropPlantFood": true,
+    "armors": [
+      "BrickDefault"
+    ],
+    "properties": {
+      "Cost": 150,
+      "GroundTrackName": "ground_swatch"
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
+  },
+  {
+    "key": "knight-zombie",
+    "alias": "ZombieDarkArmor3",
+    "displayName": "Knight Zombie",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 550,
+      "selectionWeight": 4500
+    },
+    "ability": "ARMORED",
+    "canDropPlantFood": true,
+    "armors": [
+      "ShoulderArmorDefault",
+      "CrownDefault"
+    ],
+    "properties": {
+      "Cost": 150,
+      "GroundTrackName": "ground_swatch"
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
+  },
+  {
+    "key": "gargantuar",
+    "alias": "ZombieGargantuar",
+    "displayName": "Gargantuar",
+    "stats": {
+      "health": 3600,
+      "eatDamagePerSecond": 0,
+      "speed": 0.24,
+      "waveCost": 1500,
+      "selectionWeight": 3000
+    },
+    "ability": "GARGANTUAR",
+    "canDropPlantFood": false,
+    "armors": [],
+    "properties": {
+      "AlmanacOffset": {
+        "x": -10,
+        "y": 40
+      },
+      "AlmanacScale": 1,
+      "ArmDropFraction": -1,
+      "CanBeFlickedOff": false,
+      "Cost": 150,
+      "ExplodesWhenMowed": true,
+      "FlickIsLaneRestricted": true,
+      "GroundTrackName": "ground_swatch",
+      "HealthThresholdToImpAmmoLayers": [
+        {
+          "HealthPercentThrowImp": 0.5,
+          "ProjectileLayersToHide": [
+            "zombie_imp_skull",
+            "zombie_imp_jaw",
+            "Zombie_gargantuar_whiterope",
+            "zombie_imp_arm_inner_lower",
+            "zombie_imp_arm_inner_upper",
+            "zombie_imp_arm_outer_lower",
+            "zombie_imp_arm_outer_upper_01",
+            "zombie_imp_arm_outer_upper_02",
+            "zombie_imp_arms_outer_upper",
+            "zombie_imp_eye",
+            "zombie_imp_eye_sm",
+            "zombie_imp_hand_inner",
+            "zombie_imp_hand_outer",
+            "zombie_imp_leg_inner_lower",
+            "zombie_imp_leg_inner_upper",
+            "zombie_imp_leg_outer_lower",
+            "zombie_imp_leg_outer_upper",
+            "zombie_imp_pupil",
+            "zombie_imp_torso",
+            "zombie_imp_waist",
+            "zombie_imp_toe_outer",
+            "zombie_imp_toe_inner"
+          ]
+        }
+      ],
+      "HypnoshroomEffectOffset": {
+        "x": 0,
+        "y": 120
+      },
+      "ImpApex": 250,
+      "ImpFlightTime": 1.5,
+      "ImpSpawnOffset": {
+        "x": -100,
+        "y": 2,
+        "z": 115
+      },
+      "ImpTargetColumn": 2,
+      "ImpType": "egypt_imp",
+      "IsValidPinchTarget": false,
+      "MinPosXThrowImp": 400,
+      "Size": "large",
+      "SkipHeadDropState": true,
+      "SmashDamage": 1500,
+      "SmashDuration": 2,
+      "SoundOnAsh": "Play_Zomb_Global_Gargantuar_Mvmt_Death_Ash",
+      "SoundOnElectrocute": "Play_Zomb_Global_Gargantuar_Mvmt_Shock",
+      "SoundOnIdle": "Play_Zomb_Egypt_Gargantuar_Mvmt_Idle",
+      "StaticArtImageAsset": "IMAGE_GARGANTUAR",
+      "ThrowImpDuration": 1
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
+  },
+  {
+    "key": "imp",
+    "alias": "ZombieImp",
+    "displayName": "Imp",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.22,
+      "waveCost": 100,
+      "selectionWeight": 1000
+    },
+    "ability": "IMP",
+    "canDropPlantFood": false,
+    "armors": [],
+    "properties": {
+      "Cost": 150,
+      "GroundTrackName": "ground_swatch",
+      "HypnoshroomEffectOffset": {
+        "x": -6,
+        "y": 36
+      },
+      "Size": "imp"
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
+  },
+  {
+    "key": "ra-zombie",
+    "alias": "ZombieRa",
+    "displayName": "Ra Zombie",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.2,
+      "waveCost": 100,
+      "selectionWeight": 700
+    },
+    "ability": "RA",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "Cost": 150,
+      "GroundTrackName": "ground_swatch",
+      "MaxClaimedSunCurrency": 250
+    },
+    "seasons": [
+      "ANCIENT_EGYPT"
+    ]
+  },
+  {
+    "key": "explorer-zombie",
+    "alias": "ZombieExplorer",
+    "displayName": "Explorer Zombie",
+    "stats": {
+      "health": 250,
+      "eatDamagePerSecond": 100,
+      "speed": 0.25,
+      "waveCost": 250,
+      "selectionWeight": 3000
+    },
+    "ability": "EXPLORER",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "Cost": 150,
+      "GroundTrackName": "ground_swatch",
+      "MaxTorchReach": 37,
+      "PlantsToEat": {
+        "List": [
+          "frostbonnet",
+          "blazingknight"
+        ],
+        "ListType": "includelist"
+      }
+    },
+    "seasons": [
+      "ANCIENT_EGYPT"
+    ]
+  },
+  {
+    "key": "tomb-raiser-zombie",
+    "alias": "ZombieTombRaiser",
+    "displayName": "Tomb Raiser Zombie",
+    "stats": {
+      "health": 380,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 300,
+      "selectionWeight": 2000
+    },
+    "ability": "TOMB_RAISER",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "# TombRaiser specific properties ": 0,
+      "Ammo": 5,
+      "Cost": 150,
+      "GroundTrackName": "ground_swatch",
+      "NumberOfTombsToSpawn": 2,
+      "Projectile": "RTID(ZombieBoneDefault@ProjectileTypes)",
+      "TimeBetweenCasts": 0,
+      "TimeBetweenRaisings": 6
+    },
+    "seasons": [
+      "ANCIENT_EGYPT"
+    ]
+  },
+  {
+    "key": "dodo-rider-zombie",
+    "alias": "ZombieIceAgeDodo",
+    "displayName": "Dodo Rider Zombie",
+    "stats": {
+      "health": 490,
+      "eatDamagePerSecond": 100,
+      "speed": 0.3,
+      "waveCost": 600,
+      "selectionWeight": 3500
+    },
+    "ability": "DODO_RIDER",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "AddRandomChanceForJumpPerGridWalked": 0.1,
+      "ArmDropFraction": -1,
+      "ChillInsteadOfFreeze": true,
+      "CooldownSecondsUntilNextJumpAvailable": 0,
+      "Cost": 150,
+      "ElectrocutePAMName": "POPANIM_EFFECTS_ZOMBIE_DODO_SHOCK",
+      "GridItemsToFlyOver": {
+        "List": [
+          "slider_down",
+          "slider_up",
+          "slider_down_modern",
+          "slider_up_modern",
+          "lava",
+          "shallowpuddle",
+          "potholepuddle"
+        ],
+        "ListType": "includelist"
+      },
+      "GroundTrackName": "ground_swatch",
+      "InitialSetRandomChanceForJump": 0,
+      "LandedResetRandomChanceForJump": 0.35,
+      "MaxRandomGridSquaresToFlyOver": 2,
+      "MaximumGridSquaresToFlyOver": 2,
+      "MinRandomGridSquaresToFlyOver": 1,
+      "PlantsToFlyOver": {
+        "List": [
+          "spikeweed",
+          "spikerock",
+          "iceburg",
+          "wallnut",
+          "potatomine",
+          "lavaguava",
+          "endurian",
+          "cactus",
+          "primalwallnut",
+          "primalpotatomine",
+          "escaperoot",
+          "murkadamia",
+          "tombtangler",
+          "vamporcini"
+        ],
+        "ListType": "includelist"
+      },
+      "SkipHeadDropState": true,
+      "projectPlantAbilitiesToFlyOver": [
+        "WALL_NUT",
+        "ENDURIAN",
+        "CACTUS",
+        "POTATO_MINE",
+        "PRIMAL_POTATO_MINE",
+        "ICEBERG_LETTUCE",
+        "EXPLODE_O_NUT",
+        "GARLIC",
+        "SWEET_POTATO"
+      ],
+      "projectTileTypesToFlyOver": [
+        "SLIPPERY_UP",
+        "SLIPPERY_DOWN"
+      ],
+      "projectFlightDistanceTiles": 2
+    },
+    "seasons": [
+      "FROSTBITE_CAVES"
+    ]
+  },
+  {
+    "key": "hunter-zombie",
+    "alias": "ZombieIceAgeHunter",
+    "displayName": "Hunter Zombie",
+    "stats": {
+      "health": 700,
+      "eatDamagePerSecond": 100,
+      "speed": 0.12,
+      "waveCost": 500,
+      "selectionWeight": 3500
+    },
+    "ability": "HUNTER",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "Actions": [
+        "RTID(ZombieIceAgeProjectileAction@ZombieActions)"
+      ],
+      "ChillInsteadOfFreeze": true,
+      "Cost": 150,
+      "FarAttackRange": 4,
+      "GroundTrackName": "ground_swatch",
+      "NearAttackRange": 1,
+      "SnowballsPerBarrage": 3
+    },
+    "seasons": [
+      "FROSTBITE_CAVES"
+    ]
+  },
+  {
+    "key": "troglobite",
+    "alias": "ZombieIceAgeTroglobite",
+    "displayName": "Troglobite",
+    "stats": {
+      "health": 470,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 600,
+      "selectionWeight": 3500
+    },
+    "ability": "TROGLOBITE",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "Actions": [
+        "RTID(ZombiePushGridItemAction@ZombieActions)"
+      ],
+      "ChillInsteadOfFreeze": true,
+      "Cost": 150,
+      "GroundTrackName": "ground_swatch",
+      "ImpType": "iceage_imp",
+      "NumberOfIceblocksToSpawnWith": 3,
+      "projectIceBlockHealth": 600,
+      "projectIceBlockSpacingTiles": 0.9
+    },
+    "seasons": [
+      "FROSTBITE_CAVES"
+    ]
+  },
+  {
+    "key": "fisherman-zombie",
+    "alias": "ZombieBeachFisherman",
+    "displayName": "Fisherman Zombie",
+    "stats": {
+      "health": 1000,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 700,
+      "selectionWeight": 2500
+    },
+    "ability": "FISHERMAN",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "AllowedLowPlants": [],
+      "CanBeFlicked": false,
+      "CanBePlantTossedStrong": false,
+      "CanBePlantTossedWeak": false,
+      "CanSurrender": true,
+      "DiesOutOfWater": true,
+      "CastTimePerGridSquare": 0.08,
+      "CastingAreaHeight": 1,
+      "CastingAreaMaxRange": 8,
+      "CastingAreaMinRange": 2,
+      "Cost": 150,
+      "DelayBeforeReeling": 0.3,
+      "DelayBetweenCasting": 2.5,
+      "GroundTrackName": "ground_swatch",
+      "MaxTideLoweredPercent": 0.001,
+      "PlantablePlants": [
+        "tanglekelp",
+        "ghostpepper",
+        "guacodile"
+      ],
+      "ReelTimePerGridSquare": 0.05,
+      "SkipHeadDropState": true
+    },
+    "seasons": [
+      "BIG_WAVE_BEACH"
+    ]
+  },
+  {
+    "key": "octopus-zombie",
+    "alias": "ZombieBeachOctopus",
+    "displayName": "Octopus Zombie",
+    "stats": {
+      "health": 910,
+      "eatDamagePerSecond": 100,
+      "speed": 0.12,
+      "waveCost": 900,
+      "selectionWeight": 3500
+    },
+    "ability": "OCTOPUS",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "Actions": [
+        "RTID(ZombieOctopusProjectileAction@ZombieActions)"
+      ],
+      "Cost": 150,
+      "GroundTrackName": "ground_swatch"
+    },
+    "seasons": [
+      "BIG_WAVE_BEACH"
+    ]
+  },
+  {
+    "key": "snorkel-zombie",
+    "alias": "ZombieBeachSnorkel",
+    "displayName": "Snorkel Zombie",
+    "stats": {
+      "health": 350,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 200,
+      "selectionWeight": 3000
+    },
+    "ability": "SNORKEL",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "Cost": 150,
+      "DamageWhileSubmerged": {
+        "List": [
+          "banana",
+          "ghostpepper",
+          "homingthistle",
+          "chomper",
+          "jalapeno",
+          "cherry_bomb",
+          "squash",
+          "iceburg",
+          "lavaguava",
+          "toadstool",
+          "strawburst",
+          "electricblueberry",
+          "grapeshot",
+          "jackolantern",
+          "cabbagepult",
+          "akee",
+          "melonpult",
+          "kernelpult",
+          "wintermelon",
+          "banana",
+          "phatbeet",
+          "kiwibeast",
+          "homingthistle",
+          "sapfling",
+          "pepperpult",
+          "sporeshroom",
+          "shrinkingviolet",
+          "bloominghearts",
+          "dusklobber",
+          "applemortar",
+          "witchhazel",
+          "missiletoe",
+          "hotdate",
+          "tanglekelp",
+          "blastberry",
+          "solarsage",
+          "guardshroom",
+          "blastspinner",
+          "hammeruit"
+        ],
+        "ListType": "includelist"
+      },
+      "DamageWhileSubmergedPlantfoodOnly": {
+        "List": [
+          "bowlingbulb",
+          "ghostpepper",
+          "homingthistle",
+          "chomper",
+          "fumeshroom",
+          "snapdragon",
+          "coconutcannon",
+          "bloomerang",
+          "spikeweed",
+          "spikerock",
+          "guacodile",
+          "laser_bean",
+          "firepeashooter",
+          "lavaguava",
+          "toadstool",
+          "cabbagepult",
+          "akee",
+          "melonpult",
+          "kernelpult",
+          "wintermelon",
+          "banana",
+          "phatbeet",
+          "kiwibeast",
+          "homingthistle",
+          "coldsnapdragon",
+          "sapfling",
+          "pepperpult",
+          "sporeshroom",
+          "shrinkingviolet",
+          "dandelion",
+          "applemortar",
+          "witchhazel",
+          "parsnip",
+          "missiletoe",
+          "shadowpeashooter",
+          "tanglekelp",
+          "ultomato",
+          "solarsage",
+          "frostbonnet",
+          "devourbloom",
+          "brainstem"
+        ],
+        "ListType": "includelist"
+      },
+      "GroundTrackName": "ground_swatch",
+      "TargetByIncludelist": {
+        "List": [
+          "ghostpepper",
+          "homingthistle",
+          "jalapeno",
+          "cherry_bomb",
+          "squash",
+          "iceburg",
+          "lavaguava",
+          "strawburst",
+          "electricblueberry",
+          "grapeshot",
+          "cabbagepult",
+          "akee",
+          "melonpult",
+          "kernelpult",
+          "wintermelon",
+          "banana",
+          "phatbeet",
+          "kiwibeast",
+          "homingthistle",
+          "sapfling",
+          "pepperpult",
+          "sporeshroom",
+          "shrinkingviolet",
+          "bloominghearts",
+          "dusklobber",
+          "applemortar",
+          "witchhazel",
+          "missiletoe",
+          "hotdate",
+          "tanglekelp",
+          "blastberry",
+          "blastspinner",
+          "frostbonnet",
+          "hammeruit",
+          "devourbloom"
+        ],
+        "ListType": "includelist"
+      }
+    },
+    "seasons": [
+      "BIG_WAVE_BEACH"
+    ]
+  },
+  {
+    "key": "juggler-zombie",
+    "alias": "ZombieDarkJuggler",
+    "displayName": "Juggler Zombie",
+    "stats": {
+      "health": 420,
+      "eatDamagePerSecond": 100,
+      "speed": 0.2,
+      "waveCost": 450,
+      "selectionWeight": 3500
+    },
+    "ability": "JUGGLER",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "AngleAgnosticProjectiles": [
+        "HomingThistleDefault",
+        "HomingThistlePlantfood",
+        "BuduhBoomDefaultProjectile",
+        "ButterDefault"
+      ],
+      "CatchArcDegrees": 120,
+      "Cost": 150,
+      "GroundTrackName": "ground_swatch",
+      "JuggleLaunchDelay": 2,
+      "JuggleableProjectiles": [
+        "PeaDefault",
+        "ThreepeaterPeaDefault",
+        "PlantfoodPeaDefault",
+        "FirePeaDefault",
+        "UltraFirePeaDefault",
+        "SnowPeaDefault",
+        "GiantPeaDefault",
+        "GiantFirePeaDefault",
+        "GiantUltraFirePeaDefault",
+        "CannonballDefault",
+        "CabbageDefault",
+        "MelonDefault",
+        "WinterMelonDefault",
+        "KernelDefault",
+        "ButterDefault",
+        "StarFruitShot",
+        "BloomerangDefault",
+        "PlasmaBall",
+        "PuffSporeDefault",
+        "ThrownZombieParticle",
+        "GuacodileDefault",
+        "HomingThistleDefault",
+        "HomingThistlePlantfood",
+        "BowlingBulbDefault",
+        "BowlingBulbDefault2",
+        "BowlingBulbDefault3",
+        "PepperpultDefault",
+        "PepperpultPlantfoodDefault",
+        "XShotShot",
+        "XShotGiantShot",
+        "StingerDefault",
+        "AkeeDefault",
+        "MegaAkeeDefault",
+        "StrawburstProjectileSmall",
+        "StrawburstProjectileMedium",
+        "StrawburstProjectileLarge",
+        "CactusDefault",
+        "CactusPlantfood",
+        "SporeshroomDefault",
+        "GrapeshotDefaultProjectile",
+        "PrimalPeashooterPea",
+        "PrimalPeashooterFirePea",
+        "PrimalPeashooterUltraFirePea",
+        "PrimalPeashooterPlantfoodPea",
+        "PrimalPeashooterPlantfoodFirePea",
+        "PrimalPeashooterPlantfoodUltraFirePea",
+        "NightshadeProjectile",
+        "NightshadeUpgradedProjectile",
+        "NightshadePFProjectile",
+        "BloomingHeartsDefault",
+        "BloomingHeartsPlantfoodDefault",
+        "DusklobberDefault",
+        "AppleMortarDefault",
+        "AppleMortarPlantfoodDefault",
+        "ShadowPeashooterDefault",
+        "PoisonPeaDefault",
+        "SlingPeaDefault",
+        "SlingPeaPlantfoodDefault",
+        "ReincarnationRedPetal",
+        "ReincarnationPinkPetal",
+        "ReincarnationWhitePetal",
+        "AppeasemintProjectileDefault",
+        "BlastberrySecondaryProjectile",
+        "PokraDefault",
+        "PokraPlantfood",
+        "DartichokeLeafDefault",
+        "DartichokeLeafPerfect",
+        "PVineDefault",
+        "ScaredyShroomDefault",
+        "ScaredyShroomPlantfood",
+        "DragonBruitDefault",
+        "DragonBruitPlantfoodDefault",
+        "DragonBabyBruitDefault",
+        "BlazeLeafBlazeWave",
+        "SeashooterProjectileDefault",
+        "CornfettiPopperPlantfood",
+        "CornfettiPopperNormal",
+        "SourshotProjectile",
+        "SourshotPlantfoodProjectile"
+      ],
+      "BounceableProjectiles": [
+        "RTID(BuduhBoomDefaultProjectile@ProjectileTypes)",
+        "RTID(ButterDefault@ProjectileTypes)"
+      ],
+      "ProjectileBounceDistance": 160,
+      "ProjectileBounceHeight": 80,
+      "ProjectileBounceTime": 0.9,
+      "LaunchAcceleration": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "LaunchHeight": {
+        "Max": 50,
+        "Min": 50
+      },
+      "LaunchVelocity": {
+        "x": 500,
+        "y": 0,
+        "z": 0
+      },
+      "MaxProjectilesToJuggle": 1000,
+      "MoveSpeedMultiplierWhileJuggling": 1.1,
+      "UnthrowableProjectiles": [],
+      "projectSpinDurationSeconds": 2
+    },
+    "seasons": [
+      "DARK_AGES"
+    ],
+    "lookupAliases": [
+      "Jester Zombie",
+      "Jester"
+    ]
+  },
+  {
+    "key": "wizard-zombie",
+    "alias": "ZombieWizard",
+    "displayName": "Wizard Zombie",
+    "stats": {
+      "health": 490,
+      "eatDamagePerSecond": 100,
+      "speed": 0.12,
+      "waveCost": 800,
+      "selectionWeight": 3500
+    },
+    "ability": "WIZARD",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "Actions": [
+        "RTID(ZombieDarkWizardZap@ZombieActions)"
+      ],
+      "Cost": 150,
+      "GroundTrackName": "ground_swatch"
+    },
+    "seasons": [
+      "DARK_AGES"
+    ]
+  },
+  {
+    "key": "king-zombie",
+    "alias": "ZombieDarkKing",
+    "displayName": "King Zombie",
+    "stats": {
+      "health": 1000,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 750,
+      "selectionWeight": 2000
+    },
+    "ability": "KING",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "CanBeFlicked": false,
+      "CanBeFlickedOff": false,
+      "CanBePlantTossedStrong": false,
+      "CanBePlantTossedWeak": false,
+      "CanSurrender": true,
+      "Cost": 150,
+      "DelayBetweenKnightings": 2.5,
+      "GroundTrackName": "ground_swatch",
+      "KnightHelm": "none",
+      "KnightingAreaX": 4,
+      "KnightingAreaY": 3,
+      "PlantablePlants": [
+        "cherry_bomb",
+        "jalapeno",
+        "powerlily",
+        "iceburg",
+        "empea",
+        "powerplant",
+        "goldleaf",
+        "grapeshot"
+      ],
+      "SkipHeadDropState": true,
+      "ValidKnightTargets": [
+        "dark",
+        "dark_armor1",
+        "dark_armor2",
+        "dark_armor3"
+      ]
+    },
+    "seasons": [
+      "DARK_AGES"
+    ]
+  },
+  {
+    "key": "dragon-imp",
+    "alias": "ZombieDarkImpDragon",
+    "displayName": "Dragon Imp",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 150,
+      "selectionWeight": 2000
+    },
+    "ability": "DRAGON_IMP",
+    "canDropPlantFood": false,
+    "armors": [],
+    "properties": {
+      "Cost": 150,
+      "FireDamageMultiplier": 0,
+      "GroundTrackName": "ground_swatch",
+      "HypnoshroomEffectOffset": {
+        "x": -6,
+        "y": 36
+      },
+      "Size": "imp"
+    },
+    "seasons": [
+      "DARK_AGES"
+    ]
+  },
+  {
+    "key": "all-star-zombie",
+    "alias": "ZombieModernAllStar",
+    "displayName": "All-Star Zombie",
+    "stats": {
+      "health": 1100,
+      "eatDamagePerSecond": 100,
+      "speed": 0.16,
+      "waveCost": 1000,
+      "selectionWeight": 3500
+    },
+    "ability": "ALL_STAR",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "Cost": 150,
+      "GroundTrackName": "ground_swatch",
+      "RunningSpeedScale": 0.5,
+      "SmashDamage": 1500
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
+  },
+  {
+    "key": "parasol-zombie",
+    "alias": "ZombieLostCityJane",
+    "displayName": "Parasol Zombie",
+    "stats": {
+      "health": 350,
+      "eatDamagePerSecond": 100,
+      "speed": 0.25,
+      "waveCost": 200,
+      "selectionWeight": 3000
+    },
+    "ability": "PARASOL",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "BounceableProjectiles": [
+        "RTID(CabbageDefault@ProjectileTypes)",
+        "RTID(MegaCabbageDefault@ProjectileTypes)",
+        "RTID(KernelDefault@ProjectileTypes)",
+        "RTID(ButterDefault@ProjectileTypes)",
+        "RTID(MelonDefault@ProjectileTypes)",
+        "RTID(MegaMelonDefault@ProjectileTypes)",
+        "RTID(WinterMelonDefault@ProjectileTypes)",
+        "RTID(WinterMegaMelonDefault@ProjectileTypes)",
+        "RTID(PepperpultDefault@ProjectileTypes)",
+        "RTID(PepperpultPlantfoodDefault@ProjectileTypes)",
+        "RTID(AkeeDefault@ProjectileTypes)",
+        "RTID(MegaAkeeDefault@ProjectileTypes)",
+        "RTID(SporeshroomDefault@ProjectileTypes)",
+        "RTID(MegaSporeshroomDefault@ProjectileTypes)",
+        "RTID(BloomingHeartsDefault@ProjectileTypes)",
+        "RTID(BloomingHeartsPlantfoodDefault@ProjectileTypes)",
+        "RTID(DusklobberDefault@ProjectileTypes)",
+        "RTID(AppleMortarDefault@ProjectileTypes)",
+        "RTID(AppleMortarPlantfoodDefault@ProjectileTypes)",
+        "RTID(SlingPeaDefault@ProjectileTypes)",
+        "RTID(SlingPeaPlantfoodDefault@ProjectileTypes)",
+        "RTID(BlastberrySecondaryProjectile@ProjectileTypes)",
+        "RTID(BoomberryMainProjectile@ProjectileTypes)",
+        "RTID(BoomberrySecondaryProjectile@ProjectileTypes)",
+        "RTID(BuduhBoomDefaultProjectile@ProjectileTypes)",
+        "RTID(DragonBruitDefault@ProjectileTypes)",
+        "RTID(DragonBruitPlantfoodDefault@ProjectileTypes)",
+        "RTID(DragonBabyBruitDefault@ProjectileTypes)"
+      ],
+      "Cost": 150,
+      "GroundTrackName": "ground_swatch",
+      "ProjectileBounceDistance": 160,
+      "ProjectileBounceHeight": 120,
+      "ProjectileBounceTime": 0.9,
+      "ShadowScaling": {
+        "x": 1.4,
+        "y": 1
+      }
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
+  },
+  {
+    "key": "turquoise-skull-zombie",
+    "alias": "ZombieCrystalSkull",
+    "displayName": "Turquoise Skull Zombie",
+    "stats": {
+      "health": 250,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 500,
+      "selectionWeight": 3000
+    },
+    "ability": "TURQUOISE_SKULL",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "ChargingTime": 5,
+      "ChargingTimeDecrementPerFiveSun": 0.2,
+      "Cost": 150,
+      "GroundTrackName": "ground_swatch",
+      "LaserBeamDamage": 4001,
+      "LaserBeamLength": 220,
+      "LaserCooldownTime": 5
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
+  },
+  {
+    "key": "prospector-zombie",
+    "alias": "ZombieProspector",
+    "displayName": "Prospector Zombie",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.16,
+      "waveCost": 200,
+      "selectionWeight": 3000
+    },
+    "ability": "PROSPECTOR",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "Apex": 250,
+      "Cost": 150,
+      "GroundTrackName": "ground_swatch",
+      "LaunchCountdown": 10,
+      "StunTime": 2.5,
+      "TimeToTravel": 1.5,
+      "projectDynamiteSpeed": 0.2,
+      "projectDynamiteStartColumn": 0.0
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
+  },
+  {
+    "key": "pianist-zombie",
+    "alias": "ZombiePiano",
+    "displayName": "Pianist Zombie",
+    "stats": {
+      "health": 840,
+      "eatDamagePerSecond": 4000,
+      "speed": 0.12,
+      "waveCost": 450,
+      "selectionWeight": 2000
+    },
+    "ability": "PIANIST",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "Cost": 150,
+      "FastMoveSpeed": 0.4,
+      "GroundTrackName": "none",
+      "NormalDeathWhenMowed": true,
+      "PlantsWhichBreakPianoOnCollision": {
+        "List": [
+          "spikeweed",
+          "spikerock",
+          "cactus",
+          "iceweed"
+        ],
+        "ListType": "includelist"
+      },
+      "StreetCriticalSize": {
+        "x": 3,
+        "y": 1
+      },
+      "StreetOffset": {
+        "x": -2,
+        "y": -1
+      },
+      "StreetSize": {
+        "x": 3,
+        "y": 2
+      }
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
+  },
+  {
+    "key": "newspaper-zombie",
+    "alias": "ZombieNewspaper",
+    "displayName": "Newspaper Zombie",
+    "stats": {
+      "health": 460,
+      "eatDamagePerSecond": 200,
+      "speed": 0.22,
+      "waveCost": 700,
+      "selectionWeight": 4000
+    },
+    "ability": "NEWSPAPER",
+    "canDropPlantFood": true,
+    "armors": [
+      "NewspaperDefault"
+    ],
+    "properties": {
+      "Cost": 150,
+      "EnragedDamageScale": 4,
+      "EnragedSpeedScale": 4,
+      "GroundTrackName": "ground_swatch"
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
+  },
+  {
+    "key": "arcade-zombie",
+    "alias": "ZombieArcade",
+    "displayName": "Arcade Zombie",
+    "stats": {
+      "health": 490,
+      "eatDamagePerSecond": 100,
+      "speed": 0.19,
+      "waveCost": 600,
+      "selectionWeight": 1000
+    },
+    "ability": "ARCADE",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "Actions": [
+        "RTID(ZombieArcadePushAction@ZombieActions)"
+      ],
+      "Cost": 150,
+      "GroundTrackName": "ground_swatch",
+      "JamStyle": "jam_8bit",
+      "projectMachineHealth": 1290,
+      "projectMachineSpacingTiles": 0.9
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ]
+  },
+  {
+    "key": "barrel-roller-zombie",
+    "alias": "ZombieBarrelRoller",
+    "displayName": "Barrel Roller Zombie",
+    "stats": {
+      "health": 190,
+      "eatDamagePerSecond": 100,
+      "speed": 0.185,
+      "waveCost": 500,
+      "selectionWeight": 2000
+    },
+    "ability": "BARREL_ROLLER",
+    "canDropPlantFood": true,
+    "armors": [],
+    "properties": {
+      "projectDataOrigin": "PDF behavior; numerical values are explicit project defaults because official zombie data omits this zombie",
+      "projectBarrelHealth": 1100,
+      "projectBarrelSpacingTiles": 0.9,
+      "projectImpCount": 2
+    },
+    "seasons": [
+      "ANCIENT_EGYPT",
+      "FROSTBITE_CAVES",
+      "BIG_WAVE_BEACH",
+      "DARK_AGES"
+    ],
+    "lookupAliases": [
+      "Barrel Roller"
+    ]
+  }
+]
