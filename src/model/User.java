@@ -18,6 +18,9 @@ public class User implements Serializable {
     private String email;
     private String gender;
     private int difficultyLevel;
+    private int gameSpeed;
+    private boolean gridVisible;
+    private boolean debugMode;
     private SecurityQuestion securityQuestion;
     private String securityAnswerHash;
     private String securityAnswerSalt;
@@ -37,6 +40,9 @@ public class User implements Serializable {
         this.email = email;
         this.gender = gender.trim().toUpperCase(Locale.ROOT);
         this.difficultyLevel = 3;
+        this.gameSpeed = 1;
+        this.gridVisible = false;
+        this.debugMode = false;
         this.progress = new GameProgress();
         this.wallet = new Wallet();
         this.inventory = new Inventory();
@@ -58,6 +64,9 @@ public class User implements Serializable {
     public String getGender() { return gender; }
     public Gender getGenderValue() { return Gender.valueOf(gender); }
     public int getDifficultyLevel() { return difficultyLevel; }
+    public int getGameSpeed() { return gameSpeed <= 0 ? 1 : gameSpeed; }
+    public boolean isGridVisible() { return gridVisible; }
+    public boolean isDebugMode() { return debugMode; }
     public SecurityQuestion getSecurityQuestion() { return securityQuestion; }
     public GameProgress getProgress() { return progress; }
     public Wallet getWallet() { return wallet; }
@@ -73,6 +82,9 @@ public class User implements Serializable {
     public void changeEmail(String newEmail) { email = newEmail; }
     public void changePassword(String newPassword) { setPassword(newPassword); }
     public void setDifficultyLevel(int difficultyLevel) { this.difficultyLevel = difficultyLevel; }
+    public void setGameSpeed(int gameSpeed) { this.gameSpeed = gameSpeed; }
+    public void setGridVisible(boolean gridVisible) { this.gridVisible = gridVisible; }
+    public void setDebugMode(boolean debugMode) { this.debugMode = debugMode; }
 
     public boolean checkPassword(String password) {
         return CredentialHasher.matches(password, passwordSalt, passwordHash);
@@ -115,6 +127,9 @@ public class User implements Serializable {
         }
         if (questLog == null) {
             questLog = new QuestLog();
+        }
+        if (gameSpeed <= 0) {
+            gameSpeed = 1;
         }
         if (gender != null) {
             gender = gender.trim().toUpperCase(Locale.ROOT);
