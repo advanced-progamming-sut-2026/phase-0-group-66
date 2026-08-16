@@ -1,6 +1,5 @@
 package pvz.screen;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -8,16 +7,21 @@ import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
-import com.badlogic.gdx.utils.Align;
-import controller.ActionResult;
 import model.News;
 import model.User;
 import pvz.PvzApplication;
 import pvz.ui.UiTheme;
 
 public final class MainMenuScreen extends BaseUiScreen {
-    private static final float TILE_WIDTH = 245f;
-    private static final float TILE_HEIGHT = 112f;
+    private static final String PROMO_BANNER = "IMAGE_UI_MAINMENU_MAINMENU_CONTENT_OFFLINE";
+    private static final String MENU_BUTTON_BACKGROUND = "IMAGE_UI_MAINMENU_BTN_BKGD";
+    private static final String NETWORK_ICON = "IMAGE_UI_MAINMENU_MM_ICLOUDICON";
+
+    private static final float LOGO_WIDTH = 520f;
+    private static final float LOGO_HEIGHT = 88f;
+    private static final float BANNER_WIDTH = 760f;
+    private static final float BANNER_HEIGHT = 263f;
+    private static final float ICON_BUTTON_SIZE = 88f;
 
     private final User user;
 
@@ -29,106 +33,107 @@ public final class MainMenuScreen extends BaseUiScreen {
 
     private void buildUi() {
         Table screen = new Table();
+        screen.setFillParent(true);
         screen.top();
-        screen.padTop(72f);
-        screen.add(buildTopHud()).growX().pad(0f, 36f, 0f, 36f);
+        screen.pad(28f, 42f, 26f, 42f);
+
+        addLogo(screen);
+        screen.row().padTop(18f);
+        screen.add(buildPromoBanner()).width(BANNER_WIDTH).height(BANNER_HEIGHT);
+        screen.row().padTop(10f);
+        screen.add(buildPagerDots()).height(24f);
         screen.row();
-        screen.add(buildMenuArea()).expand().top().padTop(24f);
+        screen.add().expandY();
         screen.row();
-        screen.add(buildFooter()).growX().pad(0f, 36f, 20f, 36f);
+        screen.add(buildBottomBar()).growX();
+
         root.add(screen).grow();
     }
 
-    private Table buildTopHud() {
-        Table hud = new Table();
+    private void addLogo(Table screen) {
         Image logo = theme.pvzLogo();
         if (logo != null) {
-            hud.add(logo).width(250f).height(43f).left();
+            screen.add(logo).width(LOGO_WIDTH).height(LOGO_HEIGHT).center();
+            return;
         }
-        hud.add(buildPlayerCard()).expandX().left().padLeft(18f);
-        hud.add(buildCurrencyBadge(UiTheme.COIN_ICON, Integer.toString(user.getWallet().getCoins())))
-            .width(145f).height(54f).padRight(8f);
-        hud.add(buildCurrencyBadge(UiTheme.GEM_ICON, Integer.toString(user.getWallet().getGems())))
-            .width(145f).height(54f).padRight(8f);
-        hud.add(buildDifficultyBadge()).width(165f).height(54f);
-        return hud;
+        screen.add(theme.title("PLANTS VS. ZOMBIES 2")).center();
     }
 
-    private Table buildPlayerCard() {
-        Table card = theme.insetPanel(8f);
-        Image player = theme.image(UiTheme.PLAYER_ICON);
-        if (player != null) {
-            card.add(player).size(38f).padRight(8f);
-        }
-        Table text = new Table();
-        text.add(theme.heading(user.getNickname())).left();
-        text.row();
-        text.add(theme.fieldLabel("@" + user.getUsername())).left();
-        card.add(text).left();
-        return card;
-    }
-
-    private Table buildCurrencyBadge(String iconId, String value) {
-        Table badge = theme.insetPanel(7f);
-        Image icon = theme.image(iconId);
-        if (icon != null) {
-            badge.add(icon).size(36f).padRight(7f);
-        }
-        badge.add(theme.heading(value));
-        return badge;
-    }
-
-    private Stack buildDifficultyBadge() {
-        Stack stack = new Stack();
-        Image background = theme.image(UiTheme.DIFFICULTY_BG);
-        if (background != null) {
-            stack.add(background);
+    private Stack buildPromoBanner() {
+        Stack banner = new Stack();
+        Image promo = theme.image(PROMO_BANNER);
+        if (promo != null) {
+            banner.add(promo);
         } else {
-            stack.add(theme.insetPanel(4f));
+            Table fallback = new Table();
+            fallback.setBackground(
+                theme.skin().getDrawable("image_ui_dialog_asset_inner_bkgd_10")
+            );
+            banner.add(fallback);
         }
-        Table text = new Table();
-        text.add(theme.fieldLabel("DIFFICULTY"));
-        text.row();
-        text.add(theme.heading(Integer.toString(user.getDifficultyLevel())));
-        stack.add(text);
-        return stack;
+
+        Table actionLayer = new Table();
+        actionLayer.setFillParent(true);
+        actionLayer.bottom().right();
+        TextButton news = theme.tertiaryButton("NEWS");
+        UiActions.onClick(news, app::showNews);
+        actionLayer.add(news).width(132f).height(46f).padRight(18f).padBottom(16f);
+        banner.add(actionLayer);
+        return banner;
     }
 
-    private Table buildMenuArea() {
-        Table area = new Table();
-        area.add(theme.title("MAIN MENU")).colspan(4).padBottom(12f);
-        area.row();
-        addMenuRow(area,
-            menuTile("Adventure", UiTheme.ADVENTURE_ICON, () -> open("Adventure"), 0),
-            menuTile("Collection", UiTheme.ALMANAC_ICON, () -> open("Collection"), 0),
-            menuTile("Greenhouse", UiTheme.GREENHOUSE_ICON, () -> open("Greenhouse"), 0),
-            menuTile("Travel Log", UiTheme.QUEST_ICON, () -> open("Travel Log"), 0));
-        addMenuRow(area,
-            menuTile("Settings", UiTheme.SETTINGS_ICON, app::showSettings, 0),
-            menuTile("News", UiTheme.NEWS_ICON, app::showNews, unreadNewsCount()),
-            menuTile("Profile", UiTheme.PLAYER_ICON, app::showProfile, 0),
-            menuTile("Leaderboard", UiTheme.LEADERBOARD_ICON, () -> open("Leaderboard"), 0));
-        return area;
+    private Label buildPagerDots() {
+        Label dots = theme.heading("●  ○  ○  ○");
+        dots.setFontScale(0.72f);
+        return dots;
     }
 
-    private void addMenuRow(Table table, Button first, Button second, Button third, Button fourth) {
-        table.add(first).width(TILE_WIDTH).height(TILE_HEIGHT).pad(6f);
-        table.add(second).width(TILE_WIDTH).height(TILE_HEIGHT).pad(6f);
-        table.add(third).width(TILE_WIDTH).height(TILE_HEIGHT).pad(6f);
-        table.add(fourth).width(TILE_WIDTH).height(TILE_HEIGHT).pad(6f);
-        table.row();
+    private Table buildBottomBar() {
+        Table bottom = new Table();
+
+        Table left = new Table();
+        left.add(iconButton(NETWORK_ICON, () -> app.showPlaceholder("Network"), 0))
+            .size(ICON_BUTTON_SIZE)
+            .padRight(14f);
+        left.add(iconButton(UiTheme.NEWS_ICON, app::showNews, unreadNewsCount()))
+            .size(ICON_BUTTON_SIZE);
+
+        Table right = new Table();
+        right.add(iconButton(UiTheme.SETTINGS_ICON, app::showSettings, 0))
+            .size(ICON_BUTTON_SIZE)
+            .padRight(14f);
+        right.add(iconButton(UiTheme.LEADERBOARD_ICON, () -> app.showPlaceholder("Leaderboard"), 0))
+            .size(ICON_BUTTON_SIZE);
+
+        TextButton play = theme.tertiaryButton("PLAY");
+        play.getLabel().setFontScale(1.25f);
+        UiActions.onClick(play, app::showAdventure);
+
+        bottom.add(left).width(210f).left();
+        bottom.add().expandX();
+        bottom.add(play).width(310f).height(82f).center();
+        bottom.add().expandX();
+        bottom.add(right).width(210f).right();
+        return bottom;
     }
 
-    private Button menuTile(String title, String iconId, Runnable action, long notificationCount) {
+    private Button iconButton(String iconId, Runnable action, long notificationCount) {
         Button.ButtonStyle style = new Button.ButtonStyle();
-        Drawable background = theme.drawable(UiTheme.MAIN_MENU_TILE);
+        Drawable background = theme.drawable(MENU_BUTTON_BACKGROUND);
         if (background == null) {
             background = theme.skin().getDrawable("image_ui_dialog_asset_inner_bkgd_10");
         }
         style.up = background;
         style.down = background;
+
         Button button = new Button(style);
-        button.add(buildTileContent(title, iconId)).grow();
+        Image icon = theme.image(iconId);
+        if (icon != null) {
+            button.add(icon).size(62f);
+        } else {
+            button.add(theme.heading("?"));
+        }
+
         if (notificationCount > 0) {
             button.addActor(buildNotificationBadge(notificationCount));
         }
@@ -136,60 +141,25 @@ public final class MainMenuScreen extends BaseUiScreen {
         return button;
     }
 
-    private Table buildTileContent(String title, String iconId) {
-        Table content = new Table();
-        Image icon = theme.image(iconId);
-        if (icon != null) {
-            content.add(icon).size(52f).padRight(10f);
-        }
-        content.add(theme.heading(title));
-        return content;
-    }
-
     private Table buildNotificationBadge(long count) {
         Table layer = new Table();
         layer.setFillParent(true);
         layer.top().right();
+
         Stack badge = new Stack();
         Image dot = theme.image(UiTheme.RED_DOT);
         if (dot != null) {
             badge.add(dot);
         }
         Label number = theme.heading(Long.toString(count));
+        number.setFontScale(0.62f);
         badge.add(number);
-        layer.add(badge).size(34f).pad(7f);
+
+        layer.add(badge).size(34f).padTop(-6f).padRight(-6f);
         return layer;
-    }
-
-    private Table buildFooter() {
-        Table footer = new Table();
-        Label welcome = theme.bodyLabel("Welcome back, " + user.getNickname() + ".");
-        welcome.setWrap(false);
-        welcome.setAlignment(Align.left);
-        footer.add(welcome).width(360f).left();
-        footer.add().expandX();
-
-        TextButton logout = theme.secondaryButton("Logout");
-        TextButton exit = theme.tertiaryButton("Exit Game");
-        UiActions.onClick(logout, this::logout);
-        UiActions.onClick(exit, Gdx.app::exit);
-        footer.add(logout).width(150f).height(48f).padRight(8f);
-        footer.add(exit).width(150f).height(48f);
-        return footer;
     }
 
     private long unreadNewsCount() {
         return user.getNews().stream().filter(News::isUnread).count();
-    }
-
-    private void open(String title) {
-        app.showPlaceholder(title);
-    }
-
-    private void logout() {
-        ActionResult result = app.services().auth().logout();
-        if (result.isSuccessful()) {
-            app.showLogin();
-        }
     }
 }
