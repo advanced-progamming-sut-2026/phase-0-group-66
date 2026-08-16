@@ -4,26 +4,34 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.utils.GdxRuntimeException;
+import pvz.app.AudioSettings;
+import pvz.app.DisplaySettings;
 import pvz.app.PvzServices;
 import pvz.assets.PvzAssets;
 import pvz.screen.ForgotPasswordScreen;
 import pvz.screen.LoginScreen;
 import pvz.screen.MainMenuScreen;
 import pvz.screen.NewsScreen;
-import pvz.screen.ProfileScreen;
-import pvz.screen.SettingsScreen;
 import pvz.screen.PlaceholderScreen;
+import pvz.screen.ProfileScreen;
 import pvz.screen.RegisterScreen;
 import pvz.screen.SecurityQuestionScreen;
+import pvz.screen.SettingsScreen;
 
 import java.io.IOException;
 
 public final class PvzApplication extends Game {
     private PvzAssets assets;
     private PvzServices services;
+    private DisplaySettings displaySettings;
+    private AudioSettings audioSettings;
 
     @Override
     public void create() {
+        displaySettings = new DisplaySettings();
+        displaySettings.apply();
+        audioSettings = new AudioSettings();
+
         try {
             assets = new PvzAssets();
             services = new PvzServices();
@@ -44,6 +52,14 @@ public final class PvzApplication extends Game {
 
     public PvzServices services() {
         return services;
+    }
+
+    public DisplaySettings displaySettings() {
+        return displaySettings;
+    }
+
+    public AudioSettings audioSettings() {
+        return audioSettings;
     }
 
     public void showRegister() {
