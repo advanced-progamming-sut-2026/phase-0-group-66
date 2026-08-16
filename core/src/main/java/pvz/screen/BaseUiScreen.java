@@ -16,8 +16,8 @@ import pvz.ui.UiTheme;
 public abstract class BaseUiScreen extends ScreenAdapter {
     protected static final float WORLD_WIDTH = 1280f;
     protected static final float WORLD_HEIGHT = 720f;
-    protected static final float FIELD_WIDTH = 350f;
-    protected static final float FIELD_HEIGHT = 46f;
+    protected static final float FIELD_WIDTH = 390f;
+    protected static final float FIELD_HEIGHT = 56f;
 
     protected final PvzApplication app;
     protected final FitViewport viewport;

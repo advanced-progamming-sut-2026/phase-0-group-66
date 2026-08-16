@@ -55,6 +55,7 @@ public final class PvzAssets implements Disposable {
 
     @Override
     public void dispose() {
+        uiTheme.dispose();
         textureBank.dispose();
         skin.dispose();
     }

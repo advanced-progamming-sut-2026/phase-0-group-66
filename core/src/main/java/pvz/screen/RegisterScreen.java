@@ -13,7 +13,7 @@ import pvz.skin.BorderedTable;
 public final class RegisterScreen extends BaseUiScreen {
     private static final float PANEL_WIDTH = 850f;
     private static final float PANEL_HEIGHT = 625f;
-    private static final float COLUMN_WIDTH = 350f;
+    private static final float COLUMN_WIDTH = 370f;
 
     private final TextField username;
     private final TextField password;
@@ -41,7 +41,7 @@ public final class RegisterScreen extends BaseUiScreen {
 
         Image logo = theme.pvzLogo();
         if (logo != null) {
-            panel.add(logo).width(300f).height(51f).colspan(2);
+            panel.add(logo).width(330f).height(56f).colspan(2);
             panel.row().padTop(5f);
         }
 
@@ -67,9 +67,9 @@ public final class RegisterScreen extends BaseUiScreen {
         UiActions.onClick(register, this::submitRegistration);
         UiActions.onClick(login, app::showLogin);
 
-        panel.add(register).width(270f).height(62f).colspan(2);
+        panel.add(register).width(300f).height(66f).colspan(2);
         panel.row().padTop(9f);
-        panel.add(login).width(365f).height(56f).colspan(2);
+        panel.add(login).width(430f).height(60f).colspan(2);
         panel.row().padTop(8f);
         panel.add(status).width(650f).height(42f).colspan(2);
 

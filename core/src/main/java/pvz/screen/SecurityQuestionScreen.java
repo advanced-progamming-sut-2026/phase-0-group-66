@@ -42,8 +42,8 @@ public final class SecurityQuestionScreen extends BaseUiScreen {
         panel.row().padTop(4f);
         panel.add(questions).width(CONTENT_WIDTH).height(52f);
         panel.row().padTop(15f);
-        addField(panel, "Answer", answer);
-        addField(panel, "Confirm answer", answerConfirm);
+        addSecurityField(panel, "Answer", answer);
+        addSecurityField(panel, "Confirm answer", answerConfirm);
         addActions(panel);
         panel.row().padTop(10f);
         panel.add(status).width(CONTENT_WIDTH).height(48f);
@@ -63,7 +63,7 @@ public final class SecurityQuestionScreen extends BaseUiScreen {
         panel.row().padTop(16f);
     }
 
-    private void addField(Table panel, String title, TextField field) {
+    private void addSecurityField(Table panel, String title, TextField field) {
         panel.add(theme.fieldLabel(title)).left().width(CONTENT_WIDTH);
         panel.row().padTop(3f);
         panel.add(field).width(CONTENT_WIDTH).height(FIELD_HEIGHT);

@@ -1,5 +1,6 @@
 package pvz.assets;
 
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
@@ -19,7 +20,11 @@ public final class UiAtlasHelper {
     }
 
     public TextureRegion region(String imageId) {
-        return textures.region(imageId);
+        TextureRegion region = textures.region(imageId);
+        if (region != null) {
+            region.getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        }
+        return region;
     }
 
     public Drawable drawable(String imageId) {
