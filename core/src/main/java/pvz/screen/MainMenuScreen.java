@@ -8,6 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
+import com.badlogic.gdx.utils.Align;
 import controller.ActionResult;
 import model.News;
 import model.User;
@@ -29,13 +30,12 @@ public final class MainMenuScreen extends BaseUiScreen {
     private void buildUi() {
         Table screen = new Table();
         screen.top();
-        screen.add().height(38f);
+        screen.padTop(72f);
+        screen.add(buildTopHud()).growX().pad(0f, 36f, 0f, 36f);
         screen.row();
-        screen.add(buildTopHud()).growX().pad(0f, 24f, 0f, 24f);
+        screen.add(buildMenuArea()).expand().top().padTop(24f);
         screen.row();
-        screen.add(buildMenuArea()).expand().center().padTop(16f);
-        screen.row();
-        screen.add(buildFooter()).growX().pad(0f, 24f, 16f, 24f);
+        screen.add(buildFooter()).growX().pad(0f, 36f, 20f, 36f);
         root.add(screen).grow();
     }
 
@@ -163,7 +163,12 @@ public final class MainMenuScreen extends BaseUiScreen {
 
     private Table buildFooter() {
         Table footer = new Table();
-        footer.add(theme.bodyLabel("Welcome back, " + user.getNickname() + ".")).expandX().left();
+        Label welcome = theme.bodyLabel("Welcome back, " + user.getNickname() + ".");
+        welcome.setWrap(false);
+        welcome.setAlignment(Align.left);
+        footer.add(welcome).width(360f).left();
+        footer.add().expandX();
+
         TextButton logout = theme.secondaryButton("Logout");
         TextButton exit = theme.tertiaryButton("Exit Game");
         UiActions.onClick(logout, this::logout);
