@@ -1,31 +1,94 @@
 package pvz;
 
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.Game;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.utils.GdxRuntimeException;
+import pvz.app.PvzServices;
+import pvz.assets.PvzAssets;
+import pvz.screen.ForgotPasswordScreen;
+import pvz.screen.LoginScreen;
+import pvz.screen.MainMenuScreen;
+import pvz.screen.PlaceholderScreen;
+import pvz.screen.RegisterScreen;
+import pvz.screen.SecurityQuestionScreen;
 
-public class PvzApplication extends ApplicationAdapter {
-    private SpriteBatch batch;
-    private Texture image;
+import java.io.IOException;
+
+public final class PvzApplication extends Game {
+    private PvzAssets assets;
+    private PvzServices services;
 
     @Override
     public void create() {
-        batch = new SpriteBatch();
-        image = new Texture("libgdx.png");
+        try {
+            assets = new PvzAssets();
+            services = new PvzServices();
+        } catch (IOException exception) {
+            throw new GdxRuntimeException("Could not initialize PVZ data.", exception);
+        }
+
+        if (services.auth().restoreSession()) {
+            showMainMenu();
+        } else {
+            showRegister();
+        }
     }
 
-    @Override
-    public void render() {
-        ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
-        batch.begin();
-        batch.draw(image, 140, 210);
-        batch.end();
+    public PvzAssets assets() {
+        return assets;
+    }
+
+    public PvzServices services() {
+        return services;
+    }
+
+    public void showRegister() {
+        changeScreen(new RegisterScreen(this));
+    }
+
+    public void showSecurityQuestion() {
+        changeScreen(new SecurityQuestionScreen(this));
+    }
+
+    public void showLogin() {
+        changeScreen(new LoginScreen(this));
+    }
+
+    public void showForgotPassword() {
+        changeScreen(new ForgotPasswordScreen(this));
+    }
+
+    public void showMainMenu() {
+        if (!services.auth().isAuthenticated()) {
+            showLogin();
+            return;
+        }
+        changeScreen(new MainMenuScreen(this));
+    }
+
+    public void showPlaceholder(String title) {
+        changeScreen(new PlaceholderScreen(this, title));
+    }
+
+    private void changeScreen(Screen next) {
+        Screen previous = getScreen();
+        setScreen(next);
+        if (previous != null) {
+            Gdx.app.postRunnable(previous::dispose);
+        }
     }
 
     @Override
     public void dispose() {
-        batch.dispose();
-        image.dispose();
+        if (services != null) {
+            services.auth().saveCurrentState();
+        }
+        if (getScreen() != null) {
+            getScreen().dispose();
+        }
+        if (assets != null) {
+            assets.dispose();
+        }
     }
 }
