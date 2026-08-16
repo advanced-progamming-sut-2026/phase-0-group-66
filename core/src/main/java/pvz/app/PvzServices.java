@@ -1,11 +1,15 @@
 package pvz.app;
 
 import controller.AuthController;
+import controller.GameController;
 import controller.NewsController;
+import controller.QuestController;
 import controller.ProfileController;
 import controller.SettingsController;
+import model.AdventureFactory;
 import model.GameData;
 import model.UserRepository;
+import view.GameView;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,6 +24,9 @@ public final class PvzServices {
     private final ProfileController profileController;
     private final SettingsController settingsController;
     private final NewsController newsController;
+    private final QuestController questController;
+    private final GameController gameController;
+    private final AdventureFactory adventureFactory;
     private final GameData gameData;
 
     public PvzServices() throws IOException {
@@ -27,10 +34,22 @@ public final class PvzServices {
         migrateLegacyUserData(userDataDirectory);
         UserRepository repository = new UserRepository(userDataDirectory);
         authController = new AuthController(repository);
+        gameData = GameData.loadDefault();
         profileController = new ProfileController(authController);
         settingsController = new SettingsController(authController);
         newsController = new NewsController(authController);
-        gameData = GameData.loadDefault();
+        questController = new QuestController(
+            authController,
+            gameData.getQuestFactory(),
+            gameData.getPlantFactory()
+        );
+        gameController = new GameController(
+            authController,
+            gameData,
+            new GameView(),
+            questController
+        );
+        adventureFactory = new AdventureFactory();
     }
 
     public AuthController auth() {
@@ -47,6 +66,18 @@ public final class PvzServices {
 
     public NewsController news() {
         return newsController;
+    }
+
+    public QuestController quests() {
+        return questController;
+    }
+
+    public GameController game() {
+        return gameController;
+    }
+
+    public AdventureFactory adventure() {
+        return adventureFactory;
     }
 
     public GameData gameData() {

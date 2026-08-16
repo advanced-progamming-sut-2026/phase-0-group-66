@@ -8,7 +8,10 @@ import pvz.app.AudioSettings;
 import pvz.app.DisplaySettings;
 import pvz.app.PvzServices;
 import pvz.assets.PvzAssets;
+import pvz.screen.AdventureScreen;
+import pvz.screen.ChapterLevelsScreen;
 import pvz.screen.ForgotPasswordScreen;
+import pvz.screen.LevelBriefingScreen;
 import pvz.screen.LoginScreen;
 import pvz.screen.MainMenuScreen;
 import pvz.screen.NewsScreen;
@@ -17,6 +20,8 @@ import pvz.screen.ProfileScreen;
 import pvz.screen.RegisterScreen;
 import pvz.screen.SecurityQuestionScreen;
 import pvz.screen.SettingsScreen;
+import model.Chapter;
+import model.Level;
 
 import java.io.IOException;
 
@@ -84,6 +89,31 @@ public final class PvzApplication extends Game {
             return;
         }
         changeScreen(new MainMenuScreen(this));
+    }
+
+
+    public void showAdventure() {
+        if (!services.auth().isAuthenticated()) {
+            showLogin();
+            return;
+        }
+        changeScreen(new AdventureScreen(this));
+    }
+
+    public void showChapterLevels(Chapter chapter) {
+        if (!services.auth().isAuthenticated()) {
+            showLogin();
+            return;
+        }
+        changeScreen(new ChapterLevelsScreen(this, chapter));
+    }
+
+    public void showLevelBriefing(Chapter chapter, Level level) {
+        if (!services.auth().isAuthenticated()) {
+            showLogin();
+            return;
+        }
+        changeScreen(new LevelBriefingScreen(this, chapter, level));
     }
 
     public void showProfile() {
