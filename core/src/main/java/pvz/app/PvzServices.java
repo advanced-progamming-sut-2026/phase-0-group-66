@@ -1,6 +1,9 @@
 package pvz.app;
 
 import controller.AuthController;
+import controller.NewsController;
+import controller.ProfileController;
+import controller.SettingsController;
 import model.GameData;
 import model.UserRepository;
 
@@ -14,6 +17,9 @@ public final class PvzServices {
     private static final String USER_DATA_PROPERTY = "pvz.user.data";
 
     private final AuthController authController;
+    private final ProfileController profileController;
+    private final SettingsController settingsController;
+    private final NewsController newsController;
     private final GameData gameData;
 
     public PvzServices() throws IOException {
@@ -21,11 +27,26 @@ public final class PvzServices {
         migrateLegacyUserData(userDataDirectory);
         UserRepository repository = new UserRepository(userDataDirectory);
         authController = new AuthController(repository);
+        profileController = new ProfileController(authController);
+        settingsController = new SettingsController(authController);
+        newsController = new NewsController(authController);
         gameData = GameData.loadDefault();
     }
 
     public AuthController auth() {
         return authController;
+    }
+
+    public ProfileController profile() {
+        return profileController;
+    }
+
+    public SettingsController settings() {
+        return settingsController;
+    }
+
+    public NewsController news() {
+        return newsController;
     }
 
     public GameData gameData() {

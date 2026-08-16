@@ -9,6 +9,9 @@ import pvz.assets.PvzAssets;
 import pvz.screen.ForgotPasswordScreen;
 import pvz.screen.LoginScreen;
 import pvz.screen.MainMenuScreen;
+import pvz.screen.NewsScreen;
+import pvz.screen.ProfileScreen;
+import pvz.screen.SettingsScreen;
 import pvz.screen.PlaceholderScreen;
 import pvz.screen.RegisterScreen;
 import pvz.screen.SecurityQuestionScreen;
@@ -65,6 +68,30 @@ public final class PvzApplication extends Game {
             return;
         }
         changeScreen(new MainMenuScreen(this));
+    }
+
+    public void showProfile() {
+        if (!services.auth().isAuthenticated()) {
+            showLogin();
+            return;
+        }
+        changeScreen(new ProfileScreen(this));
+    }
+
+    public void showSettings() {
+        if (!services.auth().isAuthenticated()) {
+            showLogin();
+            return;
+        }
+        changeScreen(new SettingsScreen(this));
+    }
+
+    public void showNews() {
+        if (!services.auth().isAuthenticated()) {
+            showLogin();
+            return;
+        }
+        changeScreen(new NewsScreen(this));
     }
 
     public void showPlaceholder(String title) {

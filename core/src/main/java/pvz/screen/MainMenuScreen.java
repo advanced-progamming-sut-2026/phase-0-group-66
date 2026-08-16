@@ -104,9 +104,9 @@ public final class MainMenuScreen extends BaseUiScreen {
             menuTile("Greenhouse", UiTheme.GREENHOUSE_ICON, () -> open("Greenhouse"), 0),
             menuTile("Travel Log", UiTheme.QUEST_ICON, () -> open("Travel Log"), 0));
         addMenuRow(area,
-            menuTile("Settings", UiTheme.SETTINGS_ICON, () -> open("Settings"), 0),
-            menuTile("News", UiTheme.NEWS_ICON, () -> open("News"), unreadNewsCount()),
-            menuTile("Profile", UiTheme.PLAYER_ICON, () -> open("Profile"), 0),
+            menuTile("Settings", UiTheme.SETTINGS_ICON, app::showSettings, 0),
+            menuTile("News", UiTheme.NEWS_ICON, app::showNews, unreadNewsCount()),
+            menuTile("Profile", UiTheme.PLAYER_ICON, app::showProfile, 0),
             menuTile("Leaderboard", UiTheme.LEADERBOARD_ICON, () -> open("Leaderboard"), 0));
         return area;
     }

@@ -211,7 +211,13 @@ public final class UiTheme implements Disposable {
     }
 
     public CheckBox stayLoggedInCheckBox() {
-        return new CheckBox(" Stay logged in", checkBoxStyle);
+        return checkBox(" Stay logged in", false);
+    }
+
+    public CheckBox checkBox(String text, boolean checked) {
+        CheckBox checkBox = new CheckBox(text, checkBoxStyle);
+        checkBox.setChecked(checked);
+        return checkBox;
     }
 
     public TextButton primaryButton(String text) {
