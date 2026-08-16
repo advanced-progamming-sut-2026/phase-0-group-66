@@ -1,5 +1,6 @@
 package pvz.screen;
 
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -8,8 +9,13 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import controller.ActionResult;
 import model.SecurityQuestion;
 import pvz.PvzApplication;
+import pvz.skin.BorderedTable;
 
 public final class SecurityQuestionScreen extends BaseUiScreen {
+    private static final float PANEL_WIDTH = 700f;
+    private static final float PANEL_HEIGHT = 570f;
+    private static final float CONTENT_WIDTH = 500f;
+
     private final SelectBox<String> questions;
     private final TextField answer;
     private final TextField answerConfirm;
@@ -30,29 +36,49 @@ public final class SecurityQuestionScreen extends BaseUiScreen {
     }
 
     private void buildUi() {
-        Table form = new Table();
-        form.add(new Label("SECURITY QUESTION", app.assets().skin(), "big_outline"));
-        form.row().padTop(22f);
-        form.add(new Label("Choose a recovery question", app.assets().skin(), "secondary")).left();
-        form.row().padTop(5f);
-        form.add(questions).width(520f).height(50f);
-        form.row().padTop(14f);
-        addField(form, "Answer", answer);
-        addField(form, "Confirm answer", answerConfirm);
-
-        TextButton finish = new TextButton("Create account", app.assets().skin(), "green");
-        TextButton back = new TextButton("Back", app.assets().skin(), "brown");
-        UiActions.onClick(finish, this::finishRegistration);
-        UiActions.onClick(back, app::showRegister);
-
-        Table buttons = new Table();
-        buttons.add(back).width(170f).height(58f).padRight(12f);
-        buttons.add(finish).width(230f).height(58f);
-        form.add(buttons);
-        form.row().padTop(12f);
-        form.add(status).width(540f);
-        root.add(form);
+        BorderedTable panel = theme.dialogPanel();
+        addHeader(panel);
+        panel.add(theme.fieldLabel("Recovery question")).left().width(CONTENT_WIDTH);
+        panel.row().padTop(4f);
+        panel.add(questions).width(CONTENT_WIDTH).height(52f);
+        panel.row().padTop(15f);
+        addField(panel, "Answer", answer);
+        addField(panel, "Confirm answer", answerConfirm);
+        addActions(panel);
+        panel.row().padTop(10f);
+        panel.add(status).width(CONTENT_WIDTH).height(48f);
+        root.add(panel).width(PANEL_WIDTH).height(PANEL_HEIGHT);
         stage.setKeyboardFocus(answer);
+    }
+
+    private void addHeader(Table panel) {
+        Image logo = theme.pvzLogo();
+        if (logo != null) {
+            panel.add(logo).width(270f).height(46f);
+            panel.row().padTop(4f);
+        }
+        panel.add(theme.title("SECURITY QUESTION"));
+        panel.row().padTop(8f);
+        panel.add(theme.bodyLabel("Choose a question you can answer later.")).width(CONTENT_WIDTH);
+        panel.row().padTop(16f);
+    }
+
+    private void addField(Table panel, String title, TextField field) {
+        panel.add(theme.fieldLabel(title)).left().width(CONTENT_WIDTH);
+        panel.row().padTop(3f);
+        panel.add(field).width(CONTENT_WIDTH).height(FIELD_HEIGHT);
+        panel.row().padTop(12f);
+    }
+
+    private void addActions(Table panel) {
+        TextButton back = theme.secondaryButton("Back");
+        TextButton finish = theme.primaryButton("Create account");
+        UiActions.onClick(back, app::showRegister);
+        UiActions.onClick(finish, this::finishRegistration);
+        Table buttons = new Table();
+        buttons.add(back).width(180f).height(56f).padRight(12f);
+        buttons.add(finish).width(250f).height(56f);
+        panel.add(buttons);
     }
 
     private void finishRegistration() {
@@ -62,9 +88,11 @@ public final class SecurityQuestionScreen extends BaseUiScreen {
             answer.getText(),
             answerConfirm.getText()
         );
-        status.setText(result.getMessage());
-        if (result.isSuccessful()) {
-            app.showLogin();
+        if (!result.isSuccessful()) {
+            theme.showError(status, result.getMessage());
+            return;
         }
+        theme.showSuccess(status, result.getMessage());
+        app.showLogin();
     }
 }
