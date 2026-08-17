@@ -23,6 +23,7 @@ import pvz.ui.PlantPacketCard;
 import pvz.ui.CollectionCardFactory;
 import pvz.ui.UiTheme;
 import pvz.ui.ZombieArtResolver;
+import pvz.ui.ZombieAnimationActor;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -90,13 +91,16 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
 
         screen.add(buildContent())
             .width(1185f)
-            .height(478f);
+            .height(500f);
         screen.row();
 
-        screen.add(buildFooter())
+        status.setWrap(false);
+        status.setAlignment(Align.left);
+        screen.add(status)
             .width(1185f)
-            .height(50f)
-            .padTop(8f);
+            .height(30f)
+            .left()
+            .padTop(4f);
 
         root.add(screen).grow();
     }
@@ -127,6 +131,10 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
             row.add(states).width(180f).height(46f);
         }
         row.add().expandX();
+        TextButton back = theme.secondaryButton("Back");
+        back.getLabel().setFontScale(0.72f);
+        UiActions.onClick(back, app::showAdventure);
+        row.add(back).width(140f).height(46f).padLeft(10f);
         return row;
     }
 
@@ -180,14 +188,34 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
     private Table buildContent() {
         Table content = new Table();
         refreshDetail();
-        content.add(buildCatalogPanel()).width(790f).growY().padRight(10f);
-        content.add(detailHost).width(375f).growY();
+
+        Table catalog = buildCatalogPanel();
+        content.add(catalog)
+            .width(790f)
+            .height(500f)
+            .minWidth(0f)
+            .minHeight(0f)
+            .padRight(10f);
+
+        ScrollPane detailScroll = new ScrollPane(detailHost, theme.skin());
+        detailScroll.setFadeScrollBars(false);
+        detailScroll.setOverscroll(false, false);
+        detailScroll.setScrollingDisabled(true, false);
+        content.add(detailScroll)
+            .width(375f)
+            .height(500f)
+            .minWidth(0f)
+            .minHeight(0f);
         return content;
     }
 
     private void refreshDetail() {
         detailHost.clearChildren();
-        detailHost.add(buildDetailPanel()).grow();
+        detailHost.top();
+        detailHost.add(buildDetailPanel())
+            .growX()
+            .top();
+        detailHost.invalidateHierarchy();
     }
 
     private Table buildCatalogPanel() {
@@ -290,7 +318,7 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
 
         PlantAnimationActor animation = new PlantAnimationActor(app.assets(), plant);
         if (animation.hasAnimation()) {
-            panel.add(animation).width(300f).height(160f).padBottom(2f);
+            panel.add(animation).width(270f).height(135f).padBottom(2f);
             panel.row();
         }
         Label name = theme.heading(plant.getName());
@@ -308,7 +336,7 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
         Label ability = theme.settingsLabel(plant.getBaseAbility());
         ability.setWrap(true);
         ability.setAlignment(Align.left);
-        panel.add(ability).growX().height(70f).padTop(6f);
+        panel.add(ability).growX().height(60f).padTop(6f);
         panel.row();
         panel.add(buildPlantAction(plant)).growX().height(50f).padTop(7f);
         return panel;
@@ -343,10 +371,16 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
             return panel;
         }
 
-        Image art = ZombieArtResolver.image(theme, zombie);
-        if (art != null) {
-            panel.add(art).width(250f).height(160f).padBottom(4f);
+        ZombieAnimationActor animation = new ZombieAnimationActor(app.assets(), zombie);
+        if (animation.hasAnimation()) {
+            panel.add(animation).width(280f).height(175f).padBottom(4f);
             panel.row();
+        } else {
+            Image art = ZombieArtResolver.image(theme, zombie);
+            if (art != null) {
+                panel.add(art).width(250f).height(160f).padBottom(4f);
+                panel.row();
+            }
         }
         Label name = theme.heading(zombie.getDisplayName());
         name.setWrap(false);
@@ -379,23 +413,6 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
             return "None";
         }
         return armor.stream().map(ArmorDefinition::getArmorType).reduce((a, b) -> a + ", " + b).orElse("None");
-    }
-
-    private Table buildFooter() {
-        Table footer = new Table();
-        status.setWrap(false);
-        status.setAlignment(Align.left);
-        footer.add(status)
-            .width(850f)
-            .height(46f)
-            .left();
-        footer.add().expandX();
-
-        TextButton back = theme.secondaryButton("Back to Adventure");
-        back.getLabel().setFontScale(0.72f);
-        UiActions.onClick(back, app::showAdventure);
-        footer.add(back).width(220f).height(48f);
-        return footer;
     }
 
     private void switchTab(Tab next) {
