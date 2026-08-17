@@ -11,6 +11,7 @@ import pvz.assets.PvzAssets;
 import pvz.screen.AdventureScreen;
 import pvz.screen.BattleScreen;
 import pvz.screen.ChapterLevelsScreen;
+import pvz.screen.CheatScreen;
 import pvz.screen.ForgotPasswordScreen;
 import pvz.screen.LevelBriefingScreen;
 import pvz.screen.LoginScreen;
@@ -156,6 +157,14 @@ public final class PvzApplication extends Game {
             return;
         }
         changeScreen(new NewsScreen(this));
+    }
+
+    public void showCheats() {
+        if (!services.auth().isAuthenticated()) {
+            showLogin();
+            return;
+        }
+        changeScreen(new CheatScreen(this));
     }
 
     public void showPlaceholder(String title) {

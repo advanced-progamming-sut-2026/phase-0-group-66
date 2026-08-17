@@ -86,11 +86,14 @@ public final class SettingsScreen extends AuthenticatedUiScreen {
         panel.row();
 
         Table actions = new Table();
+        TextButton cheats = theme.primaryButton("Cheat Codes");
         TextButton reset = theme.tertiaryButton("Reset Defaults");
         TextButton back = theme.secondaryButton("Back");
+        UiActions.onClick(cheats, app::showCheats);
         UiActions.onClick(reset, this::resetDefaults);
         UiActions.onClick(back, app::showMainMenu);
-        actions.add(reset).width(220f).height(48f).padRight(14f);
+        actions.add(cheats).width(190f).height(48f).padRight(10f);
+        actions.add(reset).width(220f).height(48f).padRight(10f);
         actions.add(back).width(180f).height(48f);
         panel.add(actions).padTop(3f);
 
@@ -108,7 +111,7 @@ public final class SettingsScreen extends AuthenticatedUiScreen {
     }
 
     private Table currencyBadge(String iconId, int value) {
-        Table badge = theme.insetPanel(4f);
+        Table badge = theme.settingsBadgePanel(4f);
         Image icon = theme.image(iconId);
         if (icon != null) {
             badge.add(icon).size(26f).padRight(4f);
@@ -118,7 +121,7 @@ public final class SettingsScreen extends AuthenticatedUiScreen {
     }
 
     private Table buildAudioCard() {
-        Table card = theme.insetPanel(12f);
+        Table card = theme.settingsCardPanel(12f);
         card.left();
         card.add(theme.settingsLabel("AUDIO")).left().padBottom(4f).colspan(3);
         card.row();
@@ -135,7 +138,7 @@ public final class SettingsScreen extends AuthenticatedUiScreen {
     }
 
     private Table buildGameplayCard() {
-        Table card = theme.insetPanel(14f);
+        Table card = theme.settingsCardPanel(14f);
         card.top().left();
         card.add(theme.settingsLabel("GAMEPLAY")).left().padBottom(7f).colspan(2);
         card.row();
@@ -169,7 +172,7 @@ public final class SettingsScreen extends AuthenticatedUiScreen {
     }
 
     private Table buildDisplayCard() {
-        Table card = theme.insetPanel(14f);
+        Table card = theme.settingsCardPanel(14f);
         card.top().left();
         card.add(theme.settingsLabel("DISPLAY")).left().padBottom(6f).colspan(2);
         card.row();

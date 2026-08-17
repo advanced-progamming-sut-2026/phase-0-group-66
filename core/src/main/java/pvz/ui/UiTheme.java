@@ -48,6 +48,9 @@ public final class UiTheme implements Disposable {
     public static final String AUDIO_BAR = "IMAGE_UI_GENERIC_AUDIO_BAR";
     public static final String AUDIO_FILL = "IMAGE_UI_GENERIC_AUDIO_FILL";
     public static final String DIVIDER = "IMAGE_UI_GENERIC_4PXDIVIDER";
+    public static final String SETTINGS_CARD =
+        "IMAGE_UI_DIALOG_ASSET_TINT_ROUNDED_BOX_9SLICE";
+    public static final String SETTINGS_BADGE = "IMAGE_UI_DIALOG_ASSET_INNER_BKGD";
 
     private static final String UI_FONT = "skin/FBUSV8C5EI.TTF";
     private static final String BUTTON_FONT = "skin/HOUSE OF TERROR.TTF";
@@ -251,6 +254,28 @@ public final class UiTheme implements Disposable {
     public Table insetPanel(float padding) {
         Table table = new Table();
         Drawable background = drawable(MAIN_MENU_INSET);
+        if (background == null) {
+            background = skin.getDrawable("image_ui_dialog_asset_inner_bkgd_10");
+        }
+        table.setBackground(background);
+        table.pad(padding);
+        return table;
+    }
+
+    public Table settingsCardPanel(float padding) {
+        Table table = new Table();
+        Drawable background = atlas.ninePatchDrawable(SETTINGS_CARD, 14, 14, 14, 14);
+        if (background == null) {
+            background = skin.getDrawable("image_ui_dialog_asset_inner_bkgd_10");
+        }
+        table.setBackground(background);
+        table.pad(padding);
+        return table;
+    }
+
+    public Table settingsBadgePanel(float padding) {
+        Table table = new Table();
+        Drawable background = atlas.ninePatchDrawable(SETTINGS_BADGE, 12, 12, 12, 12);
         if (background == null) {
             background = skin.getDrawable("image_ui_dialog_asset_inner_bkgd_10");
         }
