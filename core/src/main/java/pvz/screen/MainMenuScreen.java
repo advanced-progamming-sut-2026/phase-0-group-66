@@ -106,7 +106,7 @@ public final class MainMenuScreen extends BaseUiScreen {
         right.add(iconButton(UiTheme.SETTINGS_ICON, app::showSettings, 0))
             .size(ICON_BUTTON_SIZE)
             .padRight(14f);
-        right.add(iconButton(UiTheme.LEADERBOARD_ICON, () -> app.showPlaceholder("Leaderboard"), 0))
+        right.add(iconButton(UiTheme.LEADERBOARD_ICON, app::showLeaderboard, 0))
             .size(ICON_BUTTON_SIZE);
 
         TextButton play = theme.tertiaryButton("PLAY");

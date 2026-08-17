@@ -180,15 +180,21 @@ public final class AdventureScreen extends AuthenticatedUiScreen {
 
     private Table buildFooter() {
         Table footer = new Table();
+        TextButton collection = theme.secondaryButton("Collection");
         TextButton quests = theme.tertiaryButton("Quests / Travel Log");
         TextButton miniGames = theme.primaryButton("Mini Games");
         TextButton back = theme.secondaryButton("Back");
 
-        UiActions.onClick(quests, () -> app.showPlaceholder("Quests / Travel Log"));
-        UiActions.onClick(miniGames, () -> app.showPlaceholder("Mini Games"));
+        UiActions.onClick(collection, app::showCollection);
+        UiActions.onClick(quests, app::showQuests);
+        UiActions.onClick(
+            miniGames,
+            () -> app.showPlaceholder("Mini Games", "Back to Adventure", app::showAdventure)
+        );
         UiActions.onClick(back, app::showMainMenu);
 
-        footer.add(quests).width(230f).height(48f).padRight(10f);
+        footer.add(collection).width(165f).height(48f).padRight(8f);
+        footer.add(quests).width(220f).height(48f).padRight(8f);
         footer.add(miniGames).width(165f).height(48f);
         footer.add().expandX();
         footer.add(back).width(150f).height(48f);

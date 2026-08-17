@@ -3,6 +3,7 @@ package pvz.app;
 import controller.AuthController;
 import controller.CollectionController;
 import controller.GameController;
+import controller.LeaderboardController;
 import controller.NewsController;
 import controller.QuestController;
 import controller.ProfileController;
@@ -28,6 +29,7 @@ public final class PvzServices {
     private final NewsController newsController;
     private final QuestController questController;
     private final GameController gameController;
+    private final LeaderboardController leaderboardController;
     private final AdventureFactory adventureFactory;
     private final GameData gameData;
 
@@ -36,6 +38,7 @@ public final class PvzServices {
         migrateLegacyUserData(userDataDirectory);
         UserRepository repository = new UserRepository(userDataDirectory);
         authController = new AuthController(repository);
+        leaderboardController = new LeaderboardController(repository);
         gameData = GameData.loadDefault();
         profileController = new ProfileController(authController);
         collectionController = new CollectionController(
@@ -86,6 +89,10 @@ public final class PvzServices {
 
     public GameController game() {
         return gameController;
+    }
+
+    public LeaderboardController leaderboard() {
+        return leaderboardController;
     }
 
     public AdventureFactory adventure() {
