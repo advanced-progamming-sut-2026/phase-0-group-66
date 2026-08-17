@@ -17,6 +17,13 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class BattlePamRenderer {
+    /*
+     * The PVZ background art and PAM animation coordinate systems are not 1:1.
+     * Keep this correction local to the battle renderer instead of modifying
+     * libPVZ, so the asset browser and PAM offsets keep their original values.
+     */
+    private static final float WORLD_ASSET_SCALE = 1.5625f;
+
     private final PvzAssets assets;
     private final PamPlayer player;
     private final Map<String, AnimationSpec> plantSpecs = new HashMap<>();
@@ -74,8 +81,9 @@ public final class BattlePamRenderer {
         if (flipped) {
             batch.setColor(0.72f, 1f, 0.72f, previous.a);
         }
-        float scaleX = flipped ? -scale : scale;
-        player.draw(batch, spec.path(), spec.clip(), time, x, y, scaleX, scale, true);
+        float worldScale = scale * WORLD_ASSET_SCALE;
+        float scaleX = flipped ? -worldScale : worldScale;
+        player.draw(batch, spec.path(), spec.clip(), time, x, y, scaleX, worldScale, true);
         batch.setColor(previous);
         return true;
     }
@@ -142,8 +150,7 @@ public final class BattlePamRenderer {
             if (clips == null || clips.isEmpty()) {
                 return AnimationSpec.missing();
             }
-            String clip = chooseClip(clips, preferredClip);
-            return new AnimationSpec(path, clip);
+            return new AnimationSpec(path, chooseClip(clips, preferredClip));
         } catch (RuntimeException exception) {
             return AnimationSpec.missing();
         }

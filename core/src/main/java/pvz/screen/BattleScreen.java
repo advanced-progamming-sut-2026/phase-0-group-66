@@ -27,6 +27,10 @@ import java.util.List;
 public final class BattleScreen extends AuthenticatedUiScreen {
     private static final float MODEL_STEP_SECONDS = 0.50f;
     private static final int BASE_TICKS_PER_STEP = 5;
+    private static final float PAN_TO_ZOMBIES_SECONDS = 1.25f;
+    private static final float ZOMBIE_PREVIEW_SECONDS = 1.75f;
+    private static final float PAN_HOME_SECONDS = 1.25f;
+    private static final float READY_DELAY_SECONDS = 2.50f;
 
     private final Chapter chapter;
     private final Level level;
@@ -36,6 +40,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     private final Label plantFoodLabel;
     private final Label waveLabel;
     private final Label status;
+    private final Label introLabel;
     private final Table seedBank;
     private final Stack pauseLayer;
     private final BattleBoardActor boardActor;
@@ -46,6 +51,8 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     private ToolMode toolMode = ToolMode.PLANT;
     private boolean paused;
     private boolean resultShown;
+    private float introElapsed;
+    private IntroPhase introPhase = IntroPhase.PAN_TO_ZOMBIES;
 
     public BattleScreen(PvzApplication app, Chapter chapter, Level level) {
         super(app);
@@ -61,6 +68,8 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         plantFoodLabel = theme.settingsLabel("");
         waveLabel = theme.settingsLabel("");
         status = theme.statusLabel();
+        introLabel = theme.title("");
+        introLabel.setAlignment(Align.center);
         seedBank = new Table();
         pauseLayer = new Stack();
         boardActor = new BattleBoardActor(app.assets(), controller, level, this::handleCellClick);
@@ -80,14 +89,26 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     }
 
     private Actor buildBattleLayer() {
-        Table screen = new Table();
-        screen.top();
-        screen.add(buildTopHud()).growX().height(104f);
-        screen.row();
-        screen.add(boardActor).grow().pad(0f, 12f, 5f, 12f);
-        screen.row();
-        screen.add(buildBottomHud()).growX().height(66f).pad(0f, 16f, 8f, 16f);
-        return screen;
+        Stack battle = new Stack();
+        battle.add(boardActor);
+
+        Table hud = new Table();
+        hud.top();
+        hud.add(buildTopHud()).growX().height(92f);
+        hud.row();
+        hud.add().expand();
+        hud.row();
+        hud.add(buildBottomHud()).growX().height(60f).pad(0f, 16f, 6f, 16f);
+        battle.add(hud);
+        battle.add(buildIntroLayer());
+        return battle;
+    }
+
+    private Table buildIntroLayer() {
+        Table layer = new Table();
+        layer.center();
+        layer.add(introLabel).width(560f).height(90f);
+        return layer;
     }
 
     private Table buildTopHud() {
@@ -129,7 +150,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         }
         bar.add(plantFoodLabel).width(100f).left();
 
-        startWavesButton.setVisible(!game.areZombieWavesStarted());
+        startWavesButton.setVisible(false);
         UiActions.onClick(startWavesButton, this::startZombieWaves);
         bar.add(startWavesButton).width(170f).height(46f).padLeft(10f);
 
@@ -251,6 +272,9 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         stack.addListener(new com.badlogic.gdx.scenes.scene2d.utils.ClickListener() {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                if (isIntroRunning()) {
+                    return;
+                }
                 selectedPlant = definition.getName();
                 toolMode = ToolMode.PLANT;
                 theme.showSuccess(status, "Selected " + definition.getName() + ".");
@@ -261,7 +285,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     }
 
     private void handleCellClick(int col, int row) {
-        if (paused || game.getGameState() != GameState.RUNNING) {
+        if (paused || isIntroRunning() || game.getGameState() != GameState.RUNNING) {
             return;
         }
         if (collectSunIfPresent(col, row)) {
@@ -305,6 +329,9 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     }
 
     private void selectShovel() {
+        if (isIntroRunning()) {
+            return;
+        }
         toolMode = ToolMode.SHOVEL;
         selectedPlant = null;
         theme.showSuccess(status, "Shovel selected. Click a planted tile.");
@@ -312,6 +339,9 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     }
 
     private void selectPlantFood() {
+        if (isIntroRunning()) {
+            return;
+        }
         toolMode = ToolMode.PLANT_FOOD;
         selectedPlant = null;
         theme.showSuccess(status, "Plant food selected. Click a plant.");
@@ -319,6 +349,9 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     }
 
     private void startZombieWaves() {
+        if (isIntroRunning()) {
+            return;
+        }
         ActionResult result = controller.startZombieWaves();
         showResult(result);
         startWavesButton.setVisible(!game.areZombieWavesStarted());
@@ -355,6 +388,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
 
     @Override
     public void render(float delta) {
+        advanceIntro(delta);
         advanceModel(delta);
         refreshHud();
         checkResult();
@@ -362,7 +396,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     }
 
     private void advanceModel(float delta) {
-        if (paused || resultShown || game.getGameState() != GameState.RUNNING) {
+        if (paused || resultShown || isIntroRunning() || game.getGameState() != GameState.RUNNING) {
             return;
         }
         if (!game.areZombieWavesStarted()) {
@@ -387,7 +421,91 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         Wave wave = game.getCurrentWave();
         int current = wave == null ? 0 : wave.getWaveNumber();
         waveLabel.setText("Wave " + current + " / " + level.getWaves().size());
+        startWavesButton.setVisible(!isIntroRunning() && !game.areZombieWavesStarted());
+    }
+
+    private void advanceIntro(float delta) {
+        if (!isIntroRunning() || paused || resultShown) {
+            return;
+        }
+        introElapsed += Math.max(0f, delta);
+        switch (introPhase) {
+            case PAN_TO_ZOMBIES -> updatePanToZombies();
+            case SHOW_ZOMBIES -> updateZombiePreview();
+            case PAN_HOME -> updatePanHome();
+            case READY_DELAY -> updateReadyDelay();
+            case FINISHED -> finishIntro();
+        }
+    }
+
+    private void updatePanToZombies() {
+        float progress = clamp01(introElapsed / PAN_TO_ZOMBIES_SECONDS);
+        boardActor.setCameraPan(smooth(progress));
+        introLabel.setText("");
+        if (progress >= 1f) {
+            changeIntroPhase(IntroPhase.SHOW_ZOMBIES);
+        }
+    }
+
+    private void updateZombiePreview() {
+        boardActor.setCameraPan(1f);
+        introLabel.setText("ZOMBIES APPROACHING...");
+        if (introElapsed >= ZOMBIE_PREVIEW_SECONDS) {
+            changeIntroPhase(IntroPhase.PAN_HOME);
+        }
+    }
+
+    private void updatePanHome() {
+        float progress = clamp01(introElapsed / PAN_HOME_SECONDS);
+        boardActor.setCameraPan(1f - smooth(progress));
+        introLabel.setText("");
+        if (progress >= 1f) {
+            changeIntroPhase(IntroPhase.READY_DELAY);
+        }
+    }
+
+    private void updateReadyDelay() {
+        boardActor.setCameraPan(0f);
+        if (introElapsed < 0.85f) {
+            introLabel.setText("READY...");
+        } else if (introElapsed < 1.65f) {
+            introLabel.setText("SET...");
+        } else {
+            introLabel.setText("PLANT!");
+        }
+        if (introElapsed >= READY_DELAY_SECONDS) {
+            changeIntroPhase(IntroPhase.FINISHED);
+            finishIntro();
+        }
+    }
+
+    private void finishIntro() {
+        introPhase = IntroPhase.FINISHED;
+        introLabel.setText("");
+        boardActor.setCameraPan(0f);
         startWavesButton.setVisible(!game.areZombieWavesStarted());
+        if (game.areZombieWavesStarted()) {
+            theme.showSuccess(status, "The first wave is coming!");
+        } else {
+            theme.showSuccess(status, "Set up your defense, then start the waves.");
+        }
+    }
+
+    private void changeIntroPhase(IntroPhase phase) {
+        introPhase = phase;
+        introElapsed = 0f;
+    }
+
+    private boolean isIntroRunning() {
+        return introPhase != IntroPhase.FINISHED;
+    }
+
+    private float clamp01(float value) {
+        return Math.max(0f, Math.min(1f, value));
+    }
+
+    private float smooth(float value) {
+        return value * value * (3f - 2f * value);
     }
 
     private void checkResult() {
@@ -447,6 +565,14 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     public void dispose() {
         boardActor.dispose();
         super.dispose();
+    }
+
+    private enum IntroPhase {
+        PAN_TO_ZOMBIES,
+        SHOW_ZOMBIES,
+        PAN_HOME,
+        READY_DELAY,
+        FINISHED
     }
 
     private enum ToolMode {

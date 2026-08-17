@@ -17,30 +17,28 @@ import model.Plant;
 import model.Projectile;
 import model.SeasonType;
 import model.Sun;
-import model.Tile;
 import model.Zombie;
 import pvz.assets.PvzAssets;
 
 import java.util.function.BiConsumer;
 
 public final class BattleBoardActor extends Actor implements Disposable {
-    private static final float GRID_LEFT = 0.205f;
-    private static final float GRID_BOTTOM = 0.115f;
-    private static final float GRID_WIDTH = 0.735f;
-    private static final float GRID_HEIGHT = 0.765f;
-
     private final PvzAssets assets;
     private final GameController controller;
     private final Level level;
     private final BattlePamRenderer pamRenderer;
     private final BiConsumer<Integer, Integer> cellClick;
     private final Texture pixel;
+    private final BoardGeometry geometry;
 
-    private TextureRegion background;
+    private TextureRegion backgroundLeft;
+    private TextureRegion backgroundMain;
+    private TextureRegion backgroundRight;
     private TextureRegion sunIcon;
     private TextureRegion projectileIcon;
     private TextureRegion mowerIcon;
     private float animationTime;
+    private float cameraPan;
     private boolean showGrid;
 
     public BattleBoardActor(
@@ -55,7 +53,12 @@ public final class BattleBoardActor extends Actor implements Disposable {
         this.cellClick = cellClick;
         this.pamRenderer = new BattlePamRenderer(assets);
         this.pixel = createPixel();
+        this.geometry = BoardGeometry.forSeason(level.getSeason());
         loadRegions();
+        configureInput();
+    }
+
+    private void configureInput() {
         setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.enabled);
         addListener(new InputListener() {
             @Override
@@ -73,6 +76,10 @@ public final class BattleBoardActor extends Actor implements Disposable {
 
     public void setShowGrid(boolean showGrid) {
         this.showGrid = showGrid;
+    }
+
+    public void setCameraPan(float cameraPan) {
+        this.cameraPan = Math.max(0f, Math.min(1f, cameraPan));
     }
 
     @Override
@@ -102,10 +109,27 @@ public final class BattleBoardActor extends Actor implements Disposable {
     }
 
     private void drawBackground(Batch batch) {
-        if (background != null) {
-            batch.draw(background, getX(), getY(), getWidth(), getHeight());
+        if (backgroundMain == null) {
+            drawFallbackBackground(batch);
             return;
         }
+        float height = getHeight();
+        float x = panoramaLeft();
+        x = drawPiece(batch, backgroundLeft, x, height);
+        x = drawPiece(batch, backgroundMain, x, height);
+        drawPiece(batch, backgroundRight, x, height);
+    }
+
+    private float drawPiece(Batch batch, TextureRegion region, float x, float height) {
+        if (region == null) {
+            return x;
+        }
+        float width = pieceWidth(region, height);
+        batch.draw(region, x, getY(), width, height);
+        return x + width;
+    }
+
+    private void drawFallbackBackground(Batch batch) {
         batch.setColor(0.22f, 0.48f, 0.20f, 1f);
         batch.draw(pixel, getX(), getY(), getWidth(), getHeight());
         batch.setColor(Color.WHITE);
@@ -139,12 +163,13 @@ public final class BattleBoardActor extends Actor implements Disposable {
             int row = plant.getPosition().getRow();
             int col = plant.getPosition().getColumn();
             float x = cellCenterX(col);
-            float y = cellBottom(row) + cellHeight() * 0.43f;
+            float y = cellBottom(row) + cellHeight() * 0.38f;
             boolean animated = pamRenderer.drawPlant(batch, plant, animationTime, x, y, scale);
             if (!animated) {
                 drawFallbackPlant(batch, x, y, plant);
             }
-            drawHealth(batch, x, cellTop(row) - 8f, plant.getHealth(), plant.getMaxHealth(), 38f);
+            float barWidth = Math.max(30f, cellWidth() * 0.52f);
+            drawHealth(batch, x, cellTop(row) - 7f, plant.getHealth(), plant.getMaxHealth(), barWidth);
         }
     }
 
@@ -158,18 +183,19 @@ public final class BattleBoardActor extends Actor implements Disposable {
             int row = zombie.getPosition().getRow();
             double column = zombie.getPosition().getColumn();
             float x = gridLeft() + (float) ((column + 0.5d) * cellWidth());
-            float y = cellBottom(row) + cellHeight() * 0.42f;
+            float y = cellBottom(row) + cellHeight() * 0.37f;
             boolean animated = pamRenderer.drawZombie(batch, zombie, season, animationTime, x, y, scale);
             if (!animated) {
                 drawFallbackZombie(batch, x, y);
             }
+            float barWidth = Math.max(34f, cellWidth() * 0.58f);
             drawHealth(
                 batch,
                 x,
                 cellTop(row) - 2f,
                 zombie.getEffectiveHealth(),
                 Math.max(1, zombie.getMaximumHealth()),
-                44f
+                barWidth
             );
         }
     }
@@ -182,12 +208,13 @@ public final class BattleBoardActor extends Actor implements Disposable {
             float x = gridLeft()
                 + (float) ((projectile.getPosition().getColumn() + 0.5d) * cellWidth());
             int row = projectile.getPosition().getRow();
-            float y = cellBottom(row) + cellHeight() * 0.56f;
+            float y = cellBottom(row) + cellHeight() * 0.55f;
+            float size = Math.max(12f, Math.min(cellWidth(), cellHeight()) * 0.20f);
             if (projectileIcon != null) {
-                batch.draw(projectileIcon, x - 8f, y - 8f, 16f, 16f);
+                batch.draw(projectileIcon, x - size / 2f, y - size / 2f, size, size);
             } else {
                 batch.setColor(0.25f, 0.92f, 0.18f, 1f);
-                batch.draw(pixel, x - 6f, y - 6f, 12f, 12f);
+                batch.draw(pixel, x - size / 2f, y - size / 2f, size, size);
                 batch.setColor(Color.WHITE);
             }
         }
@@ -202,7 +229,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
             int col = sun.getPosition().getColumn();
             float x = cellCenterX(col);
             float y = cellBottom(row) + cellHeight() * 0.66f;
-            float size = Math.min(cellWidth(), cellHeight()) * 0.48f;
+            float size = Math.min(cellWidth(), cellHeight()) * 0.46f;
             if (sunIcon != null) {
                 batch.draw(sunIcon, x - size / 2f, y - size / 2f, size, size);
             } else {
@@ -218,13 +245,13 @@ public final class BattleBoardActor extends Actor implements Disposable {
             return;
         }
         Board board = controller.getGame().getBoard();
-        float width = cellWidth() * 0.74f;
+        float width = cellWidth() * 0.72f;
         float height = cellHeight() * 0.58f;
         for (LawnMower mower : board.getLawnMowers()) {
             if (mower.isActivated()) {
                 continue;
             }
-            float x = gridLeft() - width * 0.83f;
+            float x = gridLeft() - width * 0.90f;
             float y = cellBottom(mower.getRow()) + (cellHeight() - height) / 2f;
             batch.draw(mowerIcon, x, y, width, height);
         }
@@ -232,7 +259,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
 
     private void drawFallbackPlant(Batch batch, float x, float y, Plant plant) {
         TextureRegion packet = packetRegion(plant.getDefinition());
-        float size = Math.min(cellWidth(), cellHeight()) * 0.72f;
+        float size = Math.min(cellWidth(), cellHeight()) * 0.78f;
         if (packet != null) {
             batch.draw(packet, x - size / 2f, y - size * 0.35f, size, size);
             return;
@@ -243,8 +270,8 @@ public final class BattleBoardActor extends Actor implements Disposable {
     }
 
     private void drawFallbackZombie(Batch batch, float x, float y) {
-        float width = cellWidth() * 0.42f;
-        float height = cellHeight() * 0.70f;
+        float width = cellWidth() * 0.48f;
+        float height = cellHeight() * 0.82f;
         batch.setColor(0.54f, 0.62f, 0.45f, 1f);
         batch.draw(pixel, x - width / 2f, y - height * 0.25f, width, height);
         batch.setColor(Color.WHITE);
@@ -322,19 +349,19 @@ public final class BattleBoardActor extends Actor implements Disposable {
     }
 
     private float gridLeftLocal() {
-        return getWidth() * GRID_LEFT;
+        return mainLeft() - getX() + geometry.left() * mainWidth();
     }
 
     private float gridBottomLocal() {
-        return getHeight() * GRID_BOTTOM;
+        return geometry.bottom() * getHeight();
     }
 
     private float gridWidth() {
-        return getWidth() * GRID_WIDTH;
+        return mainWidth() * geometry.width();
     }
 
     private float gridHeight() {
-        return getHeight() * GRID_HEIGHT;
+        return getHeight() * geometry.height();
     }
 
     private float cellWidth() {
@@ -345,8 +372,41 @@ public final class BattleBoardActor extends Actor implements Disposable {
         return gridHeight() / Board.DEFAULT_ROWS;
     }
 
+    private float panoramaLeft() {
+        return getX() + (getWidth() - panoramaWidth()) / 2f + cameraOffsetX();
+    }
+
+    private float cameraOffsetX() {
+        float overflow = Math.max(0f, panoramaWidth() - getWidth());
+        return -overflow * 0.48f * cameraPan;
+    }
+
+    private float panoramaWidth() {
+        return pieceWidth(backgroundLeft, getHeight())
+            + pieceWidth(backgroundMain, getHeight())
+            + pieceWidth(backgroundRight, getHeight());
+    }
+
+    private float mainLeft() {
+        return panoramaLeft() + pieceWidth(backgroundLeft, getHeight());
+    }
+
+    private float mainWidth() {
+        return pieceWidth(backgroundMain, getHeight());
+    }
+
+    private float pieceWidth(TextureRegion region, float height) {
+        if (region == null || region.getRegionHeight() <= 0) {
+            return 0f;
+        }
+        return height * region.getRegionWidth() / region.getRegionHeight();
+    }
+
     private void loadRegions() {
-        background = assets.uiAtlas().region(backgroundId(level.getSeason()));
+        String prefix = backgroundPrefix(level.getSeason());
+        backgroundMain = assets.uiAtlas().region(prefix + "_TEXTURE");
+        backgroundLeft = assets.uiAtlas().region(prefix + "_TEXTURE_LEFT");
+        backgroundRight = assets.uiAtlas().region(prefix + "_TEXTURE_RIGHT");
         sunIcon = assets.uiAtlas().region("IMAGE_UI_HUD_INGAME_SUN");
         projectileIcon = findFirstRegion(
             "IMAGE_EFFECTS_PEA_PROJECTILE_PEA_PROJECTILE_25X25",
@@ -366,12 +426,12 @@ public final class BattleBoardActor extends Actor implements Disposable {
         return null;
     }
 
-    private String backgroundId(SeasonType season) {
+    private String backgroundPrefix(SeasonType season) {
         return switch (season) {
-            case ANCIENT_EGYPT -> "IMAGE_BACKGROUNDS_EGYPT_TEXTURE";
-            case FROSTBITE_CAVES -> "IMAGE_BACKGROUNDS_ICEAGE_TEXTURE";
-            case BIG_WAVE_BEACH -> "IMAGE_BACKGROUNDS_BEACH_TEXTURE";
-            case DARK_AGES -> "IMAGE_BACKGROUNDS_DARK_TEXTURE";
+            case ANCIENT_EGYPT -> "IMAGE_BACKGROUNDS_EGYPT";
+            case FROSTBITE_CAVES -> "IMAGE_BACKGROUNDS_ICEAGE";
+            case BIG_WAVE_BEACH -> "IMAGE_BACKGROUNDS_BEACH";
+            case DARK_AGES -> "IMAGE_BACKGROUNDS_DARK";
         };
     }
 
@@ -396,5 +456,16 @@ public final class BattleBoardActor extends Actor implements Disposable {
     @Override
     public void dispose() {
         pixel.dispose();
+    }
+
+    private record BoardGeometry(float left, float bottom, float width, float height) {
+        private static BoardGeometry forSeason(SeasonType season) {
+            return switch (season) {
+                case ANCIENT_EGYPT -> new BoardGeometry(0.244f, 0.102f, 0.728f, 0.640f);
+                case FROSTBITE_CAVES -> new BoardGeometry(0.250f, 0.134f, 0.716f, 0.601f);
+                case BIG_WAVE_BEACH -> new BoardGeometry(0.251f, 0.104f, 0.718f, 0.634f);
+                case DARK_AGES -> new BoardGeometry(0.246f, 0.099f, 0.723f, 0.643f);
+            };
+        }
     }
 }
