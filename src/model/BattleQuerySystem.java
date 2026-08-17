@@ -60,6 +60,7 @@ final class BattleQuerySystem {
             return false;
         }
         return engine.nextWaveIndex >= engine.currentLevel.getWaves().size()
+            && engine.pendingZombieSpawns.isEmpty()
             && engine.board.getZombies().isEmpty()
             && engine.board.getProspectorDynamites().isEmpty();
     }

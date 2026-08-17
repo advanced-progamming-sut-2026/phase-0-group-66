@@ -15,17 +15,26 @@ public final class LevelFactory {
     private void addWaves(Level level, int waveCount, int firstWaveCost) {
         int previousCost = firstWaveCost;
         for (int waveNumber = 1; waveNumber <= waveCount; waveNumber++) {
-            int cost;
-            if (waveNumber == 1) {
-                cost = previousCost;
-            } else if (waveNumber == waveCount) {
-                cost = roundToNearestFifty(previousCost * 2.0);
-            } else {
-                cost = roundToNearestFifty(previousCost * 1.25);
-            }
+            int cost = waveCost(level, waveNumber, waveCount, firstWaveCost, previousCost);
             level.addWave(new Wave(waveNumber, cost, 0));
             previousCost = cost;
         }
+    }
+
+    private int waveCost(Level level, int waveNumber, int waveCount,
+                         int firstWaveCost, int previousCost) {
+        if (level.getLevelNumber() == 1) {
+            return waveNumber == waveCount
+                ? roundToNearestFifty(firstWaveCost * 2.0)
+                : firstWaveCost;
+        }
+        if (waveNumber == 1) {
+            return previousCost;
+        }
+        if (waveNumber == waveCount) {
+            return roundToNearestFifty(previousCost * 2.0);
+        }
+        return roundToNearestFifty(previousCost * 1.25);
     }
 
     private int roundToNearestFifty(double value) {

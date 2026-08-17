@@ -27,6 +27,7 @@ final class BattleCommandSystem {
         engine.selectedPlants.clear();
         engine.levelBoostedPlants.clear();
         engine.cooldownTicks.clear();
+        engine.pendingZombieSpawns.clear();
         engine.waitingSunProducers.clear();
         engine.endangeredPositions.clear();
         engine.conveyorCards.clear();
@@ -163,6 +164,7 @@ final class BattleCommandSystem {
         engine.sunAmount = engine.currentLevel.getStartingSunAmount();
         engine.elapsedTicks = 0;
         engine.nextWaveIndex = 0;
+        engine.pendingZombieSpawns.clear();
         engine.nextSkySunTick = engine.calculateNextSkySunTick();
         engine.lostPlantsCount = 0;
         engine.plantedPositions.clear();
@@ -221,17 +223,13 @@ final class BattleCommandSystem {
         }
         Wave wave = waves.get(engine.nextWaveIndex);
         int targetCost = engine.adjustedWaveCost(wave.getDifficultyCost());
-        wave.populate(engine.zombieFactory,
-            engine.zombieFactory.getDefinitionsForSeason(engine.currentLevel.getSeason()), targetCost,
+        wave.populate(engine.zombieFactory, waveZombieDefinitions(engine), targetCost,
             engine.board.getRows(), engine.board.getCols() - 0.05, engine.random);
         engine.applyWaveStartSeasonEffects(wave);
         engine.configureWaveForSeason(wave);
         engine.configureZombieDifficultyAndDrops(wave);
         wave.startWave();
-        for (Zombie zombie : wave.getZombies()) {
-            engine.board.addZombie(zombie);
-            engine.recordZombieEncounter(zombie);
-        }
+        scheduleWaveZombies(engine, wave);
         ZombieObjectSystem.ensureZombieCompanions(engine);
         engine.currentWave = wave;
         engine.nextWaveIndex++;
@@ -248,6 +246,48 @@ final class BattleCommandSystem {
         }
         engine.board.refreshZombieTiles();
     }
+    private static List<ZombieDefinition> waveZombieDefinitions(Game engine) {
+        List<ZombieDefinition> seasonal = engine.zombieFactory
+            .getDefinitionsForSeason(engine.currentLevel.getSeason());
+        if (engine.currentLevel.getLevelNumber() != 1) {
+            return seasonal;
+        }
+        ZombieDefinition basic = engine.zombieFactory.findDefinition("Basic Zombie")
+            .filter(definition -> definition.isAvailableIn(engine.currentLevel.getSeason()))
+            .orElse(null);
+        if (basic != null) {
+            return List.of(basic);
+        }
+        int minimumCost = seasonal.stream()
+            .mapToInt(ZombieDefinition::getWavePointCost)
+            .filter(cost -> cost > 0)
+            .min()
+            .orElseThrow(() -> new IllegalStateException("No zombie is available for level 1."));
+        return seasonal.stream()
+            .filter(definition -> definition.getWavePointCost() == minimumCost)
+            .toList();
+    }
+
+    private static void scheduleWaveZombies(Game engine, Wave wave) {
+        boolean finalWave = wave.getWaveNumber() == engine.currentLevel.getWaves().size();
+        int delayTicks = 0;
+        for (Zombie zombie : wave.getZombies()) {
+            engine.recordZombieEncounter(zombie);
+            if (delayTicks == 0) {
+                engine.board.addZombie(zombie);
+            } else {
+                engine.pendingZombieSpawns.put(zombie, delayTicks);
+            }
+            delayTicks += nextSpawnGapTicks(engine, finalWave);
+        }
+    }
+
+    private static int nextSpawnGapTicks(Game engine, boolean finalWave) {
+        int minimum = finalWave ? 14 : 20;
+        int variation = finalWave ? 8 : 10;
+        return minimum + engine.random.nextInt(variation + 1);
+    }
+
     static void plant(Game engine, Plant plant, int row, int col) {
         engine.requireRunning();
         if (plant == null) {

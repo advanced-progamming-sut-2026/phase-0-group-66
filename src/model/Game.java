@@ -23,6 +23,7 @@ public class Game {
     final  LinkedHashSet<String> selectedPlants;
     final  LinkedHashSet<String> levelBoostedPlants;
     final  LinkedHashMap<String, Integer> cooldownTicks;
+    final  LinkedHashMap<Zombie, Integer> pendingZombieSpawns;
     final  LinkedHashSet<GridPosition> waitingSunProducers;
     final  LinkedHashSet<GridPosition> endangeredPositions;
     final  LinkedHashMap<String, Integer> conveyorCards;
@@ -94,6 +95,7 @@ public class Game {
         this.selectedPlants = new LinkedHashSet<>();
         this.levelBoostedPlants = new LinkedHashSet<>();
         this.cooldownTicks = new LinkedHashMap<>();
+        this.pendingZombieSpawns = new LinkedHashMap<>();
         this.waitingSunProducers = new LinkedHashSet<>();
         this.endangeredPositions = new LinkedHashSet<>();
         this.conveyorCards = new LinkedHashMap<>();

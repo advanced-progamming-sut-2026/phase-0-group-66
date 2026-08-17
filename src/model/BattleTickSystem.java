@@ -45,6 +45,7 @@ final class BattleTickSystem {
         if (engine.elapsedTicks % Game.TICKS_PER_SECOND == 0) {
             engine.resetWarmedIcePositions();
         }
+        tickPendingZombieSpawns(engine);
         engine.tickCooldowns();
         engine.tickConveyor();
         engine.tickSuns();
@@ -73,6 +74,21 @@ final class BattleTickSystem {
             }
         }
     }
+    static void tickPendingZombieSpawns(Game engine) {
+        Iterator<Map.Entry<Zombie, Integer>> iterator =
+            engine.pendingZombieSpawns.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Zombie, Integer> entry = iterator.next();
+            int remaining = entry.getValue() - 1;
+            if (remaining > 0) {
+                entry.setValue(remaining);
+                continue;
+            }
+            engine.board.addZombie(entry.getKey());
+            iterator.remove();
+        }
+    }
+
     static void tickCooldowns(Game engine) {
         for (Map.Entry<String, Integer> entry : engine.cooldownTicks.entrySet()) {
             if (entry.getValue() > 0) {
