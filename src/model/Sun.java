@@ -11,7 +11,7 @@ public class Sun {
     private boolean falling;
 
     public Sun() {
-        this(25, new GridPosition(0, 0), SunType.NORMAL, false);
+        this(50, new GridPosition(0, 0), SunType.NORMAL, false);
     }
 
     public Sun(int amount, GridPosition position) {

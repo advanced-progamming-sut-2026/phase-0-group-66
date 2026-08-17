@@ -223,6 +223,7 @@ final class BattleCommandSystem {
         }
         Wave wave = waves.get(engine.nextWaveIndex);
         int targetCost = engine.adjustedWaveCost(wave.getDifficultyCost());
+        targetCost = levelOneSpawnCost(engine, wave, targetCost);
         wave.populate(engine.zombieFactory, waveZombieDefinitions(engine), targetCost,
             engine.board.getRows(), engine.board.getCols() - 0.05, engine.random);
         engine.applyWaveStartSeasonEffects(wave);
@@ -246,6 +247,14 @@ final class BattleCommandSystem {
         }
         engine.board.refreshZombieTiles();
     }
+    private static int levelOneSpawnCost(Game engine, Wave wave, int defaultCost) {
+        if (engine.currentLevel.getLevelNumber() != 1) {
+            return defaultCost;
+        }
+        boolean finalWave = wave.getWaveNumber() == engine.currentLevel.getWaves().size();
+        return finalWave ? 1000 : 500;
+    }
+
     private static List<ZombieDefinition> waveZombieDefinitions(Game engine) {
         List<ZombieDefinition> seasonal = engine.zombieFactory
             .getDefinitionsForSeason(engine.currentLevel.getSeason());
@@ -283,7 +292,7 @@ final class BattleCommandSystem {
     }
 
     private static int nextSpawnGapTicks(Game engine, boolean finalWave) {
-        int minimum = finalWave ? 14 : 20;
+        int minimum = finalWave ? 22 : 32;
         int variation = finalWave ? 8 : 10;
         return minimum + engine.random.nextInt(variation + 1);
     }

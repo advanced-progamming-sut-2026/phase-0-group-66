@@ -1,7 +1,7 @@
 package model;
 
 public enum SunType {
-    NORMAL(25),
+    NORMAL(50),
     SPECIAL(100),
     RADIOACTIVE(0),
     PLANT_GENERATED(0);

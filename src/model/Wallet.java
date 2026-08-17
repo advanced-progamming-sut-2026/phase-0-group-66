@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 public class Wallet implements Serializable {
     private static final long serialVersionUID = 1L;
+    private static final int MAX_BALANCE = 999_999_999;
 
     private int coins;
     private int gems;
@@ -26,8 +27,7 @@ public class Wallet implements Serializable {
     }
 
     public void addCoins(int amount) {
-        requireNonNegative(amount);
-        coins += amount;
+        coins = safeAdd(coins, amount);
     }
 
     public boolean spendCoins(int amount) {
@@ -40,8 +40,7 @@ public class Wallet implements Serializable {
     }
 
     public void addGems(int amount) {
-        requireNonNegative(amount);
-        gems += amount;
+        gems = safeAdd(gems, amount);
     }
 
     public boolean spendGems(int amount) {
@@ -51,6 +50,14 @@ public class Wallet implements Serializable {
         }
         gems -= amount;
         return true;
+    }
+
+    private int safeAdd(int current, int amount) {
+        requireNonNegative(amount);
+        if (amount > MAX_BALANCE - current) {
+            throw new IllegalArgumentException("Wallet balance cannot exceed " + MAX_BALANCE + ".");
+        }
+        return current + amount;
     }
 
     private void requireNonNegative(int amount) {
