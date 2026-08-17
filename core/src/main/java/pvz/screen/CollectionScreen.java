@@ -2,40 +2,31 @@ package pvz.screen;
 
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
-import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.Align;
 import controller.ActionResult;
-import model.ArmorDefinition;
 import model.PlantDefinition;
 import model.PlantFamily;
 import model.ZombieDefinition;
 import pvz.PvzApplication;
-import pvz.ui.PlantAnimationActor;
 import pvz.ui.PlantPacketCard;
 import pvz.ui.CollectionCardFactory;
-import pvz.ui.UiTheme;
-import pvz.ui.ZombieArtResolver;
-import pvz.ui.ZombieAnimationActor;
+import pvz.ui.CollectionDetailPanel;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public final class CollectionScreen extends AuthenticatedUiScreen {
-    private static final float CARD_WIDTH = 132f;
-    private static final float CARD_HEIGHT = 140f;
+    private static final float CARD_WIDTH = PlantPacketCard.COLLECTION_WIDTH;
+    private static final float CARD_HEIGHT = PlantPacketCard.COLLECTION_HEIGHT;
     private static final int GRID_COLUMNS = 5;
-    private static final int PLANT_PURCHASE_COST = 2000;
 
     private enum Tab {
         PLANTS,
@@ -44,7 +35,9 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
 
     private final Label status;
     private final CollectionCardFactory cardFactory;
+    private final CollectionDetailPanel detailPanel;
     private final Table detailHost;
+    private ScrollPane detailScroll;
     private Tab tab = Tab.PLANTS;
     private String familyFilter = "ALL";
     private String plantStateFilter = "ALL";
@@ -56,6 +49,7 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
         super(app);
         status = statusLabel();
         cardFactory = new CollectionCardFactory(app.assets(), theme, user);
+        detailPanel = new CollectionDetailPanel(app, theme, user);
         detailHost = new Table();
         chooseInitialFocus();
         buildUi();
@@ -197,7 +191,7 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
             .minHeight(0f)
             .padRight(10f);
 
-        ScrollPane detailScroll = new ScrollPane(detailHost, theme.skin());
+        detailScroll = new ScrollPane(detailHost, theme.skin());
         detailScroll.setFadeScrollBars(false);
         detailScroll.setOverscroll(false, false);
         detailScroll.setScrollingDisabled(true, false);
@@ -216,6 +210,10 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
             .growX()
             .top();
         detailHost.invalidateHierarchy();
+        if (detailScroll != null) {
+            detailScroll.setScrollY(0f);
+            detailScroll.updateVisualScroll();
+        }
     }
 
     private Table buildCatalogPanel() {
@@ -237,11 +235,17 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
     private Table buildPlantGrid() {
         Table grid = new Table();
         grid.top().left();
+        grid.padBottom(12f);
+        grid.defaults()
+            .width(CARD_WIDTH)
+            .height(CARD_HEIGHT)
+            .minWidth(0f)
+            .pad(4f);
         int column = 0;
         for (PlantDefinition plant : filteredPlants()) {
             PlantPacketCard card = cardFactory.plantCard(plant);
             UiActions.onClick(card, () -> focusPlant(plant));
-            grid.add(card).width(CARD_WIDTH).height(CARD_HEIGHT).pad(4f);
+            grid.add(card);
             column++;
             if (column == GRID_COLUMNS) {
                 grid.row();
@@ -254,11 +258,17 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
     private Table buildZombieGrid() {
         Table grid = new Table();
         grid.top().left();
+        grid.padBottom(12f);
+        grid.defaults()
+            .width(CARD_WIDTH)
+            .height(CARD_HEIGHT)
+            .minWidth(0f)
+            .pad(4f);
         int column = 0;
         for (ZombieDefinition zombie : filteredZombies()) {
             Button card = cardFactory.zombieCard(zombie, isSeen(zombie));
             UiActions.onClick(card, () -> focusZombie(zombie));
-            grid.add(card).width(CARD_WIDTH).height(CARD_HEIGHT).pad(4f);
+            grid.add(card);
             column++;
             if (column == GRID_COLUMNS) {
                 grid.row();
@@ -302,117 +312,12 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
     }
 
     private Table buildDetailPanel() {
-        return tab == Tab.PLANTS ? buildPlantDetail() : buildZombieDetail();
-    }
-
-    private Table buildPlantDetail() {
-        Table panel = theme.settingsCardPanel(12f);
-        panel.top();
-        panel.add(theme.settingsTitle("PLANT INFO")).growX().padBottom(5f);
-        panel.row();
-        PlantDefinition plant = app.services().collection().findPlant(focusedPlant).orElse(null);
-        if (plant == null) {
-            panel.add(theme.settingsLabel("Select a plant.")).padTop(20f);
-            return panel;
+        if (tab == Tab.PLANTS) {
+            PlantDefinition plant = app.services().collection().findPlant(focusedPlant).orElse(null);
+            return detailPanel.buildPlant(plant, this::purchasePlant, this::upgradePlant);
         }
-
-        PlantAnimationActor animation = new PlantAnimationActor(app.assets(), plant);
-        if (animation.hasAnimation()) {
-            panel.add(animation).width(270f).height(135f).padBottom(2f);
-            panel.row();
-        }
-        Label name = theme.heading(plant.getName());
-        name.setWrap(false);
-        panel.add(name).growX().height(36f).padBottom(4f);
-        panel.row();
-        addDetail(panel, "Family", plant.getFamily().getDisplayName());
-        addDetail(panel, "Sun Cost", Integer.toString(plant.getCost()));
-        addDetail(panel, "Health", Integer.toString(plant.getBaseHealth()));
-        addDetail(panel, "Damage", plant.getDamage());
-        addDetail(panel, "Tags", plant.getTags().isEmpty() ? "-" : String.join(", ", plant.getTags()));
-        addDetail(panel, "Level", plantLevelText(plant));
-        addDetail(panel, "Seed Packets", seedText(plant));
-
-        Label ability = theme.settingsLabel(plant.getBaseAbility());
-        ability.setWrap(true);
-        ability.setAlignment(Align.left);
-        panel.add(ability).growX().height(60f).padTop(6f);
-        panel.row();
-        panel.add(buildPlantAction(plant)).growX().height(50f).padTop(7f);
-        return panel;
-    }
-
-    private Table buildPlantAction(PlantDefinition plant) {
-        Table row = new Table();
-        if (!isOwned(plant)) {
-            TextButton buy = theme.primaryButton("Buy - " + PLANT_PURCHASE_COST + " Coins");
-            UiActions.onClick(buy, () -> purchasePlant(plant));
-            row.add(buy).growX().height(48f);
-            return row;
-        }
-        TextButton upgrade = theme.primaryButton(isMaxLevel(plant) ? "MAX LEVEL" : upgradeText(plant));
-        upgrade.setDisabled(isMaxLevel(plant));
-        UiActions.onClick(upgrade, () -> upgradePlant(plant));
-        row.add(upgrade).growX().height(48f);
-        return row;
-    }
-
-    private Table buildZombieDetail() {
-        Table panel = theme.settingsCardPanel(12f);
-        panel.top();
-        panel.add(theme.settingsTitle("ZOMBIE INFO")).growX().padBottom(5f);
-        panel.row();
         ZombieDefinition zombie = app.services().collection().findZombie(focusedZombie).orElse(null);
-        if (zombie == null || !isSeen(zombie)) {
-            Label message = theme.settingsLabel("Discover a zombie in battle to reveal its information.");
-            message.setWrap(true);
-            message.setAlignment(Align.center);
-            panel.add(message).width(330f).padTop(28f);
-            return panel;
-        }
-
-        ZombieAnimationActor animation = new ZombieAnimationActor(app.assets(), zombie);
-        if (animation.hasAnimation()) {
-            panel.add(animation).width(280f).height(175f).padBottom(4f);
-            panel.row();
-        } else {
-            Image art = ZombieArtResolver.image(theme, zombie);
-            if (art != null) {
-                panel.add(art).width(250f).height(160f).padBottom(4f);
-                panel.row();
-            }
-        }
-        Label name = theme.heading(zombie.getDisplayName());
-        name.setWrap(false);
-        panel.add(name).growX().height(38f).padBottom(4f);
-        panel.row();
-        addDetail(panel, "Health", Integer.toString(zombie.getHitpoints()));
-        addDetail(panel, "Speed", String.format("%.2f", zombie.getSpeed()));
-        addDetail(panel, "Eat Damage", Integer.toString(zombie.getEatDamagePerSecond()));
-        addDetail(panel, "Ability", zombie.getAbility().name().replace('_', ' '));
-        addDetail(panel, "Armor", armorText(zombie));
-        addDetail(panel, "Worlds", Integer.toString(zombie.getSeasons().size()));
-        return panel;
-    }
-
-    private void addDetail(Table panel, String key, String value) {
-        Table row = new Table();
-        Label left = theme.settingsLabel(key);
-        Label right = theme.settingsLabel(value);
-        right.setAlignment(Align.right);
-        right.setEllipsis(true);
-        row.add(left).left();
-        row.add(right).expandX().right();
-        panel.add(row).growX().height(28f);
-        panel.row();
-    }
-
-    private String armorText(ZombieDefinition zombie) {
-        List<ArmorDefinition> armor = app.services().collection().getArmorDefinitions(zombie);
-        if (armor.isEmpty()) {
-            return "None";
-        }
-        return armor.stream().map(ArmorDefinition::getArmorType).reduce((a, b) -> a + ", " + b).orElse("None");
+        return detailPanel.buildZombie(zombie, zombie != null && isSeen(zombie));
     }
 
     private void switchTab(Tab next) {

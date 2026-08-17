@@ -53,6 +53,9 @@ public final class PlantAnimationActor extends Actor {
     }
 
     private static String resolvePam(PvzAssets assets, PlantDefinition plant) {
+        if (plant == null) {
+            return null;
+        }
         String normalized = normalize(plant.getKey());
         String alias = PAM_ALIASES.getOrDefault(normalized, normalized);
         String[] roots = {
@@ -106,19 +109,13 @@ public final class PlantAnimationActor extends Actor {
     private static Map<String, String> createAliases() {
         Map<String, String> aliases = new HashMap<>();
         aliases.put("TWINSUNFLOWER", "SUNFLOWER_TWIN");
+        aliases.put("PRIMALSUNFLOWER", "PRIMAL_SUNFLOWER");
         aliases.put("ROTOBAGA", "ROTORUTABAGA");
         aliases.put("MEGAGATLINGPEA", "MEGAGATLING");
         aliases.put("KERNELPULT", "KERNALPULT");
         aliases.put("PRIMALPOTATOMINE", "PRIMAL_POTATOMINE");
         aliases.put("ICEBERGLETTUCE", "ICEBURG");
         aliases.put("PHATBEET", "PHATBEETS");
-        aliases.put("ENLIGHTENMINT", "ENLIGHTENMINT");
-        aliases.put("APPEASEMINT", "APPEASEMINT");
-        aliases.put("ARMAMINT", "ARMAMINT");
-        aliases.put("BOMBARDMINT", "BOMBARDMINT");
-        aliases.put("ENFORCEMINT", "ENFORCEMINT");
-        aliases.put("REINFORCEMINT", "REINFORCEMINT");
-        aliases.put("ENCHANTMINT", "ENCHANTMINT");
         aliases.put("PIERCEMINT", "SPEARMINT");
         return aliases;
     }

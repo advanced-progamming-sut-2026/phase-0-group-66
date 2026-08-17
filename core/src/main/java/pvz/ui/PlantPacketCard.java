@@ -10,11 +10,10 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Scaling;
 import model.PlantDefinition;
 
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-
 public final class PlantPacketCard extends Button {
+    public static final float COLLECTION_WIDTH = 136f;
+    public static final float COLLECTION_HEIGHT = 130f;
+
     private static final String READY = "IMAGE_UI_PACKETS_READY";
     private static final String SELECTED = "IMAGE_UI_PACKETS_SELECTED";
     private static final String BOOSTED = "IMAGE_UI_PACKETS_BOOST";
@@ -24,14 +23,17 @@ public final class PlantPacketCard extends Button {
     private static final String BOOST_ICON = "IMAGE_UI_ALMANAC_ALMANAC_BOOST";
     private static final String SUN_ICON = "IMAGE_UI_HUD_INGAME_SUN";
 
-    private static final Map<String, String> PACKET_ALIASES = createPacketAliases();
-
     private final PlantDefinition definition;
 
     public PlantPacketCard(UiTheme theme, PlantDefinition definition, State state, boolean compact) {
         super(new ButtonStyle());
         this.definition = definition;
-        add(buildCard(theme, definition, state, compact)).grow();
+        Table content = buildCard(theme, definition, state, compact);
+        if (compact) {
+            add(content).grow();
+        } else {
+            add(content).width(COLLECTION_WIDTH).height(COLLECTION_HEIGHT);
+        }
     }
 
     public PlantDefinition definition() {
@@ -41,21 +43,38 @@ public final class PlantPacketCard extends Button {
     private Table buildCard(UiTheme theme, PlantDefinition plant, State state, boolean compact) {
         Table card = new Table();
         card.top();
-        Stack packet = buildPacket(theme, plant, state);
-        card.add(packet).growX().height(compact ? 76f : 94f);
+        card.defaults().minWidth(0f);
+        float width = compact ? 104f : COLLECTION_WIDTH;
+        float packetHeight = compact ? 76f : 84f;
+
+        card.add(buildPacket(theme, plant, state))
+            .width(width)
+            .height(packetHeight)
+            .minWidth(0f);
+
         if (!compact) {
             card.row();
             Label name = theme.fieldLabel(plant.getName());
             name.setAlignment(Align.center);
             name.setWrap(false);
             name.setEllipsis(true);
-            name.setFontScale(0.72f);
-            card.add(name).growX().height(25f).padTop(2f);
+            name.setFontScale(nameScale(plant.getName()));
+            card.add(name)
+                .width(width)
+                .height(24f)
+                .minWidth(0f)
+                .padTop(1f);
+
             card.row();
-            Label seeds = theme.settingsLabel(seedText(state));
-            seeds.setAlignment(Align.center);
-            seeds.setFontScale(0.66f);
-            card.add(seeds).growX().height(20f);
+            Label stateLabel = theme.settingsLabel(seedText(state));
+            stateLabel.setAlignment(Align.center);
+            stateLabel.setWrap(false);
+            stateLabel.setEllipsis(true);
+            stateLabel.setFontScale(0.57f);
+            card.add(stateLabel)
+                .width(width)
+                .height(20f)
+                .minWidth(0f);
         }
         return card;
     }
@@ -68,15 +87,14 @@ public final class PlantPacketCard extends Button {
             packet.add(background);
         }
 
-        String plantImageId = packetImageId(theme, plant);
-        Image plantImage = plantImageId == null ? null : theme.image(plantImageId);
+        Image plantImage = PlantArtResolver.packetImage(theme, plant);
         if (plantImage != null) {
             plantImage.setScaling(Scaling.fit);
             if (!state.owned() || !state.available()) {
                 plantImage.setColor(0.40f, 0.40f, 0.40f, 0.72f);
             }
             Table plantLayer = new Table();
-            plantLayer.add(plantImage).size(82f, 70f).center();
+            plantLayer.add(plantImage).size(78f, 66f).center();
             packet.add(plantLayer);
         }
 
@@ -94,7 +112,7 @@ public final class PlantPacketCard extends Button {
             Table lockLayer = new Table();
             Image lock = theme.image(LOCK);
             if (lock != null) {
-                lockLayer.add(lock).size(34f);
+                lockLayer.add(lock).size(32f);
             }
             packet.add(lockLayer);
         }
@@ -105,13 +123,13 @@ public final class PlantPacketCard extends Button {
         Table top = new Table();
         top.top();
         Label level = theme.settingsLabel("Lv " + state.level());
-        level.setFontScale(0.62f);
-        top.add(level).left().pad(4f, 6f, 0f, 0f);
+        level.setFontScale(0.56f);
+        top.add(level).left().pad(3f, 5f, 0f, 0f);
         top.add().expandX();
         if (state.boosted()) {
             Image boost = theme.image(BOOST_ICON);
             if (boost != null) {
-                top.add(boost).size(24f).pad(3f, 0f, 0f, 5f);
+                top.add(boost).size(21f).pad(3f, 0f, 0f, 4f);
             }
         }
         return top;
@@ -122,19 +140,33 @@ public final class PlantPacketCard extends Button {
         bottom.bottom().left();
         Image sun = theme.image(SUN_ICON);
         if (sun != null) {
-            bottom.add(sun).size(21f).pad(0f, 4f, 3f, 5f);
+            bottom.add(sun).size(18f).pad(0f, 3f, 3f, 4f);
         }
         Label cost = theme.settingsLabel(Integer.toString(plant.getCost()));
-        cost.setFontScale(0.70f);
-        bottom.add(cost).padBottom(4f);
+        cost.setFontScale(0.62f);
+        bottom.add(cost).padBottom(3f);
         bottom.add().expandX();
         if (state.owned() && !state.available() && !state.selected()) {
             Label blocked = theme.settingsLabel("BLOCKED");
             blocked.setColor(Color.FIREBRICK);
-            blocked.setFontScale(0.54f);
-            bottom.add(blocked).padRight(5f).padBottom(5f);
+            blocked.setFontScale(0.46f);
+            bottom.add(blocked).padRight(4f).padBottom(4f);
         }
         return bottom;
+    }
+
+    private float nameScale(String name) {
+        int length = name == null ? 0 : name.length();
+        if (length >= 19) {
+            return 0.48f;
+        }
+        if (length >= 16) {
+            return 0.53f;
+        }
+        if (length >= 13) {
+            return 0.58f;
+        }
+        return 0.64f;
     }
 
     private String seedText(State state) {
@@ -158,38 +190,6 @@ public final class PlantPacketCard extends Button {
             return SELECTED;
         }
         return READY;
-    }
-
-    private String packetImageId(UiTheme theme, PlantDefinition plant) {
-        String normalized = normalize(plant.getKey());
-        String alias = PACKET_ALIASES.getOrDefault(normalized, normalized);
-        String candidate = "IMAGE_UI_PACKETS_" + alias;
-        if (theme.drawable(candidate) != null) {
-            return candidate;
-        }
-        candidate = "IMAGE_UI_PACKETS_" + normalize(plant.getName());
-        if (theme.drawable(candidate) != null) {
-            return candidate;
-        }
-        return null;
-    }
-
-    private static String normalize(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
-    }
-
-    private static Map<String, String> createPacketAliases() {
-        Map<String, String> aliases = new HashMap<>();
-        aliases.put("GOOPEASHOOTER", "POISONPEASHOOTER");
-        aliases.put("MEGAGATLINGPEA", "MEGAGATLING");
-        aliases.put("CHERRYBOMB", "CHERRY_BOMB");
-        aliases.put("ICEBERGLETTUCE", "ICEBURG");
-        aliases.put("PIERCEMINT", "SPEARMINT");
-        aliases.put("CATTAILMINT", "MINTFAM_SHARP");
-        return aliases;
     }
 
     public record State(
