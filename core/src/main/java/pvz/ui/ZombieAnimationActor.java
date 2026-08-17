@@ -10,8 +10,41 @@ import pvz.libpvz.pam.PamPlayer;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public final class ZombieAnimationActor extends Actor {
+    private static final Map<String, String> PAM_BY_KEY = Map.ofEntries(
+        Map.entry("basic-zombie", "768/INITIAL/ZOMBIE/ZOMBIE_EGYPT_BASIC/ZOMBIE_EGYPT_BASIC.PAM"),
+        Map.entry("gargantuar", "768/INITIAL/ZOMBIE/EGYPT_GARGANTUAR/EGYPT_GARGANTUAR.PAM"),
+        Map.entry("imp", "768/INITIAL/ZOMBIE/ZOMBIE_EGYPT_IMP/ZOMBIE_EGYPT_IMP.PAM"),
+        Map.entry("ra-zombie", "768/INITIAL/ZOMBIE/ZOMBIE_EGYPT_RA/ZOMBIE_EGYPT_RA.PAM"),
+        Map.entry("tomb-raiser-zombie", "768/INITIAL/ZOMBIE/ZOMBIE_EGYPT_TOMBRAISER/ZOMBIE_EGYPT_TOMBRAISER.PAM"),
+        Map.entry("dodo-rider-zombie", "768/FULL/ZOMBIE/ZOMBIE_ICEAGE_DODORIDER/ZOMBIE_ICEAGE_DODORIDER.PAM"),
+        Map.entry("hunter-zombie", "768/FULL/ZOMBIE/ZOMBIE_ICEAGE_HUNTER/ZOMBIE_ICEAGE_HUNTER.PAM"),
+        Map.entry("troglobite", "768/FULL/ZOMBIE/ZOMBIE_ICEAGE_TROGLOBITE/ZOMBIE_ICEAGE_TROGLOBITE.PAM"),
+        Map.entry("fisherman-zombie", "768/FULL/ZOMBIE/ZOMBIE_BEACH_FISHERMAN/ZOMBIE_BEACH_FISHERMAN.PAM"),
+        Map.entry("octopus-zombie", "768/FULL/ZOMBIE/ZOMBIE_BEACH_OCTOPUS/ZOMBIE_BEACH_OCTOPUS.PAM"),
+        Map.entry("snorkel-zombie", "768/FULL/ZOMBIE/ZOMBIE_BEACH_SNORKELER/ZOMBIE_BEACH_SNORKELER.PAM"),
+        Map.entry("juggler-zombie", "768/FULL/ZOMBIE/ZOMBIE_DARK_JESTER/ZOMBIE_DARK_JESTER.PAM"),
+        Map.entry("wizard-zombie", "768/FULL/ZOMBIE/ZOMBIE_DARK_WIZARD/ZOMBIE_DARK_WIZARD.PAM"),
+        Map.entry("king-zombie", "768/FULL/ZOMBIE/ZOMBIE_DARK_KING/ZOMBIE_DARK_KING.PAM"),
+        Map.entry("dragon-imp", "768/FULL/ZOMBIE/ZOMBIE_DARK_IMP_DRAGON/ZOMBIE_DARK_IMP_DRAGON.PAM"),
+        Map.entry("all-star-zombie", "768/FULL/ZOMBIE/ZOMBIE_MODERN_ALLSTAR/ZOMBIE_MODERN_ALLSTAR.PAM"),
+        Map.entry("parasol-zombie", "768/FULL/ZOMBIE/ZOMBIE_LOSTCITY_JANE/ZOMBIE_LOSTCITY_JANE.PAM"),
+        Map.entry(
+            "turquoise-skull-zombie",
+            "768/FULL/ZOMBIE/ZOMBIE_LOSTCITY_CRYSTALSKULL/ZOMBIE_LOSTCITY_CRYSTALSKULL.PAM"
+        ),
+        Map.entry("prospector-zombie", "768/FULL/ZOMBIE/ZOMBIE_PROSPECTOR/ZOMBIE_PROSPECTOR.PAM"),
+        Map.entry("pianist-zombie", "768/FULL/ZOMBIE/ZOMBIE_PIANO/ZOMBIE_PIANO.PAM"),
+        Map.entry("newspaper-zombie", "768/FULL/ZOMBIE/ZOMBIE_MODERN_NEWSPAPER/ZOMBIE_MODERN_NEWSPAPER.PAM"),
+        Map.entry("arcade-zombie", "768/FULL/ZOMBIE/ZOMBIE_80S_ARCADE/ZOMBIE_80S_ARCADE.PAM"),
+        Map.entry(
+            "barrel-roller-zombie",
+            "768/FULL/ZOMBIE/ZOMBIE_PIRATE_BARREL_PUSHER/ZOMBIE_PIRATE_BARREL_PUSHER.PAM"
+        )
+    );
+
     private final PamPlayer player;
     private final String pamPath;
     private final String clip;
@@ -41,32 +74,23 @@ public final class ZombieAnimationActor extends Actor {
         Color before = new Color(batch.getColor());
         Color tint = getColor();
         batch.setColor(tint.r, tint.g, tint.b, tint.a * parentAlpha);
-        float scale = Math.min(getWidth() / 260f, getHeight() / 260f);
+        float scale = Math.min(getWidth() / 270f, getHeight() / 270f);
         float x = getX() + getWidth() * 0.5f;
-        float y = getY() + getHeight() * 0.22f;
+        float y = getY() + getHeight() * 0.20f;
         player.draw(batch, pamPath, clip, stateTime, x, y, scale, scale, true);
         batch.setColor(before);
     }
 
     private static String resolvePam(PvzAssets assets, ZombieDefinition zombie) {
-        String alias = zombieAlias(zombie.getKey());
-        String[] roots = {
-            "768/INITIAL/ZOMBIE/",
-            "768/FULL/ZOMBIE/"
-        };
-        for (String root : roots) {
-            String candidate = root + alias + "/" + alias + ".PAM";
-            FileHandle file = assets.root().child("IMAGES").child(candidate);
-            if (file.exists()) {
-                return candidate;
-            }
+        if (zombie == null || zombie.getKey() == null) {
+            return null;
         }
-        return resolveBasicFallback(assets);
-    }
-
-    private static String resolveBasicFallback(PvzAssets assets) {
-        String path = "768/INITIAL/ZOMBIE/ZOMBIE_EGYPT_BASIC/ZOMBIE_EGYPT_BASIC.PAM";
-        return assets.root().child("IMAGES").child(path).exists() ? path : null;
+        String path = PAM_BY_KEY.get(zombie.getKey());
+        if (path == null) {
+            return null;
+        }
+        FileHandle file = assets.root().child("IMAGES").child(path);
+        return file.exists() ? path : null;
     }
 
     private static String chooseClip(PamPlayer player, String pam) {
@@ -96,42 +120,5 @@ public final class ZombieAnimationActor extends Actor {
         } catch (RuntimeException exception) {
             return null;
         }
-    }
-
-    private static String zombieAlias(String key) {
-        String normalized = normalize(key);
-        return switch (normalized) {
-            case "RAZOMBIE" -> "ZOMBIE_EGYPT_RA";
-            case "EXPLORERZOMBIE" -> "ZOMBIE_EXPLORER";
-            case "TOMBRAISERZOMBIE" -> "ZOMBIE_EGYPT_TOMBRAISER";
-            case "DODORIDERZOMBIE" -> "ZOMBIE_ICEAGE_DODORIDER";
-            case "HUNTERZOMBIE" -> "ZOMBIE_ICEAGE_HUNTER";
-            case "TROGLOBITE" -> "ZOMBIE_ICEAGE_TROGLOBITE";
-            case "FISHERMANZOMBIE" -> "ZOMBIE_BEACH_FISHERMAN";
-            case "OCTOPUSZOMBIE" -> "ZOMBIE_BEACH_OCTOPUS";
-            case "SNORKELZOMBIE" -> "ZOMBIE_BEACH_SNORKELER";
-            case "JUGGLERZOMBIE" -> "ZOMBIE_DARK_JESTER";
-            case "WIZARDZOMBIE" -> "ZOMBIE_DARK_WIZARD";
-            case "KINGZOMBIE" -> "ZOMBIE_DARK_KING";
-            case "DRAGONIMP" -> "ZOMBIE_DARK_IMP_DRAGON";
-            case "ALLSTARZOMBIE" -> "ZOMBIE_MODERN_ALLSTAR";
-            case "PARASOLZOMBIE" -> "ZOMBIE_LOSTCITY_JANE";
-            case "TURQUOISESKULLZOMBIE" -> "ZOMBIE_LOSTCITY_CRYSTALSKULL";
-            case "PROSPECTORZOMBIE" -> "ZOMBIE_PROSPECTOR";
-            case "PIANISTZOMBIE" -> "ZOMBIE_PIANO";
-            case "NEWSPAPERZOMBIE" -> "ZOMBIE_MODERN_NEWSPAPER";
-            case "ARCADEZOMBIE" -> "ZOMBIE_80S_ARCADE";
-            case "BARRELROLLERZOMBIE" -> "ZOMBIE_PIRATE_BARREL_PUSHER";
-            case "GARGANTUAR" -> "EGYPT_GARGANTUAR";
-            case "IMP" -> "ZOMBIE_EGYPT_IMP";
-            default -> "ZOMBIE_EGYPT_BASIC";
-        };
-    }
-
-    private static String normalize(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
     }
 }
