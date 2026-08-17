@@ -1,5 +1,6 @@
 package pvz.screen;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -7,6 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
+import controller.ActionResult;
 import model.News;
 import model.User;
 import pvz.PvzApplication;
@@ -46,6 +48,8 @@ public final class MainMenuScreen extends BaseUiScreen {
         screen.add().expandY();
         screen.row();
         screen.add(buildBottomBar()).growX();
+        screen.row().padTop(12f);
+        screen.add(buildAccountFooter()).growX();
 
         root.add(screen).grow();
     }
@@ -157,6 +161,31 @@ public final class MainMenuScreen extends BaseUiScreen {
 
         layer.add(badge).size(34f).padTop(-6f).padRight(-6f);
         return layer;
+    }
+
+    private Table buildAccountFooter() {
+        Table footer = new Table();
+
+        Label welcome = theme.bodyLabel("Welcome back, " + user.getNickname() + ".");
+        welcome.setWrap(false);
+        footer.add(welcome).width(360f).left();
+        footer.add().expandX();
+
+        TextButton logout = theme.secondaryButton("Logout");
+        TextButton exit = theme.tertiaryButton("Exit Game");
+        UiActions.onClick(logout, this::logout);
+        UiActions.onClick(exit, Gdx.app::exit);
+
+        footer.add(logout).width(150f).height(48f).padRight(8f);
+        footer.add(exit).width(150f).height(48f);
+        return footer;
+    }
+
+    private void logout() {
+        ActionResult result = app.services().auth().logout();
+        if (result.isSuccessful()) {
+            app.showLogin();
+        }
     }
 
     private long unreadNewsCount() {

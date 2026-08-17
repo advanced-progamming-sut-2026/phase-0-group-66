@@ -9,6 +9,7 @@ import pvz.app.DisplaySettings;
 import pvz.app.PvzServices;
 import pvz.assets.PvzAssets;
 import pvz.screen.AdventureScreen;
+import pvz.screen.BattleScreen;
 import pvz.screen.ChapterLevelsScreen;
 import pvz.screen.ForgotPasswordScreen;
 import pvz.screen.LevelBriefingScreen;
@@ -16,6 +17,7 @@ import pvz.screen.LoginScreen;
 import pvz.screen.MainMenuScreen;
 import pvz.screen.NewsScreen;
 import pvz.screen.PlaceholderScreen;
+import pvz.screen.PlantSelectionScreen;
 import pvz.screen.ProfileScreen;
 import pvz.screen.RegisterScreen;
 import pvz.screen.SecurityQuestionScreen;
@@ -114,6 +116,22 @@ public final class PvzApplication extends Game {
             return;
         }
         changeScreen(new LevelBriefingScreen(this, chapter, level));
+    }
+
+    public void showPlantSelection(Chapter chapter, Level level) {
+        if (!services.auth().isAuthenticated()) {
+            showLogin();
+            return;
+        }
+        changeScreen(new PlantSelectionScreen(this, chapter, level));
+    }
+
+    public void showBattle(Chapter chapter, Level level) {
+        if (!services.auth().isAuthenticated()) {
+            showLogin();
+            return;
+        }
+        changeScreen(new BattleScreen(this, chapter, level));
     }
 
     public void showProfile() {

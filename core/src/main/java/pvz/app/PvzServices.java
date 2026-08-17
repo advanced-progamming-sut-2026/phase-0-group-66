@@ -1,6 +1,7 @@
 package pvz.app;
 
 import controller.AuthController;
+import controller.CollectionController;
 import controller.GameController;
 import controller.NewsController;
 import controller.QuestController;
@@ -22,6 +23,7 @@ public final class PvzServices {
 
     private final AuthController authController;
     private final ProfileController profileController;
+    private final CollectionController collectionController;
     private final SettingsController settingsController;
     private final NewsController newsController;
     private final QuestController questController;
@@ -36,6 +38,12 @@ public final class PvzServices {
         authController = new AuthController(repository);
         gameData = GameData.loadDefault();
         profileController = new ProfileController(authController);
+        collectionController = new CollectionController(
+            authController,
+            gameData.getPlantFactory(),
+            gameData.getZombieFactory(),
+            gameData.getArmorFactory()
+        );
         settingsController = new SettingsController(authController);
         newsController = new NewsController(authController);
         questController = new QuestController(
@@ -58,6 +66,10 @@ public final class PvzServices {
 
     public ProfileController profile() {
         return profileController;
+    }
+
+    public CollectionController collection() {
+        return collectionController;
     }
 
     public SettingsController settings() {

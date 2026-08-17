@@ -103,10 +103,15 @@ public final class LevelBriefingScreen extends AuthenticatedUiScreen {
             return;
         }
         if (level.getRuleStrategy().allowsManualPlantSelection()) {
-            app.showPlaceholder("Plant Selection");
-        } else {
-            app.showPlaceholder("Battle Screen - " + pretty(level.getSpecialType().name()));
+            app.showPlantSelection(chapter, level);
+            return;
         }
+        ActionResult start = app.services().game().startGame();
+        if (!start.isSuccessful()) {
+            theme.showError(status, start.getMessage());
+            return;
+        }
+        app.showBattle(chapter, level);
     }
 
     private String pretty(String value) {
