@@ -6,6 +6,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Scaling;
 import controller.ActionResult;
@@ -94,7 +95,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
 
         Table hud = new Table();
         hud.top();
-        hud.add(buildTopHud()).growX().height(92f);
+        hud.add(buildTopHud()).growX().height(118f);
         hud.row();
         hud.add().expand();
         hud.row();
@@ -107,6 +108,8 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     private Table buildIntroLayer() {
         Table layer = new Table();
         layer.center();
+        layer.setTouchable(Touchable.disabled);
+        introLabel.setTouchable(Touchable.disabled);
         layer.add(introLabel).width(560f).height(90f);
         return layer;
     }
@@ -232,7 +235,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
             if (definition == null) {
                 continue;
             }
-            seedBank.add(seedCard(definition)).width(84f).height(88f).padRight(4f);
+            seedBank.add(seedCard(definition)).width(104f).height(110f).padRight(6f);
         }
     }
 
@@ -251,7 +254,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         if (packet != null) {
             packet.setScaling(Scaling.fit);
             Table packetLayer = new Table();
-            packetLayer.pad(5f, 6f, 11f, 6f);
+            packetLayer.pad(7f, 8f, 14f, 8f);
             packetLayer.add(packet).grow();
             stack.add(packetLayer);
         }
@@ -260,10 +263,10 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         Table text = new Table();
         text.bottom();
         Label cost = theme.settingsLabel(Integer.toString(definition.getCost()));
-        cost.setFontScale(0.66f);
+        cost.setFontScale(0.72f);
         String cooldownText = cooldown <= 0 ? "READY" : String.format("%.1fs", cooldown / 10f);
         Label cooldownLabel = theme.settingsLabel(cooldownText);
-        cooldownLabel.setFontScale(0.58f);
+        cooldownLabel.setFontScale(0.64f);
         text.add(cost).expandX().left().padLeft(5f);
         text.add(cooldownLabel).right().padRight(4f);
         stack.add(text);
