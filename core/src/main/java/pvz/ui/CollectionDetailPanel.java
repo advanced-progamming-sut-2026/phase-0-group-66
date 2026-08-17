@@ -19,8 +19,9 @@ import java.util.function.Consumer;
 
 public final class CollectionDetailPanel {
     private static final int PLANT_PURCHASE_COST = 2000;
-    private static final float KEY_WIDTH = 112f;
-    private static final float VALUE_WIDTH = 215f;
+    private static final float PANEL_CONTENT_WIDTH = 332f;
+    private static final float KEY_WIDTH = 108f;
+    private static final float VALUE_WIDTH = 216f;
 
     private final PvzApplication app;
     private final UiTheme theme;
@@ -37,7 +38,9 @@ public final class CollectionDetailPanel {
                             Consumer<PlantDefinition> upgradeAction) {
         Table panel = basePanel("PLANT INFO");
         if (plant == null) {
-            panel.add(centeredMessage("Select a plant.")).padTop(20f);
+            panel.add(centeredMessage("Select a plant."))
+                .width(PANEL_CONTENT_WIDTH)
+                .padTop(20f);
             return panel;
         }
 
@@ -72,7 +75,10 @@ public final class CollectionDetailPanel {
         addDescription(panel, upgradeDetails(plant));
 
         panel.add(buildPlantAction(plant, purchaseAction, upgradeAction))
-            .growX().height(50f).padTop(8f);
+            .width(PANEL_CONTENT_WIDTH)
+            .minWidth(0f)
+            .height(50f)
+            .padTop(8f);
         return panel;
     }
 
@@ -81,7 +87,7 @@ public final class CollectionDetailPanel {
         if (zombie == null || !seen) {
             panel.add(centeredMessage(
                 "Discover a zombie in battle to reveal its information."))
-                .width(330f).padTop(28f);
+                .width(PANEL_CONTENT_WIDTH).padTop(28f);
             return panel;
         }
 
@@ -104,9 +110,13 @@ public final class CollectionDetailPanel {
     }
 
     private Table basePanel(String title) {
-        Table panel = theme.settingsCardPanel(12f);
+        Table panel = theme.settingsCardPanel(10f);
+        panel.defaults().minWidth(0f);
         panel.top();
-        panel.add(theme.settingsTitle(title)).growX().padBottom(5f);
+        panel.add(theme.settingsTitle(title))
+            .width(PANEL_CONTENT_WIDTH)
+            .minWidth(0f)
+            .padBottom(5f);
         panel.row();
         return panel;
     }
@@ -114,13 +124,13 @@ public final class CollectionDetailPanel {
     private void addPlantVisual(Table panel, PlantDefinition plant) {
         PlantAnimationActor animation = new PlantAnimationActor(app.assets(), plant);
         if (animation.hasAnimation()) {
-            panel.add(animation).width(270f).height(135f).padBottom(2f);
+            panel.add(animation).width(250f).height(135f).padBottom(2f);
             panel.row();
             return;
         }
         Image art = PlantArtResolver.packetImage(theme, plant);
         if (art != null) {
-            panel.add(art).width(150f).height(120f).padBottom(4f);
+            panel.add(art).width(145f).height(115f).padBottom(4f);
             panel.row();
         }
     }
@@ -128,13 +138,13 @@ public final class CollectionDetailPanel {
     private void addZombieVisual(Table panel, ZombieDefinition zombie) {
         ZombieAnimationActor animation = new ZombieAnimationActor(app.assets(), zombie);
         if (animation.hasAnimation()) {
-            panel.add(animation).width(280f).height(175f).padBottom(4f);
+            panel.add(animation).width(250f).height(165f).padBottom(4f);
             panel.row();
             return;
         }
         Image art = ZombieArtResolver.image(theme, zombie);
         if (art != null) {
-            panel.add(art).width(250f).height(160f).padBottom(4f);
+            panel.add(art).width(235f).height(150f).padBottom(4f);
             panel.row();
         }
     }
@@ -143,7 +153,11 @@ public final class CollectionDetailPanel {
         Label name = theme.heading(text);
         name.setWrap(true);
         name.setAlignment(Align.center);
-        panel.add(name).growX().minHeight(38f).padBottom(4f);
+        panel.add(name)
+            .width(PANEL_CONTENT_WIDTH)
+            .minWidth(0f)
+            .minHeight(38f)
+            .padBottom(4f);
         panel.row();
     }
 
@@ -154,16 +168,27 @@ public final class CollectionDetailPanel {
         left.setAlignment(Align.left | Align.top);
         right.setWrap(true);
         right.setAlignment(Align.right | Align.top);
-        row.add(left).width(KEY_WIDTH).left().top();
-        row.add(right).width(VALUE_WIDTH).expandX().right().top();
-        panel.add(row).growX().minHeight(28f).padBottom(2f);
+        left.setWrap(false);
+        row.defaults().minWidth(0f);
+        row.add(left).width(KEY_WIDTH).minWidth(0f).left().top();
+        row.add(right).width(VALUE_WIDTH).minWidth(0f).right().top();
+        panel.add(row)
+            .width(PANEL_CONTENT_WIDTH)
+            .minWidth(0f)
+            .minHeight(28f)
+            .padBottom(2f);
         panel.row();
     }
 
     private void addSection(Table panel, String title) {
         Label heading = theme.settingsLabel(title);
         heading.setAlignment(Align.left);
-        panel.add(heading).growX().left().padTop(9f).padBottom(2f);
+        panel.add(heading)
+            .width(PANEL_CONTENT_WIDTH)
+            .minWidth(0f)
+            .left()
+            .padTop(9f)
+            .padBottom(2f);
         panel.row();
     }
 
@@ -171,7 +196,11 @@ public final class CollectionDetailPanel {
         Label description = theme.settingsLabel(nonEmpty(text));
         description.setWrap(true);
         description.setAlignment(Align.left | Align.top);
-        panel.add(description).width(325f).growX().left().padBottom(4f);
+        panel.add(description)
+            .width(PANEL_CONTENT_WIDTH)
+            .minWidth(0f)
+            .left()
+            .padBottom(4f);
         panel.row();
     }
 

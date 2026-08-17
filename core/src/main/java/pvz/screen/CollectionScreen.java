@@ -1,5 +1,6 @@
 package pvz.screen;
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -27,6 +28,8 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
     private static final float CARD_WIDTH = PlantPacketCard.COLLECTION_WIDTH;
     private static final float CARD_HEIGHT = PlantPacketCard.COLLECTION_HEIGHT;
     private static final int GRID_COLUMNS = 5;
+    private static final float CATALOG_WIDTH = 785f;
+    private static final float DETAIL_WIDTH = 390f;
 
     private enum Tab {
         PLANTS,
@@ -113,14 +116,14 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
         row.add(zombies).width(155f).height(48f).padRight(16f);
 
         if (tab == Tab.PLANTS) {
-            row.add(theme.settingsLabel("Family")).padRight(5f);
+            row.add(filterCaption("Family")).padRight(8f);
             SelectBox<String> families = buildFamilyFilter();
             row.add(families).width(185f).height(46f).padRight(12f);
-            row.add(theme.settingsLabel("Status")).padRight(5f);
+            row.add(filterCaption("Status")).padRight(8f);
             SelectBox<String> states = buildPlantStateFilter();
             row.add(states).width(170f).height(46f);
         } else {
-            row.add(theme.settingsLabel("Discovery")).padRight(5f);
+            row.add(filterCaption("Discovery")).padRight(8f);
             SelectBox<String> states = buildZombieStateFilter();
             row.add(states).width(180f).height(46f);
         }
@@ -130,6 +133,16 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
         UiActions.onClick(back, app::showAdventure);
         row.add(back).width(140f).height(46f).padLeft(10f);
         return row;
+    }
+
+
+    private Label filterCaption(String text) {
+        Label label = theme.title(text);
+        label.setColor(Color.WHITE);
+        label.setFontScale(0.46f);
+        label.setAlignment(Align.center);
+        label.setWrap(false);
+        return label;
     }
 
     private SelectBox<String> buildFamilyFilter() {
@@ -185,7 +198,7 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
 
         Table catalog = buildCatalogPanel();
         content.add(catalog)
-            .width(790f)
+            .width(CATALOG_WIDTH)
             .height(500f)
             .minWidth(0f)
             .minHeight(0f)
@@ -196,7 +209,7 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
         detailScroll.setOverscroll(false, false);
         detailScroll.setScrollingDisabled(true, false);
         content.add(detailScroll)
-            .width(375f)
+            .width(DETAIL_WIDTH)
             .height(500f)
             .minWidth(0f)
             .minHeight(0f);
@@ -205,12 +218,13 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
 
     private void refreshDetail() {
         detailHost.clearChildren();
-        detailHost.top();
+        detailHost.top().left();
         detailHost.add(buildDetailPanel())
-            .growX()
+            .width(360f)
             .top();
         detailHost.invalidateHierarchy();
         if (detailScroll != null) {
+            detailScroll.setScrollX(0f);
             detailScroll.setScrollY(0f);
             detailScroll.updateVisualScroll();
         }
