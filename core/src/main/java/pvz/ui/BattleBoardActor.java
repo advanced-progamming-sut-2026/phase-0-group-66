@@ -20,6 +20,9 @@ import model.Sun;
 import model.Zombie;
 import pvz.assets.PvzAssets;
 
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 
 public final class BattleBoardActor extends Actor implements Disposable {
@@ -30,6 +33,9 @@ public final class BattleBoardActor extends Actor implements Disposable {
     private final BiConsumer<Integer, Integer> cellClick;
     private final Texture pixel;
     private final BoardGeometry geometry;
+    private final Map<Plant, Float> attackStartedAt = new IdentityHashMap<>();
+    private final Map<Plant, Float> attackUntil = new IdentityHashMap<>();
+    private final Map<Plant, Integer> lastActionTicks = new IdentityHashMap<>();
 
     private TextureRegion backgroundLeft;
     private TextureRegion backgroundMain;
@@ -155,7 +161,10 @@ public final class BattleBoardActor extends Actor implements Disposable {
     }
 
     private void drawPlants(Batch batch, Board board) {
-        float scale = cellHeight() / 235f * 1.18f;
+        float scale = cellHeight() / 235f * 0.96f;
+        attackStartedAt.keySet().removeIf(plant -> !board.getPlants().contains(plant));
+        attackUntil.keySet().removeIf(plant -> !board.getPlants().contains(plant));
+        lastActionTicks.keySet().removeIf(plant -> !board.getPlants().contains(plant));
         for (Plant plant : board.getPlants()) {
             if (plant == null || plant.isDestroyed() || plant.getPosition() == null) {
                 continue;
@@ -164,7 +173,13 @@ public final class BattleBoardActor extends Actor implements Disposable {
             int col = plant.getPosition().getColumn();
             float x = cellCenterX(col);
             float y = cellBottom(row) + cellHeight() * 0.38f;
-            boolean animated = pamRenderer.drawPlant(batch, plant, animationTime, x, y, scale);
+            boolean attacking = updateAttackState(plant, board);
+            float clipTime = attacking
+                ? animationTime - attackStartedAt.getOrDefault(plant, animationTime)
+                : animationTime;
+            boolean animated = pamRenderer.drawPlant(
+                batch, plant, clipTime, x, y, scale, attacking
+            );
             if (!animated) {
                 drawFallbackPlant(batch, x, y, plant);
             }
@@ -173,22 +188,55 @@ public final class BattleBoardActor extends Actor implements Disposable {
         }
     }
 
+    private boolean updateAttackState(Plant plant, Board board) {
+        int currentTicks = plant.getActionTicksRemaining();
+        Integer previousTicks = lastActionTicks.put(plant, currentTicks);
+        if (!plant.isShooter()) {
+            attackStartedAt.remove(plant);
+            attackUntil.remove(plant);
+            return false;
+        }
+        boolean timerReset = previousTicks != null && currentTicks > previousTicks + 2;
+        boolean hasTarget = board.findNearestZombieAhead(
+            plant.getPosition().getRow(),
+            plant.getPosition().getColumn()
+        ) != null;
+        if (timerReset && hasTarget) {
+            attackStartedAt.put(plant, animationTime);
+            attackUntil.put(plant, animationTime + 0.52f);
+        }
+        float until = attackUntil.getOrDefault(plant, -1f);
+        if (animationTime <= until) {
+            return true;
+        }
+        attackStartedAt.remove(plant);
+        attackUntil.remove(plant);
+        return false;
+    }
+
     private void drawZombies(Batch batch, Board board) {
-        float scale = cellHeight() / 250f * 1.24f;
+        float scale = cellHeight() / 250f * 0.82f;
         SeasonType season = level.getSeason();
-        for (Zombie zombie : board.getZombies()) {
+        List<Zombie> zombies = zombiesToDraw(board);
+        int[] previewLaneCount = new int[Board.DEFAULT_ROWS];
+        for (Zombie zombie : zombies) {
             if (zombie == null || zombie.isDead() || zombie.getPosition() == null) {
                 continue;
             }
             int row = zombie.getPosition().getRow();
             double column = zombie.getPosition().getColumn();
+            if (cameraPan > 0.05f && row >= 0 && row < previewLaneCount.length) {
+                column += previewLaneCount[row]++ * 0.34d;
+            }
             float x = gridLeft() + (float) ((column + 0.5d) * cellWidth());
-            float y = cellBottom(row) + cellHeight() * 0.37f;
-            boolean animated = pamRenderer.drawZombie(batch, zombie, season, animationTime, x, y, scale);
+            float y = cellBottom(row) + cellHeight() * 0.34f;
+            boolean animated = pamRenderer.drawZombie(
+                batch, zombie, season, animationTime, x, y, scale
+            );
             if (!animated) {
                 drawFallbackZombie(batch, x, y);
             }
-            float barWidth = Math.max(34f, cellWidth() * 0.58f);
+            float barWidth = Math.max(34f, cellWidth() * 0.52f);
             drawHealth(
                 batch,
                 x,
@@ -198,6 +246,14 @@ public final class BattleBoardActor extends Actor implements Disposable {
                 barWidth
             );
         }
+    }
+
+    private List<Zombie> zombiesToDraw(Board board) {
+        model.Game game = controller.getGame();
+        if (cameraPan > 0.05f && game != null && game.getCurrentWave() != null) {
+            return game.getCurrentWave().getZombies();
+        }
+        return board.getZombies();
     }
 
     private void drawProjectiles(Batch batch, Board board) {
@@ -409,9 +465,8 @@ public final class BattleBoardActor extends Actor implements Disposable {
         backgroundRight = assets.uiAtlas().region(prefix + "_TEXTURE_RIGHT");
         sunIcon = assets.uiAtlas().region("IMAGE_UI_HUD_INGAME_SUN");
         projectileIcon = findFirstRegion(
-            "IMAGE_EFFECTS_PEA_PROJECTILE_PEA_PROJECTILE_25X25",
-            "IMAGE_EFFECTS_PEA_PROJECTILE_PEA_PROJECTILE_26X26",
-            "IMAGE_EFFECTS_PEA_PROJECTILE_PEA_PROJECTILE_30X30"
+            "IMAGE_EFFECTS_T_PEA_PROJECTILE_T_PEA_PROJECTILE_39X36",
+            "IMAGE_EFFECTS_T_PEA_PROJECTILE_T_PEA_PROJECTILE_39X36_2"
         );
         mowerIcon = assets.uiAtlas().region(mowerId(level.getSeason()));
     }

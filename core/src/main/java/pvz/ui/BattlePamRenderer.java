@@ -17,13 +17,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class BattlePamRenderer {
-    /*
-     * The PVZ background art and PAM animation coordinate systems are not 1:1.
-     * Keep this correction local to the battle renderer instead of modifying
-     * libPVZ, so the asset browser and PAM offsets keep their original values.
-     */
     private static final float WORLD_ASSET_SCALE = 1.5625f;
-
     private final PvzAssets assets;
     private final PamPlayer player;
     private final Map<String, AnimationSpec> plantSpecs = new HashMap<>();
@@ -34,7 +28,15 @@ public final class BattlePamRenderer {
         this.player = assets.animations();
     }
 
-    public boolean drawPlant(Batch batch, Plant plant, float time, float x, float y, float scale) {
+    public boolean drawPlant(
+        Batch batch,
+        Plant plant,
+        float time,
+        float x,
+        float y,
+        float scale,
+        boolean attacking
+    ) {
         if (plant == null) {
             return false;
         }
@@ -42,7 +44,10 @@ public final class BattlePamRenderer {
             plant.getDefinition().getKey(),
             ignored -> resolvePlant(plant.getDefinition())
         );
-        return draw(batch, spec, time, x, y, scale, false);
+        String clip = attacking && spec.actionClip() != null
+            ? spec.actionClip()
+            : spec.primaryClip();
+        return draw(batch, spec.path(), clip, time, x, y, scale, false);
     }
 
     public boolean drawZombie(
@@ -62,19 +67,29 @@ public final class BattlePamRenderer {
             key,
             ignored -> resolveZombie(zombie.getDefinition(), season)
         );
-        return draw(batch, spec, time, x, y, scale, zombie.isHypnotized());
+        return draw(
+            batch,
+            spec.path(),
+            spec.primaryClip(),
+            time,
+            x,
+            y,
+            scale,
+            zombie.isHypnotized()
+        );
     }
 
     private boolean draw(
         Batch batch,
-        AnimationSpec spec,
+        String path,
+        String clip,
         float time,
         float x,
         float y,
         float scale,
         boolean flipped
     ) {
-        if (spec == null || !spec.valid()) {
+        if (path == null || clip == null) {
             return false;
         }
         Color previous = new Color(batch.getColor());
@@ -83,7 +98,7 @@ public final class BattlePamRenderer {
         }
         float worldScale = scale * WORLD_ASSET_SCALE;
         float scaleX = flipped ? -worldScale : worldScale;
-        player.draw(batch, spec.path(), spec.clip(), time, x, y, scaleX, worldScale, true);
+        player.draw(batch, path, clip, time, x, y, scaleX, worldScale, true);
         batch.setColor(previous);
         return true;
     }
@@ -98,7 +113,7 @@ public final class BattlePamRenderer {
         };
         for (String root : roots) {
             String path = root + alias + "/" + alias + ".PAM";
-            AnimationSpec spec = specIfPresent(path, "idle");
+            AnimationSpec spec = specIfPresent(path, "idle", true);
             if (spec.valid()) {
                 return spec;
             }
@@ -131,7 +146,7 @@ public final class BattlePamRenderer {
         };
         for (String root : roots) {
             String path = root + name + "/" + name + ".PAM";
-            AnimationSpec spec = specIfPresent(path, preferredClip);
+            AnimationSpec spec = specIfPresent(path, preferredClip, false);
             if (spec.valid()) {
                 return spec;
             }
@@ -139,7 +154,11 @@ public final class BattlePamRenderer {
         return AnimationSpec.missing();
     }
 
-    private AnimationSpec specIfPresent(String path, String preferredClip) {
+    private AnimationSpec specIfPresent(
+        String path,
+        String preferredClip,
+        boolean includeActionClip
+    ) {
         FileHandle file = assets.root().child("IMAGES").child(path);
         if (!file.exists()) {
             return AnimationSpec.missing();
@@ -150,10 +169,31 @@ public final class BattlePamRenderer {
             if (clips == null || clips.isEmpty()) {
                 return AnimationSpec.missing();
             }
-            return new AnimationSpec(path, chooseClip(clips, preferredClip));
+            String primary = chooseClip(clips, preferredClip);
+            String action = includeActionClip ? chooseActionClip(clips) : null;
+            return new AnimationSpec(path, primary, action);
         } catch (RuntimeException exception) {
             return AnimationSpec.missing();
         }
+    }
+
+    private String chooseActionClip(List<String> clips) {
+        String[] preferred = {"attack", "shoot", "fire", "use_action"};
+        for (String name : preferred) {
+            for (String clip : clips) {
+                if (clip.equalsIgnoreCase(name)) {
+                    return clip;
+                }
+            }
+        }
+        for (String name : preferred) {
+            for (String clip : clips) {
+                if (clip.toLowerCase(Locale.ROOT).contains(name)) {
+                    return clip;
+                }
+            }
+        }
+        return null;
     }
 
     private String chooseClip(List<String> clips, String preferred) {
@@ -224,13 +264,13 @@ public final class BattlePamRenderer {
         return value.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
     }
 
-    private record AnimationSpec(String path, String clip) {
+    private record AnimationSpec(String path, String primaryClip, String actionClip) {
         static AnimationSpec missing() {
-            return new AnimationSpec(null, null);
+            return new AnimationSpec(null, null, null);
         }
 
         boolean valid() {
-            return path != null && clip != null;
+            return path != null && primaryClip != null;
         }
     }
 }
