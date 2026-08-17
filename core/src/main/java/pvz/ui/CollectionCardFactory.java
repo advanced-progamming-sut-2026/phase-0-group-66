@@ -1,6 +1,7 @@
 package pvz.ui;
 
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -54,11 +55,11 @@ public final class CollectionCardFactory {
         Stack stack = new Stack();
 
         if (seen) {
-            ZombieAnimationActor animation = new ZombieAnimationActor(assets, zombie);
-            if (animation.hasAnimation()) {
-                Table animationLayer = new Table();
-                animationLayer.add(animation).width(112f).height(94f).padTop(4f);
-                stack.add(animationLayer);
+            Image art = ZombieArtResolver.image(theme, zombie);
+            if (art != null) {
+                Table artLayer = new Table();
+                artLayer.add(art).width(112f).height(96f).padTop(2f);
+                stack.add(artLayer);
             }
         }
 

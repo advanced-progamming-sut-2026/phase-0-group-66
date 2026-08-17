@@ -22,7 +22,7 @@ import pvz.ui.PlantAnimationActor;
 import pvz.ui.PlantPacketCard;
 import pvz.ui.CollectionCardFactory;
 import pvz.ui.UiTheme;
-import pvz.ui.ZombieAnimationActor;
+import pvz.ui.ZombieArtResolver;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -43,6 +43,7 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
 
     private final Label status;
     private final CollectionCardFactory cardFactory;
+    private final Table detailHost;
     private Tab tab = Tab.PLANTS;
     private String familyFilter = "ALL";
     private String plantStateFilter = "ALL";
@@ -54,6 +55,7 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
         super(app);
         status = statusLabel();
         cardFactory = new CollectionCardFactory(app.assets(), theme, user);
+        detailHost = new Table();
         chooseInitialFocus();
         buildUi();
     }
@@ -177,9 +179,15 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
 
     private Table buildContent() {
         Table content = new Table();
+        refreshDetail();
         content.add(buildCatalogPanel()).width(790f).growY().padRight(10f);
-        content.add(buildDetailPanel()).width(375f).growY();
+        content.add(detailHost).width(375f).growY();
         return content;
+    }
+
+    private void refreshDetail() {
+        detailHost.clearChildren();
+        detailHost.add(buildDetailPanel()).grow();
     }
 
     private Table buildCatalogPanel() {
@@ -335,9 +343,9 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
             return panel;
         }
 
-        ZombieAnimationActor animation = new ZombieAnimationActor(app.assets(), zombie);
-        if (animation.hasAnimation()) {
-            panel.add(animation).width(310f).height(190f).padBottom(2f);
+        Image art = ZombieArtResolver.image(theme, zombie);
+        if (art != null) {
+            panel.add(art).width(250f).height(160f).padBottom(4f);
             panel.row();
         }
         Label name = theme.heading(zombie.getDisplayName());
@@ -397,17 +405,16 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
 
     private void focusPlant(PlantDefinition plant) {
         focusedPlant = plant.getName();
-        rebuild();
+        refreshDetail();
     }
 
     private void focusZombie(ZombieDefinition zombie) {
         if (!isSeen(zombie)) {
             theme.showError(status, "This zombie has not been discovered yet.");
-            rebuild();
             return;
         }
         focusedZombie = zombie.getDisplayName();
-        rebuild();
+        refreshDetail();
     }
 
     private void purchasePlant(PlantDefinition plant) {
