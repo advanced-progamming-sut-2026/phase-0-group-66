@@ -273,15 +273,15 @@
     "stats": {
       "sunCost": 100,
       "maxHealth": 300,
-      "damage": 20,
+      "damage": 50,
       "actionInterval": 1.5,
       "recharge": 5.0,
       "projectileCount": 1,
-      "damageDisplay": "20"
+      "damageDisplay": "50"
     },
     "ability": {
       "kind": "BASIC_SHOOTER",
-      "power": 20,
+      "power": 50,
       "description": "Fires one direct pea.",
       "parameters": {}
     },
