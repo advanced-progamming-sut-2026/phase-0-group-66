@@ -8,6 +8,7 @@ import model.GameData;
 import model.GameState;
 import model.DailyScoredLevelFactory;
 import model.Level;
+import model.News;
 import model.PlantDefinition;
 import model.User;
 import model.Zombie;
@@ -172,13 +173,9 @@ public class GameController {
         if (game.isLevelBoosted(canonicalName)) {
             return ActionResult.failure("Plant is already boosted for this level.");
         }
-        if (!user.getWallet().spendGems(2)) {
-            return ActionResult.failure("Boosting a plant costs 2 gems.");
-        }
         ActionResult boostResult = perform(() -> game.boostSelectedPlant(canonicalName),
             canonicalName + " will receive plant food whenever it is planted in this level.");
         if (!boostResult.isSuccessful()) {
-            user.getWallet().addGems(2);
             return boostResult;
         }
         ActionResult save = authController.saveCurrentState();
@@ -284,19 +281,31 @@ public class GameController {
         if (user == null) {
             return ActionResult.failure("Login is required.");
         }
-        if (count < 0) {
-            return ActionResult.failure("Count cannot be negative.");
+        if (count <= 0) {
+            return ActionResult.failure("Amount must be greater than zero.");
         }
-        if ("coin".equals(type)) {
-            user.getWallet().addCoins(count);
-        } else if ("diamond".equals(type)) {
-            user.getWallet().addGems(count);
-        } else {
-            return ActionResult.failure("Currency must be coin or diamond.");
+
+        String currency = normalizeCurrency(type);
+        try {
+            if ("coin".equals(currency)) {
+                user.getWallet().addCoins(count);
+            } else if ("gem".equals(currency)) {
+                user.getWallet().addGems(count);
+            } else {
+                return ActionResult.failure("Currency must be coin, gem, or diamond.");
+            }
+        } catch (IllegalArgumentException exception) {
+            return ActionResult.failure(exception.getMessage());
         }
+
         ActionResult saveResult = authController.saveCurrentState();
-        return saveResult.isSuccessful()
-            ? ActionResult.success("Wallet updated.") : saveResult;
+        if (!saveResult.isSuccessful()) {
+            return saveResult;
+        }
+        int balance = "coin".equals(currency)
+            ? user.getWallet().getCoins() : user.getWallet().getGems();
+        String label = "coin".equals(currency) ? "Coins" : "Gems";
+        return ActionResult.success(label + " added. New balance: " + balance + ".");
     }
 
     public String walletAmount(String type) {
@@ -304,10 +313,45 @@ public class GameController {
         if (user == null) {
             return "Login is required.";
         }
-        if ("coin".equals(type)) {
+        String currency = normalizeCurrency(type);
+        if ("coin".equals(currency)) {
             return "Coins: " + user.getWallet().getCoins();
         }
-        return "Diamonds: " + user.getWallet().getGems();
+        if ("gem".equals(currency)) {
+            return "Gems: " + user.getWallet().getGems();
+        }
+        return "Currency must be coin, gem, or diamond.";
+    }
+
+    public ActionResult unlockLevelCheat(String chapterName, int levelNumber) {
+        User user = authController.getCurrentUser();
+        if (user == null) {
+            return ActionResult.failure("Login is required.");
+        }
+        Optional<Chapter> chapterResult = adventureFactory.findChapter(chapterName);
+        if (chapterResult.isEmpty()) {
+            return ActionResult.failure("Chapter does not exist.");
+        }
+        Chapter chapter = chapterResult.get();
+        Optional<Level> levelResult = chapter.findLevel(levelNumber);
+        if (levelResult.isEmpty()) {
+            return ActionResult.failure("Level number must be between 1 and 4.");
+        }
+
+        Level level = levelResult.get();
+        user.getProgress().unlockChapter(chapter);
+        user.getProgress().unlockLevel(level);
+        user.addNews(new News(
+            "Level Unlocked",
+            chapter.getName() + " level " + levelNumber + " was unlocked with a cheat code."
+        ));
+        ActionResult saveResult = authController.saveCurrentState();
+        if (!saveResult.isSuccessful()) {
+            return saveResult;
+        }
+        return ActionResult.success(
+            "Unlocked " + chapter.getName() + " level " + levelNumber + "."
+        );
     }
 
     public ActionResult unlockAllLevels() {
@@ -322,6 +366,23 @@ public class GameController {
         }
         return ActionResult.success(
             "Cheat activated: all adventure and mini-game levels are now unlocked.");
+    }
+
+    private String normalizeCurrency(String type) {
+        if (type == null) {
+            return "";
+        }
+        String normalized = type.trim().toLowerCase();
+        if ("coins".equals(normalized)) {
+            return "coin";
+        }
+        if ("gem".equals(normalized)
+            || "gems".equals(normalized)
+            || "diamond".equals(normalized)
+            || "diamonds".equals(normalized)) {
+            return "gem";
+        }
+        return normalized;
     }
 
     public List<String> getChapterDescriptions() {
