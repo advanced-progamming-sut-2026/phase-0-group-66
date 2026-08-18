@@ -3,11 +3,13 @@ package pvz.app;
 import controller.AuthController;
 import controller.CollectionController;
 import controller.GameController;
+import controller.GreenhouseController;
 import controller.LeaderboardController;
 import controller.NewsController;
 import controller.QuestController;
 import controller.ProfileController;
 import controller.SettingsController;
+import controller.ShopController;
 import model.AdventureFactory;
 import model.GameData;
 import model.UserRepository;
@@ -29,6 +31,8 @@ public final class PvzServices {
     private final NewsController newsController;
     private final QuestController questController;
     private final GameController gameController;
+    private final GreenhouseController greenhouseController;
+    private final ShopController shopController;
     private final LeaderboardController leaderboardController;
     private final AdventureFactory adventureFactory;
     private final GameData gameData;
@@ -59,6 +63,14 @@ public final class PvzServices {
             gameData,
             new GameView(),
             questController
+        );
+        greenhouseController = new GreenhouseController(
+            authController,
+            gameData.getPlantFactory()
+        );
+        shopController = new ShopController(
+            authController,
+            gameData.getPlantFactory()
         );
         adventureFactory = new AdventureFactory();
     }
@@ -93,6 +105,14 @@ public final class PvzServices {
 
     public LeaderboardController leaderboard() {
         return leaderboardController;
+    }
+
+    public GreenhouseController greenhouse() {
+        return greenhouseController;
+    }
+
+    public ShopController shop() {
+        return shopController;
     }
 
     public AdventureFactory adventure() {

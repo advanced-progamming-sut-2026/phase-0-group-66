@@ -14,6 +14,7 @@ import pvz.screen.ChapterLevelsScreen;
 import pvz.screen.CheatScreen;
 import pvz.screen.CollectionScreen;
 import pvz.screen.ForgotPasswordScreen;
+import pvz.screen.GreenhouseScreen;
 import pvz.screen.LevelBriefingScreen;
 import pvz.screen.LeaderboardScreen;
 import pvz.screen.LoginScreen;
@@ -26,6 +27,7 @@ import pvz.screen.ProfileScreen;
 import pvz.screen.RegisterScreen;
 import pvz.screen.SecurityQuestionScreen;
 import pvz.screen.SettingsScreen;
+import pvz.screen.ShopScreen;
 import model.Chapter;
 import model.Level;
 
@@ -193,6 +195,22 @@ public final class PvzApplication extends Game {
             return;
         }
         changeScreen(new CheatScreen(this));
+    }
+
+    public void showGreenhouse() {
+        if (!services.auth().isAuthenticated()) {
+            showLogin();
+            return;
+        }
+        changeScreen(new GreenhouseScreen(this));
+    }
+
+    public void showShop() {
+        if (!services.auth().isAuthenticated()) {
+            showLogin();
+            return;
+        }
+        changeScreen(new ShopScreen(this));
     }
 
     public void showPlaceholder(String title) {

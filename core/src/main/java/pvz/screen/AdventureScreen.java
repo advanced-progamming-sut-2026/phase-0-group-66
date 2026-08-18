@@ -181,11 +181,13 @@ public final class AdventureScreen extends AuthenticatedUiScreen {
     private Table buildFooter() {
         Table footer = new Table();
         TextButton collection = theme.secondaryButton("Collection");
-        TextButton quests = theme.tertiaryButton("Quests / Travel Log");
+        TextButton greenhouse = theme.primaryButton("Greenhouse");
+        TextButton quests = theme.tertiaryButton("Quests");
         TextButton miniGames = theme.primaryButton("Mini Games");
         TextButton back = theme.secondaryButton("Back");
 
         UiActions.onClick(collection, app::showCollection);
+        UiActions.onClick(greenhouse, app::showGreenhouse);
         UiActions.onClick(quests, app::showQuests);
         UiActions.onClick(
             miniGames,
@@ -193,11 +195,12 @@ public final class AdventureScreen extends AuthenticatedUiScreen {
         );
         UiActions.onClick(back, app::showMainMenu);
 
-        footer.add(collection).width(165f).height(48f).padRight(8f);
-        footer.add(quests).width(220f).height(48f).padRight(8f);
-        footer.add(miniGames).width(165f).height(48f);
+        footer.add(collection).width(155f).height(48f).padRight(7f);
+        footer.add(greenhouse).width(165f).height(48f).padRight(7f);
+        footer.add(quests).width(140f).height(48f).padRight(7f);
+        footer.add(miniGames).width(155f).height(48f);
         footer.add().expandX();
-        footer.add(back).width(150f).height(48f);
+        footer.add(back).width(145f).height(48f);
         return footer;
     }
 }
