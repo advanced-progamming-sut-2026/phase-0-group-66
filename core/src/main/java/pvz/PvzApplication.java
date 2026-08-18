@@ -4,6 +4,7 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.utils.GdxRuntimeException;
+import controller.ActionResult;
 import pvz.app.AudioSettings;
 import pvz.app.DisplaySettings;
 import pvz.app.PvzServices;
@@ -19,7 +20,9 @@ import pvz.screen.LevelBriefingScreen;
 import pvz.screen.LeaderboardScreen;
 import pvz.screen.LoginScreen;
 import pvz.screen.MainMenuScreen;
+import pvz.screen.MiniGameHubScreen;
 import pvz.screen.NewsScreen;
+import pvz.screen.IZombieScreen;
 import pvz.screen.PlaceholderScreen;
 import pvz.screen.PlantSelectionScreen;
 import pvz.screen.QuestScreen;
@@ -28,8 +31,11 @@ import pvz.screen.RegisterScreen;
 import pvz.screen.SecurityQuestionScreen;
 import pvz.screen.SettingsScreen;
 import pvz.screen.ShopScreen;
+import pvz.screen.VasebreakerScreen;
+import pvz.screen.WallnutBowlingScreen;
 import model.Chapter;
 import model.Level;
+import model.MiniGameType;
 
 import java.io.IOException;
 
@@ -38,6 +44,7 @@ public final class PvzApplication extends Game {
     private PvzServices services;
     private DisplaySettings displaySettings;
     private AudioSettings audioSettings;
+    private boolean miniGamesOpenedFromQuests;
 
     @Override
     public void create() {
@@ -211,6 +218,58 @@ public final class PvzApplication extends Game {
             return;
         }
         changeScreen(new ShopScreen(this));
+    }
+
+    public void showMiniGames() {
+        miniGamesOpenedFromQuests = false;
+        openMiniGameHub();
+    }
+
+    public void showMiniGamesFromQuests() {
+        miniGamesOpenedFromQuests = true;
+        openMiniGameHub();
+    }
+
+    public void returnToMiniGames() {
+        openMiniGameHub();
+    }
+
+    public String miniGameBackText() {
+        return miniGamesOpenedFromQuests ? "Back to Quests" : "Back to Adventure";
+    }
+
+    public void leaveMiniGames() {
+        if (miniGamesOpenedFromQuests) {
+            showQuests();
+        } else {
+            showAdventure();
+        }
+    }
+
+    private void openMiniGameHub() {
+        if (!services.auth().isAuthenticated()) {
+            showLogin();
+            return;
+        }
+        changeScreen(new MiniGameHubScreen(this));
+    }
+
+    public boolean startMiniGame(MiniGameType type, int level) {
+        if (!services.auth().isAuthenticated()) {
+            showLogin();
+            return false;
+        }
+        ActionResult result = services.miniGames().startMiniGame(type.name(), level);
+        if (!result.isSuccessful()) {
+            return false;
+        }
+        switch (type) {
+            case VASEBREAKER -> changeScreen(new VasebreakerScreen(this));
+            case WALLNUT_BOWLING -> changeScreen(new WallnutBowlingScreen(this));
+            case I_ZOMBIE -> changeScreen(new IZombieScreen(this));
+            case BEGHOULD, ZOMBOTANY -> returnToMiniGames();
+        }
+        return true;
     }
 
     public void showPlaceholder(String title) {

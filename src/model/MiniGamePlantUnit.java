@@ -27,4 +27,8 @@ final class MiniGamePlantUnit {
     void increaseDamage(int amount) { damage += Math.max(0, amount); }
     void setCooldown(int ticks) { cooldown = Math.max(0, ticks); }
     void tick() { if (cooldown > 0) { cooldown--; } }
+
+    MiniGamePlantSnapshot snapshot() {
+        return new MiniGamePlantSnapshot(type, row, column, health, damage);
+    }
 }

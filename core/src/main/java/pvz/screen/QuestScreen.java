@@ -29,17 +29,12 @@ public final class QuestScreen extends AuthenticatedUiScreen {
     private void buildUi() {
         Table screen = new Table();
         screen.top();
-        screen.pad(38f, 36f, 18f, 36f);
-        screen.add(titleBar("QUESTS"))
-            .width(1200f)
-            .height(56f)
-            .padBottom(8f);
+        screen.pad(20f, 28f, 18f, 28f);
+        screen.add(titleBar("QUESTS")).growX().padBottom(8f);
         screen.row();
         screen.add(buildTabs()).growX().padBottom(8f);
         screen.row();
-        screen.add(buildQuestList())
-            .width(1185f)
-            .height(475f);
+        screen.add(buildQuestList()).grow();
         screen.row();
         screen.add(buildFooter()).growX().padTop(8f);
         root.add(screen).grow();
@@ -165,15 +160,11 @@ public final class QuestScreen extends AuthenticatedUiScreen {
         footer.add(status).width(650f).left();
         footer.add().expandX();
         TextButton miniGames = theme.primaryButton("Mini Games");
-        TextButton back = theme.secondaryButton("Back to Adventure");
-        back.getLabel().setFontScale(0.72f);
-        UiActions.onClick(
-            miniGames,
-            () -> app.showPlaceholder("Mini Games", "Back to Quests", app::showQuests)
-        );
+        TextButton back = theme.secondaryButton("Back");
+        UiActions.onClick(miniGames, app::showMiniGamesFromQuests);
         UiActions.onClick(back, app::showAdventure);
         footer.add(miniGames).width(180f).height(50f).padRight(8f);
-        footer.add(back).width(220f).height(50f);
+        footer.add(back).width(160f).height(50f);
         return footer;
     }
 

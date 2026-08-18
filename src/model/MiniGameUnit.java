@@ -59,4 +59,10 @@ final class MiniGameUnit {
     }
     boolean ready() { return cooldown <= 0; }
     void setCooldown(int ticks) { cooldown = Math.max(0, ticks); }
+
+    MiniGameUnitSnapshot snapshot() {
+        return new MiniGameUnitSnapshot(
+            type, row, column, health, maximumHealth, damage, getSpeed()
+        );
+    }
 }

@@ -16,13 +16,17 @@ import model.Chapter;
 import model.Game;
 import model.GameState;
 import model.Level;
+import model.Plant;
 import model.PlantDefinition;
+import model.PlantFoodType;
 import model.Sun;
 import model.Wave;
+import model.Zombie;
 import pvz.PvzApplication;
 import pvz.ui.BattleBoardActor;
 import pvz.ui.UiTheme;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class BattleScreen extends AuthenticatedUiScreen {
@@ -32,6 +36,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     private static final float ZOMBIE_PREVIEW_SECONDS = 1.75f;
     private static final float PAN_HOME_SECONDS = 1.25f;
     private static final float READY_DELAY_SECONDS = 2.50f;
+    private static final float PLANT_FOOD_ANIMATION_SECONDS = 1.10f;
 
     private final Chapter chapter;
     private final Level level;
@@ -54,6 +59,8 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     private boolean resultShown;
     private float introElapsed;
     private IntroPhase introPhase = IntroPhase.PAN_TO_ZOMBIES;
+    private PendingPlantFood pendingPlantFood;
+    private float plantFoodImpactHold;
 
     public BattleScreen(PvzApplication app, Chapter chapter, Level level) {
         super(app);
@@ -288,7 +295,8 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     }
 
     private void handleCellClick(int col, int row) {
-        if (paused || isIntroRunning() || game.getGameState() != GameState.RUNNING) {
+        if (paused || isIntroRunning() || pendingPlantFood != null
+            || game.getGameState() != GameState.RUNNING) {
             return;
         }
         if (collectSunIfPresent(col, row)) {
@@ -300,6 +308,9 @@ public final class BattleScreen extends AuthenticatedUiScreen {
             result = controller.pluckPlant(col, row);
             toolMode = ToolMode.PLANT;
         } else if (toolMode == ToolMode.PLANT_FOOD) {
+            if (beginPlantFood(col, row)) {
+                return;
+            }
             result = controller.feedPlant(col, row);
             toolMode = ToolMode.PLANT;
         } else if (selectedPlant != null) {
@@ -312,6 +323,60 @@ public final class BattleScreen extends AuthenticatedUiScreen {
             return;
         }
         showResult(result);
+        refreshSeedBank();
+        refreshHud();
+    }
+
+    private boolean beginPlantFood(int col, int row) {
+        Board board = game.getBoard();
+        if (board == null || !board.isInside(row - 1, col - 1)) {
+            return false;
+        }
+        Plant plant = board.getTile(row - 1, col - 1).getPlant();
+        if (plant == null || plant.isDestroyed()) {
+            return false;
+        }
+        if (game.getPlantFoodCount() <= 0
+            || plant.getDefinition().getPlantFoodType() == PlantFoodType.NONE) {
+            return false;
+        }
+        pendingPlantFood = new PendingPlantFood(
+            col,
+            row,
+            plant,
+            new ArrayList<>(board.getZombies())
+        );
+        toolMode = ToolMode.PLANT;
+        selectedPlant = null;
+        boardActor.triggerPlantFood(plant, PLANT_FOOD_ANIMATION_SECONDS + 0.25f);
+        theme.showSuccess(status, "Plant Food! " + plant.getName() + " is powering up...");
+        refreshSeedBank();
+        return true;
+    }
+
+    private void advancePendingPlantFood(float delta) {
+        if (pendingPlantFood == null || paused || resultShown) {
+            return;
+        }
+        pendingPlantFood.elapsed += Math.max(0f, delta);
+        if (pendingPlantFood.elapsed < PLANT_FOOD_ANIMATION_SECONDS) {
+            return;
+        }
+
+        PendingPlantFood request = pendingPlantFood;
+        pendingPlantFood = null;
+        ActionResult result = controller.feedPlant(request.col, request.row);
+        showResult(result);
+        if (result.isSuccessful()) {
+            ArrayList<Zombie> casualties = new ArrayList<>();
+            for (Zombie zombie : request.zombiesBefore) {
+                if (zombie != null && zombie.isDead()) {
+                    casualties.add(zombie);
+                }
+            }
+            boardActor.showPlantFoodCasualties(casualties, 0.55f);
+            plantFoodImpactHold = 0.55f;
+        }
         refreshSeedBank();
         refreshHud();
     }
@@ -332,7 +397,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     }
 
     private void selectShovel() {
-        if (isIntroRunning()) {
+        if (isIntroRunning() || pendingPlantFood != null) {
             return;
         }
         toolMode = ToolMode.SHOVEL;
@@ -342,7 +407,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     }
 
     private void selectPlantFood() {
-        if (isIntroRunning()) {
+        if (isIntroRunning() || pendingPlantFood != null) {
             return;
         }
         toolMode = ToolMode.PLANT_FOOD;
@@ -352,7 +417,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     }
 
     private void startZombieWaves() {
-        if (isIntroRunning()) {
+        if (isIntroRunning() || pendingPlantFood != null) {
             return;
         }
         ActionResult result = controller.startZombieWaves();
@@ -392,6 +457,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     @Override
     public void render(float delta) {
         advanceIntro(delta);
+        advancePendingPlantFood(delta);
         advanceModel(delta);
         refreshHud();
         checkResult();
@@ -399,7 +465,12 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     }
 
     private void advanceModel(float delta) {
-        if (paused || resultShown || isIntroRunning() || game.getGameState() != GameState.RUNNING) {
+        if (plantFoodImpactHold > 0f) {
+            plantFoodImpactHold = Math.max(0f, plantFoodImpactHold - Math.max(0f, delta));
+            return;
+        }
+        if (paused || resultShown || isIntroRunning() || pendingPlantFood != null
+            || game.getGameState() != GameState.RUNNING) {
             return;
         }
         if (!game.areZombieWavesStarted()) {
@@ -568,6 +639,21 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     public void dispose() {
         boardActor.dispose();
         super.dispose();
+    }
+
+    private static final class PendingPlantFood {
+        private final int col;
+        private final int row;
+        private final Plant plant;
+        private final List<Zombie> zombiesBefore;
+        private float elapsed;
+
+        private PendingPlantFood(int col, int row, Plant plant, List<Zombie> zombiesBefore) {
+            this.col = col;
+            this.row = row;
+            this.plant = plant;
+            this.zombiesBefore = zombiesBefore;
+        }
     }
 
     private enum IntroPhase {

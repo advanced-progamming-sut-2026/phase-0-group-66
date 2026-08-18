@@ -269,6 +269,33 @@ public final class WallnutBowlingSession extends MiniGameSession {
         return '.';
     }
 
+
+    public record NutView(String type, double row, double column, boolean active) { }
+
+    public Map<String, Integer> getConveyorCounts() {
+        LinkedHashMap<String, Integer> result = new LinkedHashMap<>();
+        for (Map.Entry<NutType, Integer> entry : conveyor.entrySet()) {
+            result.put(entry.getKey().name(), entry.getValue());
+        }
+        return Map.copyOf(result);
+    }
+
+    public List<NutView> getNutViews() {
+        ArrayList<NutView> result = new ArrayList<>();
+        for (RollingNut nut : rollingNuts) {
+            result.add(new NutView(nut.type.name(), nut.row, nut.column, nut.active));
+        }
+        return List.copyOf(result);
+    }
+
+    public List<MiniGameUnitSnapshot> getZombieViews() {
+        return zombies.stream().map(MiniGameUnit::snapshot).toList();
+    }
+
+    public int getKills() {
+        return kills;
+    }
+
     private NutType parseNut(String text) {
         try {
             return NutType.valueOf(text.trim().toUpperCase());

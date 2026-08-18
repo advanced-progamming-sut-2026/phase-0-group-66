@@ -5,6 +5,7 @@ import controller.CollectionController;
 import controller.GameController;
 import controller.GreenhouseController;
 import controller.LeaderboardController;
+import controller.MiniGameController;
 import controller.NewsController;
 import controller.QuestController;
 import controller.ProfileController;
@@ -34,6 +35,7 @@ public final class PvzServices {
     private final GreenhouseController greenhouseController;
     private final ShopController shopController;
     private final LeaderboardController leaderboardController;
+    private final MiniGameController miniGameController;
     private final AdventureFactory adventureFactory;
     private final GameData gameData;
 
@@ -58,6 +60,7 @@ public final class PvzServices {
             gameData.getQuestFactory(),
             gameData.getPlantFactory()
         );
+        miniGameController = new MiniGameController(authController, questController);
         gameController = new GameController(
             authController,
             gameData,
@@ -105,6 +108,10 @@ public final class PvzServices {
 
     public LeaderboardController leaderboard() {
         return leaderboardController;
+    }
+
+    public MiniGameController miniGames() {
+        return miniGameController;
     }
 
     public GreenhouseController greenhouse() {

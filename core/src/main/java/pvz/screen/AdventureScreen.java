@@ -189,10 +189,7 @@ public final class AdventureScreen extends AuthenticatedUiScreen {
         UiActions.onClick(collection, app::showCollection);
         UiActions.onClick(greenhouse, app::showGreenhouse);
         UiActions.onClick(quests, app::showQuests);
-        UiActions.onClick(
-            miniGames,
-            () -> app.showPlaceholder("Mini Games", "Back to Adventure", app::showAdventure)
-        );
+        UiActions.onClick(miniGames, app::showMiniGames);
         UiActions.onClick(back, app::showMainMenu);
 
         footer.add(collection).width(155f).height(48f).padRight(7f);

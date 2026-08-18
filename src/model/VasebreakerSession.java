@@ -311,6 +311,43 @@ public final class VasebreakerSession extends MiniGameSession {
         return "..";
     }
 
+
+    public record VaseView(int row, int column, String kind) { }
+
+    public record PacketView(int id, String plantType, int expiresAt) { }
+
+    public List<VaseView> getVaseViews() {
+        ArrayList<VaseView> result = new ArrayList<>();
+        for (Vase vase : vases.values()) {
+            result.add(new VaseView(vase.row(), vase.column(), vase.kind().name()));
+        }
+        return List.copyOf(result);
+    }
+
+    public List<PacketView> getPacketViews() {
+        ArrayList<PacketView> result = new ArrayList<>();
+        for (Packet packet : packets.values()) {
+            result.add(new PacketView(packet.id(), packet.plantType(), packet.expiresAt()));
+        }
+        return List.copyOf(result);
+    }
+
+    public List<MiniGameUnitSnapshot> getZombieViews() {
+        return zombies.stream().map(MiniGameUnit::snapshot).toList();
+    }
+
+    public List<MiniGamePlantSnapshot> getPlantViews() {
+        return plants.stream().map(MiniGamePlantUnit::snapshot).toList();
+    }
+
+    public int getBrokenVases() {
+        return brokenVases;
+    }
+
+    public int getKilledZombies() {
+        return killedZombies;
+    }
+
     private GridPosition position(int x, int y) {
         if (x < 1 || x > COLS || y < 1 || y > ROWS) {
             throw new IllegalArgumentException("Position must be inside the 9x5 board.");

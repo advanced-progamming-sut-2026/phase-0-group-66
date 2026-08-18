@@ -36,6 +36,10 @@ public final class BattleBoardActor extends Actor implements Disposable {
     private final Map<Plant, Float> attackStartedAt = new IdentityHashMap<>();
     private final Map<Plant, Float> attackUntil = new IdentityHashMap<>();
     private final Map<Plant, Integer> lastActionTicks = new IdentityHashMap<>();
+    private final Map<Plant, Float> plantFoodStartedAt = new IdentityHashMap<>();
+    private final Map<Plant, Float> plantFoodUntil = new IdentityHashMap<>();
+    private final Map<Zombie, Float> foodDeathStartedAt = new IdentityHashMap<>();
+    private final Map<Zombie, Float> foodDeathUntil = new IdentityHashMap<>();
 
     private TextureRegion backgroundLeft;
     private TextureRegion backgroundMain;
@@ -86,6 +90,30 @@ public final class BattleBoardActor extends Actor implements Disposable {
 
     public void setCameraPan(float cameraPan) {
         this.cameraPan = Math.max(0f, Math.min(1f, cameraPan));
+    }
+
+    public void triggerPlantFood(Plant plant, float durationSeconds) {
+        if (plant == null) {
+            return;
+        }
+        plantFoodStartedAt.put(plant, animationTime);
+        plantFoodUntil.put(plant, animationTime + Math.max(0.25f, durationSeconds));
+        attackStartedAt.remove(plant);
+        attackUntil.remove(plant);
+    }
+
+    public void showPlantFoodCasualties(List<Zombie> zombies, float durationSeconds) {
+        if (zombies == null || zombies.isEmpty()) {
+            return;
+        }
+        float duration = Math.max(0.20f, durationSeconds);
+        for (Zombie zombie : zombies) {
+            if (zombie == null || zombie.getPosition() == null) {
+                continue;
+            }
+            foodDeathStartedAt.put(zombie, animationTime);
+            foodDeathUntil.put(zombie, animationTime + duration);
+        }
     }
 
     @Override
@@ -165,6 +193,8 @@ public final class BattleBoardActor extends Actor implements Disposable {
         attackStartedAt.keySet().removeIf(plant -> !board.getPlants().contains(plant));
         attackUntil.keySet().removeIf(plant -> !board.getPlants().contains(plant));
         lastActionTicks.keySet().removeIf(plant -> !board.getPlants().contains(plant));
+        plantFoodStartedAt.keySet().removeIf(plant -> !board.getPlants().contains(plant));
+        plantFoodUntil.keySet().removeIf(plant -> !board.getPlants().contains(plant));
         for (Plant plant : board.getPlants()) {
             if (plant == null || plant.isDestroyed() || plant.getPosition() == null) {
                 continue;
@@ -173,19 +203,69 @@ public final class BattleBoardActor extends Actor implements Disposable {
             int col = plant.getPosition().getColumn();
             float x = cellCenterX(col);
             float y = cellBottom(row) + cellHeight() * 0.38f;
-            boolean attacking = updateAttackState(plant, board);
-            float clipTime = attacking
-                ? animationTime - attackStartedAt.getOrDefault(plant, animationTime)
-                : animationTime;
+            boolean plantFoodActive = isPlantFoodActive(plant);
+            boolean attacking = !plantFoodActive && updateAttackState(plant, board);
+            float clipTime;
+            if (plantFoodActive) {
+                clipTime = animationTime - plantFoodStartedAt.getOrDefault(plant, animationTime);
+            } else if (attacking) {
+                clipTime = animationTime - attackStartedAt.getOrDefault(plant, animationTime);
+            } else {
+                clipTime = animationTime;
+            }
             boolean animated = pamRenderer.drawPlant(
-                batch, plant, clipTime, x, y, scale, attacking
+                batch, plant, clipTime, x, y, scale, attacking, plantFoodActive
             );
             if (!animated) {
                 drawFallbackPlant(batch, x, y, plant);
             }
+            if (plantFoodActive) {
+                drawPlantFoodVolley(batch, plant, row, x, y);
+            }
             float barWidth = Math.max(30f, cellWidth() * 0.52f);
             drawHealth(batch, x, cellTop(row) - 7f, plant.getHealth(), plant.getMaxHealth(), barWidth);
         }
+    }
+
+    private void drawPlantFoodVolley(Batch batch, Plant plant, int row, float x, float y) {
+        if (projectileIcon == null || !usesPeaPlantFoodVolley(plant)) {
+            return;
+        }
+        float start = plantFoodStartedAt.getOrDefault(plant, animationTime);
+        float elapsed = Math.max(0f, animationTime - start);
+        float travelWidth = Math.max(cellWidth() * 2f, gridLeft() + gridWidth() - x);
+        float peaSize = Math.max(11f, Math.min(cellWidth(), cellHeight()) * 0.18f);
+        for (int index = 0; index < 10; index++) {
+            float shotTime = index * 0.085f;
+            float flight = (elapsed - shotTime) / 0.70f;
+            if (flight < 0f || flight > 1f) {
+                continue;
+            }
+            float px = x + flight * travelWidth;
+            float py = cellBottom(row) + cellHeight() * 0.56f;
+            batch.draw(projectileIcon, px - peaSize / 2f, py - peaSize / 2f, peaSize, peaSize);
+        }
+    }
+
+    private boolean usesPeaPlantFoodVolley(Plant plant) {
+        String key = plant.getDefinition().getKey().toLowerCase();
+        return key.contains("peashooter")
+            || key.equals("repeater")
+            || key.equals("threepeater")
+            || key.equals("pea-pod")
+            || key.equals("split-pea")
+            || key.equals("mega-gatling-pea")
+            || key.equals("snow-pea");
+    }
+
+    private boolean isPlantFoodActive(Plant plant) {
+        float until = plantFoodUntil.getOrDefault(plant, -1f);
+        if (animationTime <= until) {
+            return true;
+        }
+        plantFoodStartedAt.remove(plant);
+        plantFoodUntil.remove(plant);
+        return false;
     }
 
     private boolean updateAttackState(Plant plant, Board board) {
@@ -246,6 +326,30 @@ public final class BattleBoardActor extends Actor implements Disposable {
                 barWidth
             );
         }
+        drawPlantFoodDeathGhosts(batch, season, scale);
+    }
+
+    private void drawPlantFoodDeathGhosts(Batch batch, SeasonType season, float scale) {
+        foodDeathUntil.entrySet().removeIf(entry -> animationTime > entry.getValue());
+        foodDeathStartedAt.keySet().removeIf(zombie -> !foodDeathUntil.containsKey(zombie));
+        Color original = new Color(batch.getColor());
+        for (Map.Entry<Zombie, Float> entry : foodDeathUntil.entrySet()) {
+            Zombie zombie = entry.getKey();
+            if (zombie == null || zombie.getPosition() == null) {
+                continue;
+            }
+            float start = foodDeathStartedAt.getOrDefault(zombie, animationTime);
+            float duration = Math.max(0.01f, entry.getValue() - start);
+            float progress = Math.max(0f, Math.min(1f, (animationTime - start) / duration));
+            float alpha = 1f - progress;
+            int row = zombie.getPosition().getRow();
+            double column = zombie.getPosition().getColumn();
+            float x = gridLeft() + (float) ((column + 0.5d) * cellWidth());
+            float y = cellBottom(row) + cellHeight() * (0.34f - 0.08f * progress);
+            batch.setColor(1f, 1f, 1f, original.a * alpha);
+            pamRenderer.drawZombie(batch, zombie, season, animationTime, x, y, scale);
+        }
+        batch.setColor(original);
     }
 
     private List<Zombie> zombiesToDraw(Board board) {

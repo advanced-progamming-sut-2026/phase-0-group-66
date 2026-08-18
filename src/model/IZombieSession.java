@@ -276,6 +276,48 @@ public final class IZombieSession extends MiniGameSession {
         return builder.toString().stripTrailing();
     }
 
+
+    public record ZombieCardView(
+        String key,
+        String type,
+        int cost,
+        int health,
+        int damage,
+        double speed
+    ) { }
+
+    public List<ZombieCardView> getCardViews() {
+        ArrayList<ZombieCardView> result = new ArrayList<>();
+        for (Map.Entry<String, ZombieCard> entry : cards.entrySet()) {
+            ZombieCard card = entry.getValue();
+            result.add(new ZombieCardView(
+                entry.getKey(), card.type(), card.cost(), card.health(),
+                card.damage(), card.speed()
+            ));
+        }
+        return List.copyOf(result);
+    }
+
+    public List<MiniGamePlantSnapshot> getPlantViews() {
+        return plants.stream().map(MiniGamePlantUnit::snapshot).toList();
+    }
+
+    public List<MiniGameUnitSnapshot> getZombieViews() {
+        return zombies.stream().map(MiniGameUnit::snapshot).toList();
+    }
+
+    public boolean[] getBrains() {
+        return brains.clone();
+    }
+
+    public int getSun() {
+        return sun;
+    }
+
+    public int getBrainsEaten() {
+        return brainsEaten;
+    }
+
     private String arg(List<String> args, int index) {
         if (args == null || index >= args.size()) {
             throw new IllegalArgumentException("Missing command argument.");

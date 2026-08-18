@@ -35,7 +35,8 @@ public final class BattlePamRenderer {
         float x,
         float y,
         float scale,
-        boolean attacking
+        boolean attacking,
+        boolean plantFoodActive
     ) {
         if (plant == null) {
             return false;
@@ -44,9 +45,14 @@ public final class BattlePamRenderer {
             plant.getDefinition().getKey(),
             ignored -> resolvePlant(plant.getDefinition())
         );
-        String clip = attacking && spec.actionClip() != null
-            ? spec.actionClip()
-            : spec.primaryClip();
+        String clip;
+        if (plantFoodActive && spec.plantFoodClip() != null) {
+            clip = spec.plantFoodClip();
+        } else if (attacking && spec.actionClip() != null) {
+            clip = spec.actionClip();
+        } else {
+            clip = spec.primaryClip();
+        }
         return draw(batch, spec.path(), clip, time, x, y, scale, false);
     }
 
@@ -171,10 +177,31 @@ public final class BattlePamRenderer {
             }
             String primary = chooseClip(clips, preferredClip);
             String action = includeActionClip ? chooseActionClip(clips) : null;
-            return new AnimationSpec(path, primary, action);
+            String plantFood = includeActionClip ? choosePlantFoodClip(clips, action) : null;
+            return new AnimationSpec(path, primary, action, plantFood);
         } catch (RuntimeException exception) {
             return AnimationSpec.missing();
         }
+    }
+
+    private String choosePlantFoodClip(List<String> clips, String actionFallback) {
+        for (String clip : clips) {
+            if (clip.equalsIgnoreCase("plantfood")) {
+                return clip;
+            }
+        }
+        for (String clip : clips) {
+            String lower = clip.toLowerCase(Locale.ROOT);
+            if (lower.contains("plantfood") || lower.contains("plant_food")) {
+                return clip;
+            }
+        }
+        for (String clip : clips) {
+            if (clip.equalsIgnoreCase("use_action")) {
+                return clip;
+            }
+        }
+        return actionFallback;
     }
 
     private String chooseActionClip(List<String> clips) {
@@ -264,9 +291,14 @@ public final class BattlePamRenderer {
         return value.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
     }
 
-    private record AnimationSpec(String path, String primaryClip, String actionClip) {
+    private record AnimationSpec(
+        String path,
+        String primaryClip,
+        String actionClip,
+        String plantFoodClip
+    ) {
         static AnimationSpec missing() {
-            return new AnimationSpec(null, null, null);
+            return new AnimationSpec(null, null, null, null);
         }
 
         boolean valid() {
