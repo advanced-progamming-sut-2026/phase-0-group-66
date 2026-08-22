@@ -14,6 +14,7 @@ import pvz.screen.BattleScreen;
 import pvz.screen.ChapterLevelsScreen;
 import pvz.screen.CheatScreen;
 import pvz.screen.CollectionScreen;
+import pvz.screen.CommandMiniGameScreen;
 import pvz.screen.ForgotPasswordScreen;
 import pvz.screen.GreenhouseScreen;
 import pvz.screen.LevelBriefingScreen;
@@ -22,8 +23,8 @@ import pvz.screen.LoginScreen;
 import pvz.screen.MainMenuScreen;
 import pvz.screen.MiniGameHubScreen;
 import pvz.screen.NewsScreen;
+import pvz.screen.NetworkScreen;
 import pvz.screen.IZombieScreen;
-import pvz.screen.PlaceholderScreen;
 import pvz.screen.PlantSelectionScreen;
 import pvz.screen.QuestScreen;
 import pvz.screen.ProfileScreen;
@@ -171,6 +172,14 @@ public final class PvzApplication extends Game {
         changeScreen(new NewsScreen(this));
     }
 
+    public void showNetwork() {
+        if (!services.auth().isAuthenticated()) {
+            showLogin();
+            return;
+        }
+        changeScreen(new NetworkScreen(this));
+    }
+
 
     public void showCollection() {
         if (!services.auth().isAuthenticated()) {
@@ -267,17 +276,10 @@ public final class PvzApplication extends Game {
             case VASEBREAKER -> changeScreen(new VasebreakerScreen(this));
             case WALLNUT_BOWLING -> changeScreen(new WallnutBowlingScreen(this));
             case I_ZOMBIE -> changeScreen(new IZombieScreen(this));
-            case BEGHOULD, ZOMBOTANY -> returnToMiniGames();
+            case BEGHOULD -> changeScreen(new CommandMiniGameScreen(this, "BEGHOULD"));
+            case ZOMBOTANY -> changeScreen(new CommandMiniGameScreen(this, "ZOMBOTANY"));
         }
         return true;
-    }
-
-    public void showPlaceholder(String title) {
-        changeScreen(new PlaceholderScreen(this, title));
-    }
-
-    public void showPlaceholder(String title, String backText, Runnable backAction) {
-        changeScreen(new PlaceholderScreen(this, title, backText, backAction));
     }
 
     private void changeScreen(Screen next) {
@@ -292,6 +294,7 @@ public final class PvzApplication extends Game {
     public void dispose() {
         if (services != null) {
             services.auth().saveCurrentState();
+            services.closeNetwork();
         }
         if (getScreen() != null) {
             getScreen().dispose();

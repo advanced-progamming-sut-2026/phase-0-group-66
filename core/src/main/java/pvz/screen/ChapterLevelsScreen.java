@@ -182,8 +182,8 @@ public final class ChapterLevelsScreen extends AuthenticatedUiScreen {
         TextButton quests = theme.tertiaryButton("Quests");
         TextButton miniGames = theme.primaryButton("Mini Games");
         TextButton back = theme.secondaryButton("Back to Chapters");
-        UiActions.onClick(quests, () -> app.showPlaceholder("Quests / Travel Log"));
-        UiActions.onClick(miniGames, () -> app.showPlaceholder("Mini Games"));
+        UiActions.onClick(quests, app::showQuests);
+        UiActions.onClick(miniGames, app::showMiniGames);
         UiActions.onClick(back, app::showAdventure);
         footer.add(quests).width(150f).height(50f).padRight(8f);
         footer.add(miniGames).width(170f).height(50f);

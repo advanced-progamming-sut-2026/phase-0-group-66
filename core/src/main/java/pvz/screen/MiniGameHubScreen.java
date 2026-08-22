@@ -2,6 +2,7 @@ package pvz.screen;
 
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.utils.Align;
@@ -26,12 +27,12 @@ public final class MiniGameHubScreen extends AuthenticatedUiScreen {
 
     private void buildUi() {
         Table screen = new Table();
-        screen.top().pad(42f, 54f, 26f, 54f);
+        screen.top().pad(24f, 54f, 16f, 54f);
 
         screen.add(titleBar("MINI GAMES"))
             .width(1170f)
             .height(56f)
-            .padBottom(22f);
+            .padBottom(12f);
         screen.row();
 
         Table cards = new Table();
@@ -54,14 +55,30 @@ public final class MiniGameHubScreen extends AuthenticatedUiScreen {
             "Spend sun on zombies and eat all five brains.",
             BRAIN_ICON
         )).width(350f).height(310f);
+        cards.row();
+        cards.add(gameCard(
+            MiniGameType.BEGHOULD,
+            "Beghouled",
+            "Swap adjacent plants, create matches, and defend the lawn.",
+            "IMAGE_UI_MINIGAME_BEJEWELED"
+        )).width(350f).height(290f);
+        cards.add(gameCard(
+            MiniGameType.ZOMBOTANY,
+            "Zombotany",
+            "Fight zombies that carry plant powers.",
+            "IMAGE_ZOMBIE_ZOMBOTANY"
+        )).width(350f).height(290f);
 
-        screen.add(cards).expand().center();
-        screen.row().padTop(16f);
+        ScrollPane scroller = new ScrollPane(cards, theme.skin());
+        scroller.setFadeScrollBars(false);
+        scroller.setScrollingDisabled(true, false);
+        screen.add(scroller).width(1160f).height(455f).center();
+        screen.row().padTop(8f);
 
         TextButton back = theme.secondaryButton(app.miniGameBackText());
         UiActions.onClick(back, app::leaveMiniGames);
-        screen.add(back).width(300f).height(58f);
-        screen.row().padTop(8f);
+        screen.add(back).width(300f).height(48f);
+        screen.row().padTop(4f);
 
         status.setAlignment(Align.center);
         screen.add(status).width(950f).height(30f);
