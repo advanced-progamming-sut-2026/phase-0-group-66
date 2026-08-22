@@ -15,14 +15,23 @@ public final class IZombieSession extends MiniGameSession {
     private final LinkedHashMap<String, ZombieCard> cards = new LinkedHashMap<>();
     private final boolean[] brains = {true, true, true, true, true};
     private final Random random;
+    private final boolean multiplayer;
     private int sun = 150;
+    private int plantSun = 500;
     private int brainsEaten;
 
     public IZombieSession(MiniGameDefinition definition, int level) {
+        this(definition, level, false);
+    }
+
+    public IZombieSession(MiniGameDefinition definition, int level, boolean multiplayer) {
         super(definition, level);
+        this.multiplayer = multiplayer;
         random = new Random(30_000L + level * 2017L);
         registerCards();
-        createGarden();
+        if (!multiplayer) {
+            createGarden();
+        }
         createSunProducers();
     }
 
@@ -33,9 +42,14 @@ public final class IZombieSession extends MiniGameSession {
         switch (normalized) {
             case "deploy", "placezombie" -> deploy(arg(arguments, 0),
                 intArg(arguments, 1) - 1);
+            case "plant", "placeplant" -> placePlant(arg(arguments, 0),
+                intArg(arguments, 1) - 1, intArg(arguments, 2) - 1);
+            case "removeplant" -> removePlant(intArg(arguments, 0) - 1,
+                intArg(arguments, 1) - 1);
             case "advance" -> advanceTime(intArg(arguments, 0));
             default -> throw new IllegalArgumentException(
-                "I, Zombie commands: deploy <card> <row>, advance <ticks>. "
+                "I, Zombie commands: deploy <card> <row>, plant <type> <row> <column>, "
+                    + "removeplant <row> <column>, advance <ticks>. "
                     + "Available cards: " + String.join(", ", cards.keySet()) + ".");
         }
     }
@@ -113,8 +127,51 @@ public final class IZombieSession extends MiniGameSession {
         addScore(10);
     }
 
+    private void placePlant(String plantName, int row, int column) {
+        if (!multiplayer) {
+            throw new IllegalStateException("Plant placement is available in multiplayer mode.");
+        }
+        validateCell(row, column);
+        if (findPlant(row, column) != null) {
+            throw new IllegalStateException("That tile already contains a plant.");
+        }
+        PlantCard card = plantCard(plantName);
+        if (plantSun < card.cost()) {
+            throw new IllegalStateException("Not enough plant sun. Required: " + card.cost() + ".");
+        }
+        plantSun -= card.cost();
+        plants.add(new MiniGamePlantUnit(card.type(), row, column, card.health(), card.damage()));
+    }
+
+    private void removePlant(int row, int column) {
+        if (!multiplayer) {
+            throw new IllegalStateException("Plant removal is available in multiplayer mode.");
+        }
+        validateCell(row, column);
+        if (!plants.removeIf(plant -> !plant.isDead() && plant.getRow() == row
+            && plant.getColumn() == column)) {
+            throw new IllegalStateException("No plant exists on that tile.");
+        }
+    }
+
+    private PlantCard plantCard(String name) {
+        return switch (normalize(name)) {
+            case "sunflower" -> new PlantCard("Sunflower", 50, 220, 0);
+            case "peashooter" -> new PlantCard("Peashooter", 100, 300, 35);
+            case "wallnut" -> new PlantCard("Wall-nut", 50, 1000, 0);
+            case "snowpea" -> new PlantCard("Snow Pea", 175, 300, 30);
+            case "repeater" -> new PlantCard("Repeater", 200, 320, 55);
+            case "cabbagepult" -> new PlantCard("Cabbage-pult", 100, 300, 40);
+            default -> throw new IllegalArgumentException(
+                "Plant must be sunflower, peashooter, wallnut, snowpea, repeater, or cabbagepult.");
+        };
+    }
+
     @Override
     protected void onTick() {
+        if (multiplayer && getElapsedTicks() % (5 * Game.TICKS_PER_SECOND) == 0) {
+            plantSun += 25;
+        }
         tickPlants();
         Iterator<MiniGameUnit> iterator = zombies.iterator();
         while (iterator.hasNext()) {
@@ -184,6 +241,11 @@ public final class IZombieSession extends MiniGameSession {
     private void tickPlants() {
         for (MiniGamePlantUnit plant : plants) {
             plant.tick();
+            if (multiplayer && plant.getType().equals("Sunflower") && plant.ready()) {
+                plantSun += 25;
+                plant.setCooldown(5 * Game.TICKS_PER_SECOND);
+                continue;
+            }
             if (!plant.ready()) {
                 continue;
             }
@@ -268,6 +330,7 @@ public final class IZombieSession extends MiniGameSession {
             builder.append('\n');
         }
         builder.append("Sun: ").append(sun).append(" | Level ").append(getLevel())
+            .append(multiplayer ? " | Plant sun: " + plantSun : "")
             .append(" cards: ");
         for (Map.Entry<String, ZombieCard> entry : cards.entrySet()) {
             builder.append(entry.getKey()).append('(').append(entry.getValue().cost())
@@ -314,6 +377,10 @@ public final class IZombieSession extends MiniGameSession {
         return sun;
     }
 
+    public int getPlantSun() {
+        return plantSun;
+    }
+
     public int getBrainsEaten() {
         return brainsEaten;
     }
@@ -337,6 +404,14 @@ public final class IZombieSession extends MiniGameSession {
         return value == null ? "" : value.toLowerCase().replace("-", "")
             .replace("_", "").replace(" ", "");
     }
+
+    private void validateCell(int row, int column) {
+        if (row < 0 || row >= 5 || column < 0 || column >= 9) {
+            throw new IllegalArgumentException("Row must be 1-5 and column must be 1-9.");
+        }
+    }
+
+    private record PlantCard(String type, int cost, int health, int damage) { }
 
     List<String> cardKeysForTest() { return List.copyOf(cards.keySet()); }
     int sunForTest() { return sun; }
