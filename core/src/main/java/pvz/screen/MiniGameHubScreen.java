@@ -60,13 +60,13 @@ public final class MiniGameHubScreen extends AuthenticatedUiScreen {
             MiniGameType.BEGHOULD,
             "Beghouled",
             "Swap adjacent plants, create matches, and defend the lawn.",
-            "IMAGE_UI_MINIGAME_BEJEWELED"
+            "IMAGE_UI_PENNY_PURSUITS_LEVEL_ICONS_TYPE_ICON_MINIGAME"
         )).width(350f).height(290f);
         cards.add(gameCard(
             MiniGameType.ZOMBOTANY,
             "Zombotany",
             "Fight zombies that carry plant powers.",
-            "IMAGE_ZOMBIE_ZOMBOTANY"
+            "IMAGE_UI_ALMANAC_PACKETS_ZOMBIES_MUMMY"
         )).width(350f).height(290f);
 
         ScrollPane scroller = new ScrollPane(cards, theme.skin());

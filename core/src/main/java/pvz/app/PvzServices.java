@@ -14,8 +14,6 @@ import controller.ShopController;
 import model.AdventureFactory;
 import model.GameData;
 import model.UserRepository;
-import network.PvzNetworkClient;
-import network.PvzNetworkServer;
 import view.GameView;
 
 import java.io.IOException;
@@ -40,9 +38,6 @@ public final class PvzServices {
     private final MiniGameController miniGameController;
     private final AdventureFactory adventureFactory;
     private final GameData gameData;
-    private final PvzNetworkClient networkClient = new PvzNetworkClient();
-    private PvzNetworkServer localNetworkServer;
-
     public PvzServices() throws IOException {
         Path userDataDirectory = resolveUserDataDirectory();
         migrateLegacyUserData(userDataDirectory);
@@ -132,33 +127,6 @@ public final class PvzServices {
 
     public GameData gameData() {
         return gameData;
-    }
-
-    public PvzNetworkClient network() {
-        return networkClient;
-    }
-
-    public synchronized int startLocalNetworkServer(int port) throws IOException {
-        if (localNetworkServer != null) {
-            return localNetworkServer.port();
-        }
-        Path directory = resolveUserDataDirectory().resolve("network-server");
-        localNetworkServer = new PvzNetworkServer(port, directory);
-        localNetworkServer.start();
-        return localNetworkServer.port();
-    }
-
-    public synchronized void closeNetwork() {
-        networkClient.logout();
-        if (localNetworkServer == null) {
-            return;
-        }
-        try {
-            localNetworkServer.close();
-        } catch (IOException ignored) {
-            // The process is already shutting down.
-        }
-        localNetworkServer = null;
     }
 
     private Path resolveUserDataDirectory() {

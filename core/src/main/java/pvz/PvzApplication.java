@@ -294,7 +294,6 @@ public final class PvzApplication extends Game {
     public void dispose() {
         if (services != null) {
             services.auth().saveCurrentState();
-            services.closeNetwork();
         }
         if (getScreen() != null) {
             getScreen().dispose();
