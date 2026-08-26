@@ -8,6 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Scaling;
 import model.Chapter;
 import model.GameProgress;
 import model.Level;
@@ -15,8 +16,14 @@ import pvz.PvzApplication;
 import pvz.ui.UiTheme;
 
 public final class ChapterLevelsScreen extends AuthenticatedUiScreen {
-    private static final float CARD_WIDTH = 255f;
-    private static final float CARD_HEIGHT = 355f;
+    private static final float CARD_WIDTH = 270f;
+    private static final float CARD_HEIGHT = 352f;
+    private static final String[] CHAPTER_BACKGROUNDS = {
+        "IMAGE_BACKGROUNDS_EGYPT_TEXTURE",
+        "IMAGE_BACKGROUNDS_ICEAGE_TEXTURE",
+        "IMAGE_BACKGROUNDS_BEACH_TEXTURE",
+        "IMAGE_BACKGROUNDS_DARK_TEXTURE"
+    };
     private static final String NODE_COMPLETE = "IMAGE_UI_QUESTS_QUEST_LEVEL_NODE_COMPLETE";
     private static final String NODE_AVAILABLE = "IMAGE_UI_QUESTS_QUEST_LEVEL_NODE_NEXT";
     private static final String NODE_LOCKED = "IMAGE_UI_QUESTS_QUEST_LEVEL_NODE_UPCOMING";
@@ -30,16 +37,24 @@ public final class ChapterLevelsScreen extends AuthenticatedUiScreen {
     }
 
     private void buildUi() {
+        Image chapterBackground = theme.image(chapterBackgroundId());
+        if (chapterBackground != null) {
+            chapterBackground.setScaling(Scaling.fill);
+            chapterBackground.setAlign(Align.center);
+            chapterBackground.setFillParent(true);
+            root.addActor(chapterBackground);
+        }
+
         Table screen = new Table();
         screen.top();
-        screen.padTop(24f);
-        screen.add(titleBar(chapter.getName())).growX().pad(0f, 42f, 0f, 42f);
+        screen.pad(24f, 42f, 18f, 42f);
+        screen.add(titleBar(chapter.getName())).width(1180f).height(54f);
         screen.row();
-        screen.add(buildSummary()).growX().pad(8f, 55f, 0f, 55f);
+        screen.add(buildSummary()).width(1160f).height(64f).padTop(8f);
         screen.row();
-        screen.add(buildLevels()).expand().center().padTop(6f);
+        screen.add(buildLevels()).width(1160f).height(CARD_HEIGHT + 14f).center().padTop(12f);
         screen.row();
-        screen.add(buildFooter()).growX().pad(4f, 42f, 24f, 42f);
+        screen.add(buildFooter()).width(1180f).height(50f).padTop(6f);
         root.add(screen).grow();
     }
 
@@ -60,6 +75,7 @@ public final class ChapterLevelsScreen extends AuthenticatedUiScreen {
 
     private Table buildLevels() {
         Table row = new Table();
+        row.center();
         for (Level level : chapter.getLevels()) {
             row.add(levelCard(level)).width(CARD_WIDTH).height(CARD_HEIGHT).pad(7f);
         }
@@ -70,6 +86,7 @@ public final class ChapterLevelsScreen extends AuthenticatedUiScreen {
         LevelState state = stateOf(level);
         Button button = new Button(cardStyle());
         button.add(levelContent(level, state)).grow();
+        button.setColor(0.76f, 0.68f, 0.49f, 1f);
         button.setDisabled(state == LevelState.LOCKED);
         if (state != LevelState.LOCKED) {
             UiActions.onClick(button, () -> app.showLevelBriefing(chapter, level));
@@ -175,6 +192,12 @@ public final class ChapterLevelsScreen extends AuthenticatedUiScreen {
         style.down = background;
         style.disabled = background;
         return style;
+    }
+
+    private String chapterBackgroundId() {
+        int index = Math.max(0, Math.min(CHAPTER_BACKGROUNDS.length - 1,
+            chapter.getChapterNumber() - 1));
+        return CHAPTER_BACKGROUNDS[index];
     }
 
     private Table buildFooter() {

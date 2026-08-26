@@ -311,9 +311,9 @@ public final class CollectionDetailPanel {
         TextButton upgrade = theme.primaryButton(max ? "MAX LEVEL" : upgradeButtonText(plant));
         upgrade.setDisabled(max);
         upgrade.getLabel().setWrap(false);
-        upgrade.getLabel().setFontScale(0.72f);
+        upgrade.getLabel().setFontScale(0.58f);
         UiActions.onClick(upgrade, () -> upgradeAction.accept(plant));
-        row.add(upgrade).growX().height(48f);
+        row.add(upgrade).width(292f).height(44f).center();
         return row;
     }
 
