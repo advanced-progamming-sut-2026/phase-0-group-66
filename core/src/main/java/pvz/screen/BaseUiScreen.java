@@ -1,6 +1,9 @@
 package pvz.screen;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -64,7 +67,20 @@ public abstract class BaseUiScreen extends ScreenAdapter {
 
     @Override
     public void show() {
-        Gdx.input.setInputProcessor(stage);
+        Gdx.input.setInputProcessor(new InputMultiplexer(stage, new InputAdapter() {
+            @Override
+            public boolean keyDown(int keycode) {
+                if (keycode == Input.Keys.ESCAPE) {
+                    handleEscape();
+                    return true;
+                }
+                return false;
+            }
+        }));
+    }
+
+    protected void handleEscape() {
+        // Screens with a dedicated escape action override this hook.
     }
 
     @Override
@@ -83,7 +99,7 @@ public abstract class BaseUiScreen extends ScreenAdapter {
 
     @Override
     public void hide() {
-        if (Gdx.input.getInputProcessor() == stage) {
+        if (Gdx.input.getInputProcessor() instanceof InputMultiplexer) {
             Gdx.input.setInputProcessor(null);
         }
     }

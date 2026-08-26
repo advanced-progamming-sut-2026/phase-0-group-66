@@ -432,6 +432,11 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         pauseLayer.setVisible(paused);
     }
 
+    @Override
+    protected void handleEscape() {
+        togglePause();
+    }
+
     private void returnToPlantSelection() {
         paused = false;
         ActionResult result = controller.startLevel(chapter.getName(), level.getLevelNumber());

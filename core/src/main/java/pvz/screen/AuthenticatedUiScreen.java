@@ -14,6 +14,11 @@ public abstract class AuthenticatedUiScreen extends BaseUiScreen {
         user = app.services().auth().getCurrentUser();
     }
 
+    @Override
+    protected void handleEscape() {
+        app.showMainMenu();
+    }
+
     protected Table titleBar(String title) {
         Table bar = new Table();
         bar.add(theme.title(title)).expandX().left();
