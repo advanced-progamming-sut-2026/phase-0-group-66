@@ -4,9 +4,11 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import controller.ActionResult;
 import model.News;
@@ -19,8 +21,8 @@ public final class MainMenuScreen extends BaseUiScreen {
     private static final String MENU_BUTTON_BACKGROUND = "IMAGE_UI_MAINMENU_BTN_BKGD";
     private static final String NETWORK_ICON = "IMAGE_UI_MAINMENU_MM_ICLOUDICON";
 
-    private static final float LOGO_WIDTH = 520f;
-    private static final float LOGO_HEIGHT = 88f;
+    private static final float LOGO_WIDTH = 560f;
+    private static final float LOGO_HEIGHT = 145f;
     private static final float BANNER_WIDTH = 760f;
     private static final float BANNER_HEIGHT = 263f;
     private static final float ICON_BUTTON_SIZE = 88f;
@@ -40,7 +42,9 @@ public final class MainMenuScreen extends BaseUiScreen {
         screen.pad(28f, 42f, 26f, 42f);
 
         addLogo(screen);
-        screen.row().padTop(18f);
+        screen.row().padTop(2f);
+        screen.add(buildProfilePicker()).width(430f).height(48f);
+        screen.row().padTop(8f);
         screen.add(buildPromoBanner()).width(BANNER_WIDTH).height(BANNER_HEIGHT);
         screen.row().padTop(10f);
         screen.add(buildPagerDots()).height(24f);
@@ -84,6 +88,42 @@ public final class MainMenuScreen extends BaseUiScreen {
         actionLayer.add(news).width(132f).height(46f).padRight(18f).padBottom(16f);
         banner.add(actionLayer);
         return banner;
+    }
+
+    private Table buildProfilePicker() {
+        Table picker = theme.insetPanel(8f);
+        SelectBox<String> profiles = theme.genderSelect();
+        java.util.ArrayList<String> usernames = new java.util.ArrayList<>();
+        for (User account : app.services().auth().getUserRepository().getAllUsers()) {
+            usernames.add(account.getUsername());
+        }
+        if (usernames.isEmpty()) {
+            picker.add(theme.fieldLabel("No profiles available."));
+            return picker;
+        }
+
+        profiles.setItems(usernames.toArray(new String[0]));
+        profiles.setSelected(user.getUsername());
+        profiles.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
+                String selected = profiles.getSelected();
+                if (!selected.equals(user.getUsername())) {
+                    ActionResult result = app.services().auth().selectUser(selected);
+                    if (result.isSuccessful()) {
+                        app.showMainMenu();
+                    }
+                }
+            }
+        });
+
+        Image playerIcon = theme.image(UiTheme.PLAYER_ICON);
+        if (playerIcon != null) {
+            picker.add(playerIcon).size(36f).padRight(8f);
+        }
+        picker.add(theme.fieldLabel("PROFILE")).padRight(12f);
+        picker.add(profiles).width(260f).height(40f);
+        return picker;
     }
 
     private Label buildPagerDots() {

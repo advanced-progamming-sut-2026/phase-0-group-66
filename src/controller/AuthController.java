@@ -120,6 +120,22 @@ public class AuthController {
         }
     }
 
+    public ActionResult selectUser(String username) {
+        Optional<User> foundUser = userRepository.findByUsername(username);
+        if (foundUser.isEmpty()) {
+            return ActionResult.failure("Username does not exist.");
+        }
+        currentUser = foundUser.get();
+        try {
+            if (stayLoggedIn) {
+                userRepository.saveSession(currentUser.getUsername());
+            }
+            return ActionResult.success("Profile selected.");
+        } catch (IOException exception) {
+            return ActionResult.failure("Profile selected, but the session could not be saved.");
+        }
+    }
+
     public ActionResult forgetPassword(String username, String email) {
         Optional<User> foundUser = userRepository.findByUsername(username);
         if (foundUser.isEmpty() || !foundUser.get().getEmail().equals(email)) {

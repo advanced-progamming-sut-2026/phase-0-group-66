@@ -86,6 +86,7 @@ public final class UiTheme implements Disposable {
 
     private final Texture gearTexture;
     private final Texture gearPressedTexture;
+    private final Texture mphLogoTexture;
     private final Drawable gearDrawable;
     private final Drawable gearPressedDrawable;
 
@@ -128,6 +129,7 @@ public final class UiTheme implements Disposable {
 
         gearTexture = createGearTexture(false);
         gearPressedTexture = createGearTexture(true);
+        mphLogoTexture = loadMphLogo();
         gearDrawable = smallDrawable(gearTexture, 42f, 42f);
         gearPressedDrawable = smallDrawable(gearPressedTexture, 40f, 40f);
     }
@@ -222,6 +224,15 @@ public final class UiTheme implements Disposable {
         return drawable;
     }
 
+    private Texture loadMphLogo() {
+        if (!Gdx.files.classpath("branding/mph_logo.png").exists()) {
+            return null;
+        }
+        Texture texture = new Texture(Gdx.files.classpath("branding/mph_logo.png"));
+        texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        return texture;
+    }
+
     public Image screenBackground() {
         Image background = atlas.image(MAIN_MENU_BACKGROUND, Scaling.fill);
         if (background != null) {
@@ -242,6 +253,11 @@ public final class UiTheme implements Disposable {
     }
 
     public Image pvzLogo() {
+        if (mphLogoTexture != null) {
+            Image logo = new Image(new TextureRegionDrawable(new TextureRegion(mphLogoTexture)));
+            logo.setScaling(Scaling.fit);
+            return logo;
+        }
         return image(PVZ2_LOGO);
     }
 
@@ -449,6 +465,9 @@ public final class UiTheme implements Disposable {
         buttonFont.dispose();
         settingsTitleFont.dispose();
         settingsFont.dispose();
+        if (mphLogoTexture != null) {
+            mphLogoTexture.dispose();
+        }
         gearTexture.dispose();
         gearPressedTexture.dispose();
     }
