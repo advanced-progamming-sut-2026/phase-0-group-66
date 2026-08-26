@@ -49,10 +49,6 @@ public final class UiTheme implements Disposable {
     public static final String GEM_ICON = "IMAGE_UI_HUD_INGAME_GEM";
     public static final String DIFFICULTY_BG = "IMAGE_UI_QUESTS_DIFFICULTY_BG";
     public static final String RED_DOT = "IMAGE_UI_HUD_INGAME_STORE_RED_DOT";
-    public static final String CURSOR_ICON =
-        "IMAGE_ZEN_GARDEN_CURSORS_BEE_CURSOR_BEE_CURSOR_132X162";
-    public static final String DIFFICULTY_PEPPER =
-        "IMAGE_PLANT_JALAPENO_JALAPENO_111X185";
     public static final String AUDIO_BAR = "IMAGE_UI_GENERIC_AUDIO_BAR";
     public static final String AUDIO_FILL = "IMAGE_UI_GENERIC_AUDIO_FILL";
     public static final String DIVIDER = "IMAGE_UI_GENERIC_4PXDIVIDER";
