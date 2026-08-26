@@ -21,8 +21,6 @@ public final class PlantPacketCard extends Button {
     private static final String LOCK = "IMAGE_UI_PACKETS_LOCKED";
     private static final String SELECT_CORNERS = "IMAGE_UI_PACKETS_SELECT";
     private static final String BOOST_ICON = "IMAGE_UI_ALMANAC_ALMANAC_BOOST";
-    private static final String SUN_ICON = "IMAGE_UI_HUD_INGAME_SUN";
-
     private final PlantDefinition definition;
 
     public PlantPacketCard(UiTheme theme, PlantDefinition definition, State state, boolean compact) {
@@ -138,9 +136,10 @@ public final class PlantPacketCard extends Button {
     private Table buildBottomLayer(UiTheme theme, PlantDefinition plant, State state) {
         Table bottom = new Table();
         bottom.bottom().left();
-        Image sun = theme.image(SUN_ICON);
-        if (sun != null) {
-            bottom.add(sun).size(18f).pad(0f, 3f, 3f, 4f);
+        Image familyIcon = PlantArtResolver.familyIcon(theme, plant);
+        if (familyIcon != null) {
+            familyIcon.setScaling(Scaling.fit);
+            bottom.add(familyIcon).size(22f).pad(0f, 3f, 2f, 3f);
         }
         Label cost = theme.settingsLabel(Integer.toString(plant.getCost()));
         cost.setFontScale(0.62f);

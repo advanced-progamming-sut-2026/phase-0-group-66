@@ -5,6 +5,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Scaling;
 import model.ArmorDefinition;
 import model.PlantDefinition;
 import model.User;
@@ -22,6 +23,19 @@ public final class CollectionDetailPanel {
     private static final float PANEL_CONTENT_WIDTH = 332f;
     private static final float KEY_WIDTH = 108f;
     private static final float VALUE_WIDTH = 216f;
+    private static final float STAT_ICON_WIDTH = 32f;
+    private static final float STAT_KEY_WIDTH = 80f;
+    private static final float STAT_VALUE_WIDTH = 212f;
+    private static final String SUN_COST_ICON =
+        "IMAGE_UI_ALMANAC_ALMANAC_STAT_ICON_SUNCOST";
+    private static final String TOUGHNESS_ICON =
+        "IMAGE_UI_ALMANAC_PLANTS_TOUGHNESS_ICON";
+    private static final String DAMAGE_ICON =
+        "IMAGE_UI_ALMANAC_PLANTS_DAMAGE_ICON";
+    private static final String RECHARGE_ICON =
+        "IMAGE_UI_ALMANAC_PLANTS_RECHARGE_ICON";
+    private static final String FAMILY_ICON =
+        "IMAGE_UI_ALMANAC_ALMANAC_STAT_ICON_FAMILY";
 
     private final PvzApplication app;
     private final UiTheme theme;
@@ -49,14 +63,14 @@ public final class CollectionDetailPanel {
         addDetail(panel, "ID", Integer.toString(plant.getId()));
         addDetail(panel, "Data Key", plant.getKey());
         addDetail(panel, "Required", plant.isRequired() ? "Yes" : "No");
-        addDetail(panel, "Family", plant.getFamily().getDisplayName());
+        addFamilyDetail(panel, plant);
         addDetail(panel, "Tags", plant.getTags().isEmpty()
             ? "None" : String.join(", ", plant.getTags()));
-        addDetail(panel, "Sun Cost", Integer.toString(plant.getCost()));
-        addDetail(panel, "Base Health", Integer.toString(plant.getBaseHealth()));
-        addDetail(panel, "Damage", plant.getDamage());
+        addStatDetail(panel, SUN_COST_ICON, "Sun Cost", Integer.toString(plant.getCost()));
+        addStatDetail(panel, TOUGHNESS_ICON, "Base Health", Integer.toString(plant.getBaseHealth()));
+        addStatDetail(panel, DAMAGE_ICON, "Damage", plant.getDamage());
         addDetail(panel, "Action Interval", formatSeconds(plant.getActionIntervalSeconds()));
-        addDetail(panel, "Recharge", formatSeconds(plant.getRechargeSeconds()));
+        addStatDetail(panel, RECHARGE_ICON, "Recharge", formatSeconds(plant.getRechargeSeconds()));
         addDetail(panel, "Projectiles", Integer.toString(plant.getProjectileCount()));
         addDetail(panel, "Current Level", plantLevelText(plant));
         addDetail(panel, "Seed Packets", seedText(plant));
@@ -176,6 +190,66 @@ public final class CollectionDetailPanel {
             .width(PANEL_CONTENT_WIDTH)
             .minWidth(0f)
             .minHeight(28f)
+            .padBottom(2f);
+        panel.row();
+    }
+
+    private void addStatDetail(Table panel, String iconId, String key, String value) {
+        Table row = new Table();
+        Image icon = theme.image(iconId);
+        if (icon != null) {
+            icon.setScaling(Scaling.fit);
+            row.add(icon).size(STAT_ICON_WIDTH).padRight(6f);
+        } else {
+            row.add().width(STAT_ICON_WIDTH + 6f);
+        }
+        Label left = theme.settingsLabel(key);
+        Label right = theme.settingsLabel(nonEmpty(value));
+        left.setAlignment(Align.left | Align.top);
+        right.setWrap(true);
+        right.setAlignment(Align.right | Align.top);
+        left.setWrap(false);
+        row.defaults().minWidth(0f);
+        row.add(left).width(STAT_KEY_WIDTH).minWidth(0f).left().top();
+        row.add(right).width(STAT_VALUE_WIDTH).minWidth(0f).right().top();
+        panel.add(row)
+            .width(PANEL_CONTENT_WIDTH)
+            .minWidth(0f)
+            .minHeight(32f)
+            .padBottom(2f);
+        panel.row();
+    }
+
+    private void addFamilyDetail(Table panel, PlantDefinition plant) {
+        Table row = new Table();
+        Image icon = theme.image(FAMILY_ICON);
+        if (icon != null) {
+            icon.setScaling(Scaling.fit);
+            row.add(icon).size(STAT_ICON_WIDTH).padRight(6f);
+        } else {
+            row.add().width(STAT_ICON_WIDTH + 6f);
+        }
+        Label key = theme.settingsLabel("Family");
+        key.setAlignment(Align.left | Align.top);
+        key.setWrap(false);
+        row.add(key).width(STAT_KEY_WIDTH).minWidth(0f).left().top();
+
+        Table value = new Table();
+        value.defaults().minWidth(0f);
+        Label family = theme.settingsLabel(plant.getFamily().getDisplayName());
+        family.setAlignment(Align.right | Align.top);
+        family.setWrap(true);
+        value.add(family).expandX().right().top();
+        Image familyIcon = PlantArtResolver.familyIcon(theme, plant);
+        if (familyIcon != null) {
+            familyIcon.setScaling(Scaling.fit);
+            value.add(familyIcon).size(28f).padLeft(4f).right().top();
+        }
+        row.add(value).width(STAT_VALUE_WIDTH).minWidth(0f).right().top();
+        panel.add(row)
+            .width(PANEL_CONTENT_WIDTH)
+            .minWidth(0f)
+            .minHeight(32f)
             .padBottom(2f);
         panel.row();
     }
