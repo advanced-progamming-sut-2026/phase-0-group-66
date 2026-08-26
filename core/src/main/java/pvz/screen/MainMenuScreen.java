@@ -4,11 +4,9 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import controller.ActionResult;
 import model.News;
@@ -42,9 +40,7 @@ public final class MainMenuScreen extends BaseUiScreen {
         screen.pad(28f, 42f, 26f, 42f);
 
         addLogo(screen);
-        screen.row().padTop(2f);
-        screen.add(buildProfilePicker()).width(430f).height(48f);
-        screen.row().padTop(8f);
+        screen.row().padTop(14f);
         screen.add(buildPromoBanner()).width(BANNER_WIDTH).height(BANNER_HEIGHT);
         screen.row().padTop(10f);
         screen.add(buildPagerDots()).height(24f);
@@ -90,42 +86,6 @@ public final class MainMenuScreen extends BaseUiScreen {
         return banner;
     }
 
-    private Table buildProfilePicker() {
-        Table picker = theme.insetPanel(8f);
-        SelectBox<String> profiles = theme.genderSelect();
-        java.util.ArrayList<String> usernames = new java.util.ArrayList<>();
-        for (User account : app.services().auth().getUserRepository().getAllUsers()) {
-            usernames.add(account.getUsername());
-        }
-        if (usernames.isEmpty()) {
-            picker.add(theme.fieldLabel("No profiles available."));
-            return picker;
-        }
-
-        profiles.setItems(usernames.toArray(new String[0]));
-        profiles.setSelected(user.getUsername());
-        profiles.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, com.badlogic.gdx.scenes.scene2d.Actor actor) {
-                String selected = profiles.getSelected();
-                if (!selected.equals(user.getUsername())) {
-                    ActionResult result = app.services().auth().selectUser(selected);
-                    if (result.isSuccessful()) {
-                        app.showMainMenu();
-                    }
-                }
-            }
-        });
-
-        Image playerIcon = theme.image(UiTheme.PLAYER_ICON);
-        if (playerIcon != null) {
-            picker.add(playerIcon).size(36f).padRight(8f);
-        }
-        picker.add(theme.fieldLabel("PROFILE")).padRight(12f);
-        picker.add(profiles).width(260f).height(40f);
-        return picker;
-    }
-
     private Label buildPagerDots() {
         Label dots = theme.heading("●  ○  ○  ○");
         dots.setFontScale(0.72f);
@@ -153,9 +113,16 @@ public final class MainMenuScreen extends BaseUiScreen {
         play.getLabel().setFontScale(1.25f);
         UiActions.onClick(play, app::showAdventure);
 
+        Table center = new Table();
+        TextButton profile = theme.secondaryButton(user.getNickname());
+        UiActions.onClick(profile, app::showPlayerList);
+        center.add(profile).width(310f).height(48f);
+        center.row().padTop(8f);
+        center.add(play).width(310f).height(82f);
+
         bottom.add(left).width(210f).left();
         bottom.add().expandX();
-        bottom.add(play).width(310f).height(82f).center();
+        bottom.add(center).width(310f).center();
         bottom.add().expandX();
         bottom.add(right).width(210f).right();
         return bottom;

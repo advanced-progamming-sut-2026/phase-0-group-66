@@ -26,6 +26,7 @@ import pvz.screen.NewsScreen;
 import pvz.screen.NetworkScreen;
 import pvz.screen.IZombieScreen;
 import pvz.screen.PlantSelectionScreen;
+import pvz.screen.PlayerListScreen;
 import pvz.screen.QuestScreen;
 import pvz.screen.ProfileScreen;
 import pvz.screen.RegisterScreen;
@@ -105,6 +106,14 @@ public final class PvzApplication extends Game {
             return;
         }
         changeScreen(new MainMenuScreen(this));
+    }
+
+    public void showPlayerList() {
+        if (!services.auth().isAuthenticated()) {
+            showLogin();
+            return;
+        }
+        changeScreen(new PlayerListScreen(this));
     }
 
 
