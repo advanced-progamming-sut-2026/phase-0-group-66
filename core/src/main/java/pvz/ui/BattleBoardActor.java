@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 public final class BattleBoardActor extends Actor implements Disposable {
+    private static final float MODEL_STEP_SECONDS = 0.50f;
     private final PvzAssets assets;
     private final GameController controller;
     private final Level level;
@@ -40,6 +41,9 @@ public final class BattleBoardActor extends Actor implements Disposable {
     private final Map<Plant, Float> plantFoodUntil = new IdentityHashMap<>();
     private final Map<Zombie, Float> foodDeathStartedAt = new IdentityHashMap<>();
     private final Map<Zombie, Float> foodDeathUntil = new IdentityHashMap<>();
+    private final Map<Zombie, Float> previousZombieColumns = new IdentityHashMap<>();
+    private final Map<Zombie, Float> zombieMotionStarts = new IdentityHashMap<>();
+    private final Map<Zombie, Float> zombieMotionOrigins = new IdentityHashMap<>();
 
     private TextureRegion backgroundLeft;
     private TextureRegion backgroundMain;
@@ -298,13 +302,16 @@ public final class BattleBoardActor extends Actor implements Disposable {
         float scale = cellHeight() / 250f * 0.82f;
         SeasonType season = level.getSeason();
         List<Zombie> zombies = zombiesToDraw(board);
+        previousZombieColumns.keySet().removeIf(zombie -> !zombies.contains(zombie));
+        zombieMotionStarts.keySet().removeIf(zombie -> !zombies.contains(zombie));
+        zombieMotionOrigins.keySet().removeIf(zombie -> !zombies.contains(zombie));
         int[] previewLaneCount = new int[Board.DEFAULT_ROWS];
         for (Zombie zombie : zombies) {
             if (zombie == null || zombie.isDead() || zombie.getPosition() == null) {
                 continue;
             }
             int row = zombie.getPosition().getRow();
-            double column = zombie.getPosition().getColumn();
+            double column = renderZombieColumn(zombie, zombie.getPosition().getColumn());
             if (cameraPan > 0.05f && row >= 0 && row < previewLaneCount.length) {
                 column += previewLaneCount[row]++ * 0.34d;
             }
@@ -327,6 +334,29 @@ public final class BattleBoardActor extends Actor implements Disposable {
             );
         }
         drawPlantFoodDeathGhosts(batch, season, scale);
+    }
+
+    private double renderZombieColumn(Zombie zombie, double modelColumn) {
+        float current = (float) modelColumn;
+        Float previous = previousZombieColumns.put(zombie, current);
+        if (previous != null && Math.abs(previous - current) >= 0.0001f) {
+            zombieMotionOrigins.put(zombie, previous);
+            zombieMotionStarts.put(zombie, animationTime);
+        }
+
+        Float origin = zombieMotionOrigins.get(zombie);
+        Float start = zombieMotionStarts.get(zombie);
+        if (origin == null || start == null) {
+            return current;
+        }
+        float progress = Math.max(0f, Math.min(1f,
+            (animationTime - start) / MODEL_STEP_SECONDS));
+        if (progress >= 1f) {
+            zombieMotionOrigins.remove(zombie);
+            zombieMotionStarts.remove(zombie);
+            return current;
+        }
+        return origin + (current - origin) * progress;
     }
 
     private void drawPlantFoodDeathGhosts(Batch batch, SeasonType season, float scale) {

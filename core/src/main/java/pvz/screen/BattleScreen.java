@@ -288,6 +288,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         Image frame = theme.image(frameId);
         if (frame != null) {
             frame.setScaling(Scaling.stretch);
+            frame.setTouchable(Touchable.disabled);
             stack.add(frame);
         }
 
@@ -295,8 +296,10 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         Image packet = packetId == null ? null : theme.image(packetId);
         if (packet != null) {
             packet.setScaling(Scaling.fit);
+            packet.setTouchable(Touchable.disabled);
             Table packetLayer = new Table();
             packetLayer.pad(7f, 8f, 14f, 8f);
+            packetLayer.setTouchable(Touchable.disabled);
             packetLayer.add(packet).grow();
             stack.add(packetLayer);
         }
@@ -309,8 +312,11 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         String cooldownText = cooldown <= 0 ? "READY" : String.format("%.1fs", cooldown / 10f);
         Label cooldownLabel = theme.settingsLabel(cooldownText);
         cooldownLabel.setFontScale(0.64f);
+        cost.setTouchable(Touchable.disabled);
+        cooldownLabel.setTouchable(Touchable.disabled);
         text.add(cost).expandX().left().padLeft(5f);
         text.add(cooldownLabel).right().padRight(4f);
+        text.setTouchable(Touchable.disabled);
         stack.add(text);
 
         stack.setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.enabled);

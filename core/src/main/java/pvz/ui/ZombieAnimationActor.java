@@ -103,7 +103,7 @@ public final class ZombieAnimationActor extends Actor {
             if (clips == null || clips.isEmpty()) {
                 return null;
             }
-            for (String preferred : List.of("idle", "walk")) {
+            for (String preferred : List.of("walk", "idle")) {
                 for (String name : clips) {
                     if (name.equalsIgnoreCase(preferred)) {
                         return name;
