@@ -50,7 +50,7 @@ public final class CheatScreen extends AuthenticatedUiScreen {
     private void buildUi() {
         Table screen = new Table();
         screen.top();
-        screen.pad(36f, 70f, 22f, 70f);
+        screen.pad(28f, 70f, 14f, 70f);
 
         Table panel = theme.dialogPanel();
         panel.top();
@@ -71,7 +71,7 @@ public final class CheatScreen extends AuthenticatedUiScreen {
         UiActions.onClick(back, app::showSettings);
         panel.add(back).width(240f).height(50f).padTop(6f);
 
-        screen.add(panel).width(1040f).height(640f);
+        screen.add(panel).width(1040f).height(620f);
         root.add(screen).grow();
     }
 

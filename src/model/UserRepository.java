@@ -57,6 +57,14 @@ public class UserRepository {
         save();
     }
 
+    public synchronized boolean delete(String username) throws IOException {
+        if (users.remove(username) == null) {
+            return false;
+        }
+        save();
+        return true;
+    }
+
     public synchronized void save() throws IOException {
         Files.createDirectories(dataDirectory);
         Path temporaryFile = usersFile.resolveSibling(usersFile.getFileName() + ".tmp");

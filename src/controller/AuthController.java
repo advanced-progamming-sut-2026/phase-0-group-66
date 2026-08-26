@@ -136,6 +136,26 @@ public class AuthController {
         }
     }
 
+    public ActionResult deleteUser(String username) {
+        Optional<User> foundUser = userRepository.findByUsername(username);
+        if (foundUser.isEmpty()) {
+            return ActionResult.failure("Username does not exist.");
+        }
+        try {
+            if (!userRepository.delete(username)) {
+                return ActionResult.failure("Could not delete the account.");
+            }
+            if (currentUser != null && currentUser.getUsername().equals(username)) {
+                currentUser = null;
+                stayLoggedIn = false;
+                userRepository.clearSession();
+            }
+            return ActionResult.success("Account deleted.");
+        } catch (IOException exception) {
+            return ActionResult.failure("Could not delete the account.");
+        }
+    }
+
     public ActionResult forgetPassword(String username, String email) {
         Optional<User> foundUser = userRepository.findByUsername(username);
         if (foundUser.isEmpty() || !foundUser.get().getEmail().equals(email)) {
