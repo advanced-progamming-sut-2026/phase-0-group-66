@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 final class BattleTickSystem {
+    private static final double PROJECTILE_HIT_RADIUS = 0.35;
+
     private BattleTickSystem() { }
 
     static void tickConveyor(Game engine) {
@@ -332,12 +334,14 @@ final class BattleTickSystem {
 
     static Zombie findProjectileTarget(Game engine, int row, double fromColumn, double toColumn) {
         Zombie target = null;
+        double minColumn = Math.min(fromColumn, toColumn) - PROJECTILE_HIT_RADIUS;
+        double maxColumn = Math.max(fromColumn, toColumn) + PROJECTILE_HIT_RADIUS;
         for (Zombie zombie : engine.board.getZombiesInRow(row)) {
             if (zombie.isHypnotized() || zombie.isTrappedInIceTile()) {
                 continue;
             }
             double column = zombie.getPosition().getColumn();
-            if (column + 0.001 < fromColumn || column - 0.001 > toColumn) {
+            if (column < minColumn || column > maxColumn) {
                 continue;
             }
             if (target == null || column < target.getPosition().getColumn()) {

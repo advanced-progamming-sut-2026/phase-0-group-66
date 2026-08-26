@@ -56,6 +56,17 @@ public final class BattlePamRenderer {
         return draw(batch, spec.path(), clip, time, x, y, scale, false);
     }
 
+    public float plantActionDuration(Plant plant) {
+        if (plant == null) {
+            return 0f;
+        }
+        AnimationSpec spec = plantSpecs.computeIfAbsent(
+            plant.getDefinition().getKey(),
+            ignored -> resolvePlant(plant.getDefinition())
+        );
+        return spec.actionDuration();
+    }
+
     public boolean drawZombie(
         Batch batch,
         Zombie zombie,
@@ -178,7 +189,8 @@ public final class BattlePamRenderer {
             String primary = chooseClip(clips, preferredClip);
             String action = includeActionClip ? chooseActionClip(clips) : null;
             String plantFood = includeActionClip ? choosePlantFoodClip(clips, action) : null;
-            return new AnimationSpec(path, primary, action, plantFood);
+            float actionDuration = action == null ? 0f : player.clipDurationSeconds(path, action);
+            return new AnimationSpec(path, primary, action, plantFood, actionDuration);
         } catch (RuntimeException exception) {
             return AnimationSpec.missing();
         }
@@ -295,10 +307,11 @@ public final class BattlePamRenderer {
         String path,
         String primaryClip,
         String actionClip,
-        String plantFoodClip
+        String plantFoodClip,
+        float actionDuration
     ) {
         static AnimationSpec missing() {
-            return new AnimationSpec(null, null, null, null);
+            return new AnimationSpec(null, null, null, null, 0f);
         }
 
         boolean valid() {

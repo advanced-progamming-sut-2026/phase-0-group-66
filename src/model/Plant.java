@@ -27,6 +27,7 @@ public abstract class Plant {
     private final PlantAbility ability;
     private final Map<String, Double> upgradeTraits;
     private int actionTicksRemaining;
+    private int actionSequence;
     private int plantFoodShield;
     private int coverShield;
     int ageTicks;
@@ -166,6 +167,9 @@ public abstract class Plant {
     public boolean tickActionTimer() {
         if (actionTicksRemaining > 0) {
             actionTicksRemaining--;
+            if (actionTicksRemaining == 0) {
+                actionSequence++;
+            }
         }
         return actionTicksRemaining <= 0;
     }
@@ -442,6 +446,7 @@ public abstract class Plant {
     public int getPlantLevel() { return plantLevel; }
     public int getActionIntervalTicks() { return actionIntervalTicks; }
     public int getActionTicksRemaining() { return actionTicksRemaining; }
+    public int getActionSequence() { return actionSequence; }
     public int getRechargeTicks() { return rechargeTicks; }
     public int getSunProductionBonus() { return sunProductionBonus; }
     public boolean hasDoubleSunChance() { return doubleSunChance; }

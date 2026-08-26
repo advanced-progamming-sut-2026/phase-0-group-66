@@ -36,7 +36,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
     private final BoardGeometry geometry;
     private final Map<Plant, Float> attackStartedAt = new IdentityHashMap<>();
     private final Map<Plant, Float> attackUntil = new IdentityHashMap<>();
-    private final Map<Plant, Integer> lastActionTicks = new IdentityHashMap<>();
+    private final Map<Plant, Integer> lastActionSequences = new IdentityHashMap<>();
     private final Map<Plant, Float> plantFoodStartedAt = new IdentityHashMap<>();
     private final Map<Plant, Float> plantFoodUntil = new IdentityHashMap<>();
     private final Map<Zombie, Float> foodDeathStartedAt = new IdentityHashMap<>();
@@ -44,6 +44,9 @@ public final class BattleBoardActor extends Actor implements Disposable {
     private final Map<Zombie, Float> previousZombieColumns = new IdentityHashMap<>();
     private final Map<Zombie, Float> zombieMotionStarts = new IdentityHashMap<>();
     private final Map<Zombie, Float> zombieMotionOrigins = new IdentityHashMap<>();
+    private final Map<Projectile, Float> previousProjectileColumns = new IdentityHashMap<>();
+    private final Map<Projectile, Float> projectileMotionStarts = new IdentityHashMap<>();
+    private final Map<Projectile, Float> projectileMotionOrigins = new IdentityHashMap<>();
 
     private TextureRegion backgroundLeft;
     private TextureRegion backgroundMain;
@@ -196,7 +199,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
         float scale = cellHeight() / 235f * 0.96f;
         attackStartedAt.keySet().removeIf(plant -> !board.getPlants().contains(plant));
         attackUntil.keySet().removeIf(plant -> !board.getPlants().contains(plant));
-        lastActionTicks.keySet().removeIf(plant -> !board.getPlants().contains(plant));
+        lastActionSequences.keySet().removeIf(plant -> !board.getPlants().contains(plant));
         plantFoodStartedAt.keySet().removeIf(plant -> !board.getPlants().contains(plant));
         plantFoodUntil.keySet().removeIf(plant -> !board.getPlants().contains(plant));
         for (Plant plant : board.getPlants()) {
@@ -273,21 +276,22 @@ public final class BattleBoardActor extends Actor implements Disposable {
     }
 
     private boolean updateAttackState(Plant plant, Board board) {
-        int currentTicks = plant.getActionTicksRemaining();
-        Integer previousTicks = lastActionTicks.put(plant, currentTicks);
+        int currentSequence = plant.getActionSequence();
+        Integer previousSequence = lastActionSequences.put(plant, currentSequence);
         if (!plant.isShooter()) {
             attackStartedAt.remove(plant);
             attackUntil.remove(plant);
             return false;
         }
-        boolean timerReset = previousTicks != null && currentTicks > previousTicks + 2;
+        boolean actionFired = previousSequence != null && currentSequence != previousSequence;
         boolean hasTarget = board.findNearestZombieAhead(
             plant.getPosition().getRow(),
             plant.getPosition().getColumn()
         ) != null;
-        if (timerReset && hasTarget) {
+        if (actionFired && hasTarget) {
             attackStartedAt.put(plant, animationTime);
-            attackUntil.put(plant, animationTime + 0.52f);
+            attackUntil.put(plant, animationTime + Math.max(
+                0.52f, pamRenderer.plantActionDuration(plant)));
         }
         float until = attackUntil.getOrDefault(plant, -1f);
         if (animationTime <= until) {
@@ -391,12 +395,17 @@ public final class BattleBoardActor extends Actor implements Disposable {
     }
 
     private void drawProjectiles(Batch batch, Board board) {
-        for (Projectile projectile : board.getProjectiles()) {
+        List<Projectile> projectiles = board.getProjectiles();
+        previousProjectileColumns.keySet().removeIf(projectile -> !projectiles.contains(projectile));
+        projectileMotionStarts.keySet().removeIf(projectile -> !projectiles.contains(projectile));
+        projectileMotionOrigins.keySet().removeIf(projectile -> !projectiles.contains(projectile));
+        for (Projectile projectile : projectiles) {
             if (projectile == null || !projectile.isActive() || projectile.getPosition() == null) {
                 continue;
             }
-            float x = gridLeft()
-                + (float) ((projectile.getPosition().getColumn() + 0.5d) * cellWidth());
+            double column = renderProjectileColumn(projectile,
+                projectile.getPosition().getColumn());
+            float x = gridLeft() + (float) ((column + 0.5d) * cellWidth());
             int row = projectile.getPosition().getRow();
             float y = cellBottom(row) + cellHeight() * 0.55f;
             float size = Math.max(12f, Math.min(cellWidth(), cellHeight()) * 0.20f);
@@ -408,6 +417,29 @@ public final class BattleBoardActor extends Actor implements Disposable {
                 batch.setColor(Color.WHITE);
             }
         }
+    }
+
+    private double renderProjectileColumn(Projectile projectile, double modelColumn) {
+        float current = (float) modelColumn;
+        Float previous = previousProjectileColumns.put(projectile, current);
+        if (previous != null && Math.abs(previous - current) >= 0.0001f) {
+            projectileMotionOrigins.put(projectile, previous);
+            projectileMotionStarts.put(projectile, animationTime);
+        }
+
+        Float origin = projectileMotionOrigins.get(projectile);
+        Float start = projectileMotionStarts.get(projectile);
+        if (origin == null || start == null) {
+            return current;
+        }
+        float progress = Math.max(0f, Math.min(1f,
+            (animationTime - start) / MODEL_STEP_SECONDS));
+        if (progress >= 1f) {
+            projectileMotionOrigins.remove(projectile);
+            projectileMotionStarts.remove(projectile);
+            return current;
+        }
+        return origin + (current - origin) * progress;
     }
 
     private void drawSuns(Batch batch, Board board) {
@@ -435,8 +467,15 @@ public final class BattleBoardActor extends Actor implements Disposable {
             return;
         }
         Board board = controller.getGame().getBoard();
-        float width = cellWidth() * 0.72f;
-        float height = cellHeight() * 0.58f;
+        float maxWidth = cellWidth() * 0.82f;
+        float maxHeight = cellHeight() * 0.62f;
+        float aspect = mowerIcon.getRegionWidth() / (float) Math.max(1, mowerIcon.getRegionHeight());
+        float width = maxWidth;
+        float height = width / aspect;
+        if (height > maxHeight) {
+            height = maxHeight;
+            width = height * aspect;
+        }
         for (LawnMower mower : board.getLawnMowers()) {
             if (mower.isActivated()) {
                 continue;
