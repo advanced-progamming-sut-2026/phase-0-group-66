@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.List;
@@ -19,6 +20,9 @@ import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
+import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
@@ -45,6 +49,10 @@ public final class UiTheme implements Disposable {
     public static final String GEM_ICON = "IMAGE_UI_HUD_INGAME_GEM";
     public static final String DIFFICULTY_BG = "IMAGE_UI_QUESTS_DIFFICULTY_BG";
     public static final String RED_DOT = "IMAGE_UI_HUD_INGAME_STORE_RED_DOT";
+    public static final String CURSOR_ICON =
+        "IMAGE_ZEN_GARDEN_CURSORS_BEE_CURSOR_BEE_CURSOR_132X162";
+    public static final String DIFFICULTY_PEPPER =
+        "IMAGE_PLANT_JALAPENO_JALAPENO_111X185";
     public static final String AUDIO_BAR = "IMAGE_UI_GENERIC_AUDIO_BAR";
     public static final String AUDIO_FILL = "IMAGE_UI_GENERIC_AUDIO_FILL";
     public static final String DIVIDER = "IMAGE_UI_GENERIC_4PXDIVIDER";
@@ -433,7 +441,27 @@ public final class UiTheme implements Disposable {
         );
         style.font = buttonFont;
         style.fontColor = Color.WHITE;
-        return new TextButton(text, style);
+        TextButton button = new TextButton(text, style);
+        Image hover = new Image(style.up);
+        hover.setFillParent(true);
+        hover.setColor(1f, 1f, 1f, 0.22f);
+        hover.setTouchable(Touchable.disabled);
+        hover.setVisible(false);
+        button.addActor(hover);
+        hover.toBack();
+        button.getLabel().toFront();
+        button.addListener(new InputListener() {
+            @Override
+            public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+                hover.setVisible(!button.isDisabled());
+            }
+
+            @Override
+            public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+                hover.setVisible(false);
+            }
+        });
+        return button;
     }
 
     public Label statusLabel() {

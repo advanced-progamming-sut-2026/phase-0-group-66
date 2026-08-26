@@ -9,6 +9,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Scaling;
 import controller.ActionResult;
 import controller.SettingsController;
 import pvz.PvzApplication;
@@ -140,7 +141,15 @@ public final class SettingsScreen extends AuthenticatedUiScreen {
     private Table buildGameplayCard() {
         Table card = theme.settingsCardPanel(14f);
         card.top().left();
-        card.add(theme.settingsLabel("GAMEPLAY")).left().padBottom(7f).colspan(2);
+        Table difficultyHeader = new Table();
+        difficultyHeader.setBackground(theme.drawable(UiTheme.DIFFICULTY_BG));
+        Image pepper = theme.image(UiTheme.DIFFICULTY_PEPPER);
+        if (pepper != null) {
+            pepper.setScaling(Scaling.fit);
+            difficultyHeader.add(pepper).size(42f).padRight(8f);
+        }
+        difficultyHeader.add(theme.settingsLabel("DIFFICULTY")).left();
+        card.add(difficultyHeader).height(56f).left().colspan(2);
         card.row();
 
         addNumberSetting(
