@@ -3,12 +3,14 @@ package pvz.screen;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Scaling;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import controller.ActionResult;
 import controller.GameController;
 import model.Board;
@@ -23,6 +25,7 @@ import model.Sun;
 import model.Wave;
 import model.Zombie;
 import pvz.PvzApplication;
+import pvz.app.AudioSettings;
 import pvz.ui.BattleBoardActor;
 import pvz.ui.UiTheme;
 
@@ -51,6 +54,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     private final Stack pauseLayer;
     private final BattleBoardActor boardActor;
     private final TextButton startWavesButton;
+    private final AudioSettings audioSettings;
 
     private float modelAccumulator;
     private String selectedPlant;
@@ -83,6 +87,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         boardActor = new BattleBoardActor(app.assets(), controller, level, this::handleCellClick);
         boardActor.setShowGrid(user.isGridVisible());
         startWavesButton = theme.tertiaryButton("START WAVES");
+        audioSettings = app.audioSettings();
         buildUi();
         refreshSeedBank();
         refreshHud();
@@ -177,32 +182,62 @@ public final class BattleScreen extends AuthenticatedUiScreen {
 
     private Stack buildPauseLayer() {
         pauseLayer.clearChildren();
-        Table dim = new Table();
-        Image background = theme.image("IMAGE_UI_DIALOG_ASSET_TINT_ROUNDED_BOX_9SLICE");
-        if (background != null) {
-            background.getColor().a = 0.95f;
-            dim.add(background).width(460f).height(300f);
-        }
+        Table backdrop = new Table();
+        backdrop.setFillParent(true);
+        backdrop.setTouchable(Touchable.enabled);
 
         Table menu = theme.dialogPanel();
-        menu.add(theme.title("PAUSED")).padBottom(18f);
+        menu.pad(24f, 32f, 22f, 32f);
+        menu.add(theme.title("GAME PAUSED")).width(620f).height(58f).padBottom(14f);
         menu.row();
-        TextButton resume = theme.primaryButton("Resume");
-        TextButton restartSelection = theme.secondaryButton("Choose Plants");
-        TextButton mainMenu = theme.tertiaryButton("Main Menu");
-        UiActions.onClick(resume, this::togglePause);
-        UiActions.onClick(restartSelection, this::returnToPlantSelection);
-        UiActions.onClick(mainMenu, app::showMainMenu);
-        menu.add(resume).width(250f).height(56f).padBottom(8f);
-        menu.row();
-        menu.add(restartSelection).width(250f).height(52f).padBottom(8f);
-        menu.row();
-        menu.add(mainMenu).width(250f).height(52f);
+        Slider music = theme.audioSlider(audioSettings.getMusicVolume());
+        Slider sfx = theme.audioSlider(audioSettings.getSfxVolume());
+        music.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                audioSettings.setMusicVolume(music.getValue());
+            }
+        });
+        sfx.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                audioSettings.setSfxVolume(sfx.getValue());
+            }
+        });
+        addPauseAudioRow(menu, "Music", music);
+        addPauseAudioRow(menu, "Sound FX", sfx);
+        menu.row().padTop(16f);
 
-        pauseLayer.add(new Table());
-        pauseLayer.add(menu);
+        TextButton exitLevel = theme.tertiaryButton("EXIT LEVEL");
+        TextButton restart = theme.tertiaryButton("RESTART");
+        TextButton resume = theme.secondaryButton("RESUME");
+        UiActions.onClick(exitLevel, () -> exitLevel());
+        UiActions.onClick(restart, this::returnToPlantSelection);
+        UiActions.onClick(resume, this::togglePause);
+        Table actions = new Table();
+        actions.add(exitLevel).width(190f).height(58f).padRight(10f);
+        actions.add(restart).width(180f).height(58f).padRight(10f);
+        actions.add(resume).width(180f).height(58f);
+        menu.add(actions).width(580f).height(58f);
+
+        Table popup = new Table();
+        popup.setFillParent(true);
+        popup.add(menu).width(700f).height(360f).center();
+        pauseLayer.add(backdrop);
+        pauseLayer.add(popup);
         pauseLayer.setVisible(false);
         return pauseLayer;
+    }
+
+    private void addPauseAudioRow(Table menu, String title, Slider slider) {
+        menu.add(theme.settingsLabel(title)).width(130f).left().padRight(12f);
+        menu.add(slider).width(430f).height(42f).left();
+        menu.row();
+    }
+
+    private void exitLevel() {
+        paused = false;
+        app.showChapterLevels(chapter);
     }
 
     private Table badgePanel(float padding) {
