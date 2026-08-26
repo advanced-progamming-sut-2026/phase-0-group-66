@@ -102,6 +102,9 @@ public final class AdventureScreen extends AuthenticatedUiScreen {
         Drawable art = theme.drawable(CHAPTER_ART[index]);
         if (art != null) {
             artLayer.setBackground(art);
+            if (!unlocked) {
+                artLayer.setColor(0.48f, 0.48f, 0.48f, 1f);
+            }
         }
         stack.add(artLayer);
 
