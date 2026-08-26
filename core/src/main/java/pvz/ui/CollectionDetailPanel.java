@@ -238,8 +238,8 @@ public final class CollectionDetailPanel {
         value.defaults().minWidth(0f);
         Label family = theme.settingsLabel(plant.getFamily().getDisplayName());
         family.setAlignment(Align.right | Align.top);
-        family.setWrap(true);
-        value.add(family).expandX().right().top();
+        family.setWrap(false);
+        value.add(family).width(STAT_VALUE_WIDTH - 32f).right().top();
         Image familyIcon = PlantArtResolver.familyIcon(theme, plant);
         if (familyIcon != null) {
             familyIcon.setScaling(Scaling.fit);
@@ -310,6 +310,8 @@ public final class CollectionDetailPanel {
         boolean max = isMaxLevel(plant);
         TextButton upgrade = theme.primaryButton(max ? "MAX LEVEL" : upgradeButtonText(plant));
         upgrade.setDisabled(max);
+        upgrade.getLabel().setWrap(false);
+        upgrade.getLabel().setFontScale(0.72f);
         UiActions.onClick(upgrade, () -> upgradeAction.accept(plant));
         row.add(upgrade).growX().height(48f);
         return row;
