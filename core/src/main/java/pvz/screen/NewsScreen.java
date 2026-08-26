@@ -41,7 +41,7 @@ public final class NewsScreen extends AuthenticatedUiScreen {
         scroll.setScrollingDisabled(true, false);
         panel.add(scroll).width(890f).height(455f).grow();
         panel.row();
-        panel.add(status).width(850f).height(30f).padTop(5f);
+        panel.add(status).width(850f).height(22f).padTop(2f);
         panel.row();
 
         Table actions = new Table();
@@ -51,7 +51,7 @@ public final class NewsScreen extends AuthenticatedUiScreen {
         UiActions.onClick(back, app::showMainMenu);
         actions.add(markAll).width(240f).height(50f).padRight(10f);
         actions.add(back).width(180f).height(50f);
-        panel.add(actions).padTop(7f);
+        panel.add(actions).padTop(0f);
         root.add(panel).width(1010f).height(650f).center();
     }
 
