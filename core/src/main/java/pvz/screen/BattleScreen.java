@@ -188,7 +188,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
 
         Table menu = theme.dialogPanel();
         menu.pad(24f, 32f, 22f, 32f);
-        menu.add(theme.title("GAME PAUSED")).width(620f).height(58f).padBottom(14f);
+        menu.add(theme.title("GAME PAUSED")).width(620f).height(58f).colspan(2).padBottom(14f);
         menu.row();
         Slider music = theme.audioSlider(audioSettings.getMusicVolume());
         Slider sfx = theme.audioSlider(audioSettings.getSfxVolume());
@@ -218,7 +218,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         actions.add(exitLevel).width(190f).height(58f).padRight(10f);
         actions.add(restart).width(180f).height(58f).padRight(10f);
         actions.add(resume).width(180f).height(58f);
-        menu.add(actions).width(580f).height(58f);
+        menu.add(actions).width(580f).height(58f).colspan(2);
 
         Table popup = new Table();
         popup.setFillParent(true);
