@@ -225,11 +225,16 @@ public final class IZombieSession extends MiniGameSession {
     }
 
     private void moveTowardBrain(MiniGameUnit zombie, Iterator<MiniGameUnit> iterator) {
+        if (zombie.getType().equals("Sun Producer Zombie")) {
+            return;
+        }
         zombie.setColumn(zombie.getColumn() - zombie.getSpeed());
-        if (zombie.getColumn() < -0.1 && brains[zombie.getRow()]) {
-            brains[zombie.getRow()] = false;
-            brainsEaten++;
-            addScore(500);
+        if (zombie.getColumn() < -0.1) {
+            if (brains[zombie.getRow()]) {
+                brains[zombie.getRow()] = false;
+                brainsEaten++;
+                addScore(500);
+            }
             iterator.remove();
             if (brainsEaten == 5) {
                 win();

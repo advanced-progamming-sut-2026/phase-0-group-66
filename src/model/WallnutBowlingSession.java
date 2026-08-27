@@ -99,7 +99,7 @@ public final class WallnutBowlingSession extends MiniGameSession {
         moveZombies();
         cleanupKills();
         rollingNuts.removeIf(nut -> !nut.active || nut.column > 9.6);
-        if (kills >= getTarget()) {
+        if (!isLost() && kills >= getTarget()) {
             win();
             addScore(1000);
         }

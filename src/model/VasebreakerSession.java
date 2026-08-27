@@ -135,17 +135,13 @@ public final class VasebreakerSession extends MiniGameSession {
     }
 
     private void plantPacket(int packetId, int x, int y) {
-        Packet packet = packets.remove(packetId);
+        GridPosition target = position(x, y);
+        Packet packet = packets.get(packetId);
         if (packet == null) {
             throw new IllegalArgumentException("Packet does not exist or has expired.");
         }
-        GridPosition target = position(x, y);
-        try {
-            validatePlantTarget(target);
-        } catch (RuntimeException exception) {
-            packets.put(packetId, packet);
-            throw exception;
-        }
+        validatePlantTarget(target);
+        packets.remove(packetId);
         int health = packet.plantType().contains("Wall") ? 700 : 250;
         int damage = packet.plantType().contains("Repeater") ? 50
             : packet.plantType().contains("Potato") ? 300 : 30;

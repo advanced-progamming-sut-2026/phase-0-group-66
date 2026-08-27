@@ -141,7 +141,7 @@ public final class MiniGameUnitLayer extends WidgetGroup {
 
     private Actor createZombieActor(String type) {
         if (isSunProducer(type)) {
-            Image sun = app.assets().uiTheme().image(UiTheme.COIN_ICON);
+            Image sun = app.assets().uiTheme().image("IMAGE_UI_HUD_INGAME_SUN");
             if (sun != null) {
                 sun.setScaling(Scaling.fit);
                 return sun;

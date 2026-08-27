@@ -8,6 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.utils.Align;
 import controller.ActionResult;
+import model.Greenhouse;
 import model.PlantDefinition;
 import model.ShopState;
 import pvz.PvzApplication;
@@ -138,16 +139,19 @@ public final class ShopScreen extends AuthenticatedUiScreen {
     private Table buildPermanentGrid() {
         Table outer = theme.settingsCardPanel(10f);
         Table grid = new Table();
+        boolean greenhouseFull = user.getGreenhouse().getUnlockedSlotCount() >= Greenhouse.MAX_SLOTS;
         List<ShopEntry> entries = List.of(
-            new ShopEntry(1, "Pot / Greenhouse Slot", "Buy a Pot for 2000 Coins to unlock the next greenhouse slot.",
-                "2000 Coins", POT_ICON),
-            new ShopEntry(2, "Plant Food", "Add one Plant Food. Capacity is 3.",
+            new ShopEntry(1, "Greenhouse Pot", greenhouseFull
+                ? "Greenhouse is full: " + Greenhouse.MAX_SLOTS + " / " + Greenhouse.MAX_SLOTS + " slots."
+                : "Buy one Pot for 2000 Coins to unlock one greenhouse slot.",
+                greenhouseFull ? "MAXED" : "2000 Coins", POT_ICON),
+            new ShopEntry(2, "Plant Food", "Add one Plant Food. Capacity: 3.",
                 "3 Gems", PLANT_FOOD_ICON),
-            new ShopEntry(3, "Random Packets", "5 packets for a random owned plant.",
+            new ShopEntry(3, "Random Packets", "Get 5 packets for a random owned plant.",
                 "1000 Coins", SEED_ICON),
-            new ShopEntry(4, "Selected Packets", "10 packets for the selected owned plant.",
+            new ShopEntry(4, "Selected Packets", "Get 10 packets for the selected owned plant.",
                 "5 Gems", SEED_ICON),
-            new ShopEntry(5, "Currency Exchange", "Exchange 5 gems for 500 coins.",
+            new ShopEntry(5, "Currency Exchange", "Exchange 5 Gems for 500 Coins.",
                 "5 Gems", GEM_STACK)
         );
 
@@ -171,22 +175,25 @@ public final class ShopScreen extends AuthenticatedUiScreen {
 
         Table labels = new Table();
         Label title = theme.heading(entry.title());
-        title.setFontScale(0.86f);
+        title.setFontScale(0.72f);
         title.setAlignment(Align.left);
-        labels.add(title).left();
+        title.setWrap(true);
+        labels.add(title).width(245f).height(30f).left();
         labels.row();
         Label description = theme.bodyLabel(entry.description());
-        description.setFontScale(0.68f);
+        description.setFontScale(0.58f);
         description.setAlignment(Align.left);
-        labels.add(description).width(245f).left().padTop(2f);
+        description.setWrap(true);
+        labels.add(description).width(245f).height(48f).left().padTop(1f);
         top.add(labels).expandX().left();
-        card.add(top).growX();
+        card.add(top).growX().height(82f);
         card.row();
 
         Table buyRow = new Table();
         buyRow.add(theme.settingsLabel(entry.price())).expandX().left();
-        TextButton buy = theme.primaryButton("Buy");
-        if (entry.id() == 1 && user.getGreenhouse().getUnlockedSlotCount() >= 20) {
+        TextButton buy = theme.primaryButton(entry.id() == 1 ? "Buy Pot" : "Buy");
+        if (entry.id() == 1
+            && user.getGreenhouse().getUnlockedSlotCount() >= Greenhouse.MAX_SLOTS) {
             buy.setDisabled(true);
         }
         UiActions.onClick(buy, () -> buyEntry(entry.id()));

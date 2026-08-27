@@ -90,15 +90,13 @@ public final class BeghouledSession extends MiniGameSession {
     }
 
     private void removeInitialMatches() {
-        for (int attempts = 0; attempts < 40; attempts++) {
-            Set<GridPosition> found = findMatches();
-            if (found.isEmpty()) {
-                return;
-            }
+        Set<GridPosition> found;
+        do {
+            found = findMatches();
             for (GridPosition position : found) {
                 grid[position.getRow()][position.getColumn()] = createPlant(randomType());
             }
-        }
+        } while (!found.isEmpty());
     }
 
     private void swap(int x1, int y1, int x2, int y2) {
@@ -127,6 +125,9 @@ public final class BeghouledSession extends MiniGameSession {
     }
 
     private void evaluateMatchVictory() {
+        if (isLost()) {
+            return;
+        }
         if (matches >= getTarget()) {
             zombies.clear();
             win();

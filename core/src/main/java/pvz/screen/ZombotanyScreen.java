@@ -44,7 +44,7 @@ public final class ZombotanyScreen extends MiniGamePlayScreen {
         sunLabel = theme.heading("");
         progress = theme.settingsLabel("");
         plantTray = new Table();
-        selectedPlant = PLANTS[0];
+        selectedPlant = null;
         buildUi();
         refreshFromSession();
     }
