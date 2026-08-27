@@ -64,7 +64,7 @@ public final class CheatScreen extends AuthenticatedUiScreen {
         panel.row();
         panel.add(buildUnlockCard()).width(900f).height(300f).padBottom(8f);
         panel.row();
-        panel.add(status).width(820f).height(30f).padTop(2f);
+        panel.add(status).width(820f).height(30f).padTop(-4f);
         panel.row();
 
         TextButton back = theme.secondaryButton("Back to Settings");
