@@ -139,7 +139,7 @@ public final class ShopScreen extends AuthenticatedUiScreen {
         Table outer = theme.settingsCardPanel(10f);
         Table grid = new Table();
         List<ShopEntry> entries = List.of(
-            new ShopEntry(1, "Greenhouse Slot", "Unlock the next greenhouse slot.",
+            new ShopEntry(1, "Pot / Greenhouse Slot", "Buy a Pot for 2000 Coins to unlock the next greenhouse slot.",
                 "2000 Coins", POT_ICON),
             new ShopEntry(2, "Plant Food", "Add one Plant Food. Capacity is 3.",
                 "3 Gems", PLANT_FOOD_ICON),
@@ -186,6 +186,9 @@ public final class ShopScreen extends AuthenticatedUiScreen {
         Table buyRow = new Table();
         buyRow.add(theme.settingsLabel(entry.price())).expandX().left();
         TextButton buy = theme.primaryButton("Buy");
+        if (entry.id() == 1 && user.getGreenhouse().getUnlockedSlotCount() >= 20) {
+            buy.setDisabled(true);
+        }
         UiActions.onClick(buy, () -> buyEntry(entry.id()));
         buyRow.add(buy).width(120f).height(44f);
         card.add(buyRow).growX().padTop(6f);
