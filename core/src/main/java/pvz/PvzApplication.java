@@ -14,7 +14,7 @@ import pvz.screen.BattleScreen;
 import pvz.screen.ChapterLevelsScreen;
 import pvz.screen.CheatScreen;
 import pvz.screen.CollectionScreen;
-import pvz.screen.CommandMiniGameScreen;
+import pvz.screen.BeghouledScreen;
 import pvz.screen.ForgotPasswordScreen;
 import pvz.screen.GreenhouseScreen;
 import pvz.screen.LevelBriefingScreen;
@@ -35,6 +35,7 @@ import pvz.screen.SettingsScreen;
 import pvz.screen.ShopScreen;
 import pvz.screen.VasebreakerScreen;
 import pvz.screen.WallnutBowlingScreen;
+import pvz.screen.ZombotanyScreen;
 import model.Chapter;
 import model.Level;
 import model.MiniGameType;
@@ -285,8 +286,8 @@ public final class PvzApplication extends Game {
             case VASEBREAKER -> changeScreen(new VasebreakerScreen(this));
             case WALLNUT_BOWLING -> changeScreen(new WallnutBowlingScreen(this));
             case I_ZOMBIE -> changeScreen(new IZombieScreen(this));
-            case BEGHOULD -> changeScreen(new CommandMiniGameScreen(this, "BEGHOULD"));
-            case ZOMBOTANY -> changeScreen(new CommandMiniGameScreen(this, "ZOMBOTANY"));
+            case BEGHOULD -> changeScreen(new BeghouledScreen(this));
+            case ZOMBOTANY -> changeScreen(new ZombotanyScreen(this));
         }
         return true;
     }

@@ -452,6 +452,39 @@ public final class BeghouledSession extends MiniGameSession {
         return BeghouledBoardRenderer.render(grid, crater, zombies, sun, matches, getTarget());
     }
 
+    public record PlantView(String type, int row, int column, int health, int damage) { }
+
+    public List<PlantView> getPlantViews() {
+        ArrayList<PlantView> result = new ArrayList<>();
+        for (int row = 0; row < ROWS; row++) {
+            for (int col = 0; col < COLS; col++) {
+                BeghouledCombatPlant plant = grid[row][col];
+                if (plant != null) {
+                    result.add(new PlantView(plant.type, row, col, plant.health,
+                        plant.profile.damage()));
+                }
+            }
+        }
+        return List.copyOf(result);
+    }
+
+    public List<MiniGameUnitSnapshot> getZombieViews() {
+        return zombies.stream().map(MiniGameUnit::snapshot).toList();
+    }
+
+    public boolean isCrater(int row, int column) {
+        validate(row, column);
+        return crater[row][column];
+    }
+
+    public int getSun() {
+        return sun;
+    }
+
+    public int getMatches() {
+        return matches;
+    }
+
     private String randomType() { return TYPES[random.nextInt(TYPES.length)]; }
 
     private void validate(int row, int col) {

@@ -306,6 +306,51 @@ public final class ZombotanySession extends MiniGameSession {
         return builder.toString();
     }
 
+    public List<String> getSelectedPlantViews() {
+        return game.getSelectedPlants();
+    }
+
+    public List<MiniGamePlantSnapshot> getPlantViews() {
+        return game.getBoard().getPlants().stream()
+            .filter(plant -> !plant.isDestroyed() && plant.getPosition() != null)
+            .map(plant -> new MiniGamePlantSnapshot(plant.getName(),
+                plant.getPosition().getRow(), plant.getPosition().getColumn(),
+                plant.getHealth(), plant.getAttackPower()))
+            .toList();
+    }
+
+    public List<MiniGameUnitSnapshot> getZombieViews() {
+        return game.getBoard().getZombies().stream()
+            .filter(zombie -> !zombie.isDead() && zombie.getPosition() != null)
+            .map(zombie -> new MiniGameUnitSnapshot(zombie.getName(),
+                zombie.getPosition().getRow(), zombie.getPosition().getColumn(),
+                zombie.getHealth(), zombie.getMaximumHealth(), zombie.getDamage(),
+                zombie.getSpeed()))
+            .toList();
+    }
+
+    public record SunView(int row, int column, int amount) { }
+
+    public List<SunView> getSunViews() {
+        return game.getBoard().getSuns().stream()
+            .filter(sun -> !sun.isCollected() && sun.getPosition() != null)
+            .map(sun -> new SunView(sun.getPosition().getRow(), sun.getPosition().getColumn(),
+                sun.getAmount()))
+            .toList();
+    }
+
+    public boolean isBattleStarted() {
+        return battleStarted;
+    }
+
+    public int getKills() {
+        return game.getZombieKillCount();
+    }
+
+    public int getSun() {
+        return game.getSunAmount();
+    }
+
     private char symbolAt(int row, int col) {
         Tile tile = game.board.getTile(row, col);
         if (!tile.getZombies().isEmpty()) {
