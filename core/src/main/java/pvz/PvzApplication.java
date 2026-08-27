@@ -22,6 +22,7 @@ import pvz.screen.LeaderboardScreen;
 import pvz.screen.LoginScreen;
 import pvz.screen.MainMenuScreen;
 import pvz.screen.MiniGameHubScreen;
+import pvz.screen.MiniGamePreviewScreen;
 import pvz.screen.NewsScreen;
 import pvz.screen.NetworkScreen;
 import pvz.screen.IZombieScreen;
@@ -282,6 +283,20 @@ public final class PvzApplication extends Game {
         if (!result.isSuccessful()) {
             return false;
         }
+        changeScreen(new MiniGamePreviewScreen(this, type));
+        return true;
+    }
+
+    public void playMiniGame(MiniGameType type) {
+        if (!services.auth().isAuthenticated()) {
+            showLogin();
+            return;
+        }
+        if (services.miniGames().getCurrentSession() == null
+            || services.miniGames().getCurrentSession().getDefinition().type() != type) {
+            returnToMiniGames();
+            return;
+        }
         switch (type) {
             case VASEBREAKER -> changeScreen(new VasebreakerScreen(this));
             case WALLNUT_BOWLING -> changeScreen(new WallnutBowlingScreen(this));
@@ -289,7 +304,6 @@ public final class PvzApplication extends Game {
             case BEGHOULD -> changeScreen(new BeghouledScreen(this));
             case ZOMBOTANY -> changeScreen(new ZombotanyScreen(this));
         }
-        return true;
     }
 
     private void changeScreen(Screen next) {
