@@ -30,12 +30,12 @@ public abstract class AuthenticatedUiScreen extends BaseUiScreen {
     }
 
     private Table currencyBadge(String iconId, int value) {
-        Table badge = theme.insetPanel(5f);
+        Table badge = theme.settingsBadgePanel(5f);
         Image icon = theme.image(iconId);
         if (icon != null) {
             badge.add(icon).size(30f).padRight(5f);
         }
-        badge.add(theme.heading(Integer.toString(value)));
+        badge.add(theme.settingsLabel(Integer.toString(value))).right().width(72f);
         return badge;
     }
 }

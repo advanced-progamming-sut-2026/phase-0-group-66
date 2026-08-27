@@ -78,7 +78,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
 
         sunLabel = theme.heading("");
         plantFoodLabel = theme.settingsLabel("");
-        waveLabel = theme.settingsLabel("");
+        waveLabel = theme.heading("");
         status = theme.statusLabel();
         introLabel = theme.title("");
         introLabel.setAlignment(Align.center);
@@ -171,12 +171,14 @@ public final class BattleScreen extends AuthenticatedUiScreen {
 
         bar.add(status).expandX().fillX().pad(0f, 12f, 0f, 12f);
 
+        Table waveProgress = badgePanel(4f);
         Image meter = theme.image("IMAGE_UI_HUD_INGAME_PROGRESS_METER");
         if (meter != null) {
             meter.setScaling(Scaling.fit);
-            bar.add(meter).width(118f).height(34f).padRight(5f);
+            waveProgress.add(meter).width(118f).height(34f).padRight(5f);
         }
-        bar.add(waveLabel).width(128f).right();
+        waveProgress.add(waveLabel).width(128f).right();
+        bar.add(waveProgress).width(260f).height(42f).right();
         return bar;
     }
 

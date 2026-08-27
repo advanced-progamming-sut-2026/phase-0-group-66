@@ -113,8 +113,8 @@ public final class CheatScreen extends AuthenticatedUiScreen {
         if (icon != null) {
             badge.add(icon).size(34f).padRight(7f);
         }
-        badge.add(theme.settingsLabel(title)).padRight(12f);
-        badge.add(value).expandX().right();
+        badge.add(theme.settingsLabel(title)).expandX().left().padRight(12f);
+        badge.add(value).width(120f).right();
         return badge;
     }
 

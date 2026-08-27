@@ -116,7 +116,7 @@ public final class SettingsScreen extends AuthenticatedUiScreen {
         if (icon != null) {
             badge.add(icon).size(26f).padRight(4f);
         }
-        badge.add(theme.settingsLabel(Integer.toString(value))).center();
+        badge.add(theme.settingsLabel(Integer.toString(value))).right().width(72f);
         return badge;
     }
 
