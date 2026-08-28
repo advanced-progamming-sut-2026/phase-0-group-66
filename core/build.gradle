@@ -22,3 +22,10 @@ sourceSets {
     }
   }
 }
+tasks.register('runServer', JavaExec) {
+  group = 'application'
+  description = 'Runs the Phase 3 PvZ account server.'
+  classpath = sourceSets.main.runtimeClasspath
+  mainClass = 'network.server.PvzServerMain'
+  standardInput = System.in
+}

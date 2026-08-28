@@ -1,0 +1,16 @@
+package network.protocol;
+
+import java.io.Serializable;
+
+/** Operations supported by the Phase 3 client/server protocol. */
+public enum NetworkOperation implements Serializable {
+    PING,
+    AUTHENTICATE,
+    FIND_USER,
+    USERNAME_EXISTS,
+    GET_ALL_USERS,
+    ADD_USER,
+    RENAME_USER,
+    DELETE_USER,
+    SAVE_USER
+}

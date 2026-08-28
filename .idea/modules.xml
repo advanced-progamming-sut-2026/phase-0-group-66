@@ -2,7 +2,13 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/phase-0-group-66.iml" filepath="$PROJECT_DIR$/phase-0-group-66.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/phase-0-group-66.iml" filepath="$PROJECT_DIR$/.idea/modules/phase-0-group-66.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/phase-0-group-66.core.iml" filepath="$PROJECT_DIR$/.idea/modules/core/phase-0-group-66.core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/phase-0-group-66.core.main.iml" filepath="$PROJECT_DIR$/.idea/modules/core/phase-0-group-66.core.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/phase-0-group-66.core.test.iml" filepath="$PROJECT_DIR$/.idea/modules/core/phase-0-group-66.core.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lwjgl3/phase-0-group-66.lwjgl3.iml" filepath="$PROJECT_DIR$/.idea/modules/lwjgl3/phase-0-group-66.lwjgl3.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lwjgl3/phase-0-group-66.lwjgl3.main.iml" filepath="$PROJECT_DIR$/.idea/modules/lwjgl3/phase-0-group-66.lwjgl3.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lwjgl3/phase-0-group-66.lwjgl3.test.iml" filepath="$PROJECT_DIR$/.idea/modules/lwjgl3/phase-0-group-66.lwjgl3.test.iml" />
     </modules>
   </component>
 </project>

@@ -1,5 +1,6 @@
 package controller;
 
+import model.AuthenticationResult;
 import model.SecurityQuestion;
 import model.User;
 import model.UserRepository;
@@ -24,6 +25,9 @@ public class AuthController {
         String error = InputValidator.validateUsername(username);
         if (error == null && userRepository.usernameExists(username)) {
             error = "Username already exists.";
+        }
+        if (error == null && userRepository.getLastAccessError() != null) {
+            error = userRepository.getLastAccessError();
         }
         if (error == null) {
             error = InputValidator.validatePassword(password);
@@ -79,14 +83,11 @@ public class AuthController {
     }
 
     public ActionResult login(String username, String password, boolean keepLoggedIn) {
-        Optional<User> foundUser = userRepository.findByUsername(username);
-        if (foundUser.isEmpty()) {
-            return ActionResult.failure("Username does not exist.");
+        AuthenticationResult authentication = userRepository.authenticate(username, password);
+        if (!authentication.isSuccessful()) {
+            return ActionResult.failure(authentication.getMessage());
         }
-        User user = foundUser.get();
-        if (!user.checkPassword(password)) {
-            return ActionResult.failure("Password is incorrect.");
-        }
+        User user = authentication.getUser();
 
         currentUser = user;
         stayLoggedIn = keepLoggedIn;
@@ -123,7 +124,8 @@ public class AuthController {
     public ActionResult selectUser(String username) {
         Optional<User> foundUser = userRepository.findByUsername(username);
         if (foundUser.isEmpty()) {
-            return ActionResult.failure("Username does not exist.");
+            String accessError = userRepository.getLastAccessError();
+            return ActionResult.failure(accessError == null ? "Username does not exist." : accessError);
         }
         currentUser = foundUser.get();
         try {
@@ -139,7 +141,8 @@ public class AuthController {
     public ActionResult deleteUser(String username) {
         Optional<User> foundUser = userRepository.findByUsername(username);
         if (foundUser.isEmpty()) {
-            return ActionResult.failure("Username does not exist.");
+            String accessError = userRepository.getLastAccessError();
+            return ActionResult.failure(accessError == null ? "Username does not exist." : accessError);
         }
         try {
             if (!userRepository.delete(username)) {
@@ -158,7 +161,14 @@ public class AuthController {
 
     public ActionResult forgetPassword(String username, String email) {
         Optional<User> foundUser = userRepository.findByUsername(username);
-        if (foundUser.isEmpty() || !foundUser.get().getEmail().equals(email)) {
+        if (foundUser.isEmpty()) {
+            recoveryUser = null;
+            recoveryAnswerVerified = false;
+            String accessError = userRepository.getLastAccessError();
+            return ActionResult.failure(accessError == null
+                ? "Username and email do not match an account." : accessError);
+        }
+        if (!foundUser.get().getEmail().equals(email)) {
             recoveryUser = null;
             recoveryAnswerVerified = false;
             return ActionResult.failure("Username and email do not match an account.");
@@ -199,7 +209,7 @@ public class AuthController {
 
         recoveryUser.changePassword(newPassword);
         try {
-            userRepository.save();
+            userRepository.save(recoveryUser);
             recoveryUser = null;
             recoveryAnswerVerified = false;
             return ActionResult.success("Password changed successfully. You can now login.");
@@ -216,7 +226,9 @@ public class AuthController {
             }
             Optional<User> user = userRepository.findByUsername(sessionUsername.get());
             if (user.isEmpty()) {
-                userRepository.clearSession();
+                if (userRepository.getLastAccessError() == null) {
+                    userRepository.clearSession();
+                }
                 return false;
             }
             currentUser = user.get();
@@ -245,7 +257,9 @@ public class AuthController {
 
     public ActionResult saveCurrentState() {
         try {
-            userRepository.save();
+            if (currentUser != null) {
+                userRepository.save(currentUser);
+            }
             if (stayLoggedIn && currentUser != null) {
                 userRepository.saveSession(currentUser.getUsername());
             }

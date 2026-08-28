@@ -14,6 +14,9 @@ import controller.ShopController;
 import model.AdventureFactory;
 import model.GameData;
 import model.UserRepository;
+import network.client.PvzNetworkClient;
+import network.client.RemoteUserRepository;
+import network.protocol.Phase3Protocol;
 import view.GameView;
 
 import java.io.IOException;
@@ -24,6 +27,9 @@ import java.nio.file.StandardCopyOption;
 
 public final class PvzServices {
     private static final String USER_DATA_PROPERTY = "pvz.user.data";
+    private static final String NETWORK_ENABLED_PROPERTY = "pvz.network.enabled";
+    private static final String SERVER_HOST_PROPERTY = "pvz.server.host";
+    private static final String SERVER_PORT_PROPERTY = "pvz.server.port";
 
     private final AuthController authController;
     private final ProfileController profileController;
@@ -40,8 +46,13 @@ public final class PvzServices {
     private final GameData gameData;
     public PvzServices() throws IOException {
         Path userDataDirectory = resolveUserDataDirectory();
-        migrateLegacyUserData(userDataDirectory);
-        UserRepository repository = new UserRepository(userDataDirectory);
+        boolean networkEnabled = resolveNetworkEnabled();
+        if (!networkEnabled) {
+            migrateLegacyUserData(userDataDirectory);
+        }
+        UserRepository repository = networkEnabled
+            ? new RemoteUserRepository(userDataDirectory, createNetworkClient())
+            : new UserRepository(userDataDirectory);
         authController = new AuthController(repository);
         leaderboardController = new LeaderboardController(repository);
         gameData = GameData.loadDefault();
@@ -127,6 +138,24 @@ public final class PvzServices {
 
     public GameData gameData() {
         return gameData;
+    }
+
+
+    private boolean resolveNetworkEnabled() {
+        return Boolean.parseBoolean(System.getProperty(NETWORK_ENABLED_PROPERTY, "true"));
+    }
+
+    private PvzNetworkClient createNetworkClient() {
+        String host = System.getProperty(SERVER_HOST_PROPERTY, Phase3Protocol.DEFAULT_HOST).trim();
+        String portText = System.getProperty(SERVER_PORT_PROPERTY,
+            Integer.toString(Phase3Protocol.DEFAULT_PORT)).trim();
+        int port;
+        try {
+            port = Integer.parseInt(portText);
+        } catch (NumberFormatException exception) {
+            port = Phase3Protocol.DEFAULT_PORT;
+        }
+        return new PvzNetworkClient(host, port);
     }
 
     private Path resolveUserDataDirectory() {

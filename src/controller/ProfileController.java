@@ -66,7 +66,7 @@ public class ProfileController {
             return ActionResult.failure("New nickname is the same as the current nickname.");
         }
         user.changeNickname(newNickname);
-        return saveProfileChange("Nickname changed successfully.");
+        return saveProfileChange(user, "Nickname changed successfully.");
     }
 
     public ActionResult changeEmail(String newEmail) {
@@ -82,7 +82,7 @@ public class ProfileController {
             return ActionResult.failure("New email is the same as the current email.");
         }
         user.changeEmail(newEmail);
-        return saveProfileChange("Email changed successfully.");
+        return saveProfileChange(user, "Email changed successfully.");
     }
 
     public ActionResult changePassword(String oldPassword, String newPassword) {
@@ -101,12 +101,12 @@ public class ProfileController {
             return ActionResult.failure(error);
         }
         user.changePassword(newPassword);
-        return saveProfileChange("Password changed successfully.");
+        return saveProfileChange(user, "Password changed successfully.");
     }
 
-    private ActionResult saveProfileChange(String successMessage) {
+    private ActionResult saveProfileChange(User user, String successMessage) {
         try {
-            userRepository.save();
+            userRepository.save(user);
             return ActionResult.success(successMessage);
         } catch (IOException exception) {
             return ActionResult.failure("Could not save profile changes.");
