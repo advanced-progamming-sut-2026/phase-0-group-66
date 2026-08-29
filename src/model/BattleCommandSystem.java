@@ -180,7 +180,7 @@ final class BattleCommandSystem {
             && !engine.currentLevel.getRuleStrategy().requiresManualWaveStart();
         engine.addEvent("Game started with " + engine.sunAmount + " suns.");
         if (engine.zombieWavesStarted) {
-            engine.startNextWave();
+            engine.addEvent("Preparation phase started. The first zombie wave will arrive after 15 seconds.");
         } else {
             engine.addEvent("Setup phase started. Use 'start zombie waves' when ready.");
         }
@@ -197,8 +197,7 @@ final class BattleCommandSystem {
         for (String key : new ArrayList<>(engine.cooldownTicks.keySet())) {
             engine.cooldownTicks.put(key, 0);
         }
-        engine.addEvent("Zombie waves started.");
-        engine.startNextWave();
+        engine.addEvent("Zombie waves started. You have 15 seconds to prepare.");
     }
     static void advanceTime(Game engine, int ticks) {
         engine.requireRunning();

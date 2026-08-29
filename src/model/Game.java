@@ -11,6 +11,7 @@ import java.util.Random;
 
 public class Game {
     public static final int TICKS_PER_SECOND = 10;
+    public static final int INITIAL_PREPARATION_TICKS = 15 * TICKS_PER_SECOND;
     static final  double PROJECTILE_SPEED = 5.0;
 
     final  PlantFactory plantFactory;

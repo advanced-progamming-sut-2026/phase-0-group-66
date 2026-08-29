@@ -9,7 +9,6 @@ import network.game.MatchRole;
 import network.game.NetworkIZombieState;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 public final class NetworkIZombieSession extends IZombieSession {
@@ -78,6 +77,10 @@ public final class NetworkIZombieSession extends IZombieSession {
 
     public List<MatchReaction> getReactions() {
         return state.reactions();
+    }
+
+    public MatchRole getWinnerRole() {
+        return state.winnerRole();
     }
 
     @Override

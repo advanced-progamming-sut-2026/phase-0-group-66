@@ -33,6 +33,7 @@ public final class WallnutBowlingSession extends MiniGameSession {
     private static final double NUT_SPEED = 0.15;
     private static final double DIAGONAL_SPEED = 0.10;
     private final ArrayList<MiniGameUnit> zombies = new ArrayList<>();
+    private final ArrayList<MiniGameUnit> pendingZombies = new ArrayList<>();
     private final ArrayList<RollingNut> rollingNuts = new ArrayList<>();
     private final LinkedHashMap<NutType, Integer> conveyor = new LinkedHashMap<>();
     private final Random random;
@@ -73,7 +74,7 @@ public final class WallnutBowlingSession extends MiniGameSession {
             int row = random.nextInt(5);
             double column = 5.0 + random.nextDouble() * 4.0 + index * 0.08;
             int health = 180 + getLevel() * 45 + random.nextInt(100);
-            zombies.add(new MiniGameUnit("Bowling Zombie", row, column, health,
+            pendingZombies.add(new MiniGameUnit("Bowling Zombie", row, column, health,
                 35 + getLevel() * 5, 0.018 + getLevel() * 0.003));
         }
     }
@@ -96,6 +97,10 @@ public final class WallnutBowlingSession extends MiniGameSession {
     protected void onTick() {
         addConveyorCardIfNeeded();
         moveNutsAndResolveCollisions();
+        if (getElapsedTicks() >= 15 * Game.TICKS_PER_SECOND && !pendingZombies.isEmpty()) {
+            zombies.addAll(pendingZombies);
+            pendingZombies.clear();
+        }
         moveZombies();
         cleanupKills();
         rollingNuts.removeIf(nut -> !nut.active || nut.column > 9.6);

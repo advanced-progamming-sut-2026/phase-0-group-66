@@ -38,7 +38,9 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
     private int selectedY = 1;
     private String message = "Select a greenhouse slot.";
     private boolean messageSuccess = true;
-    private float refreshAccumulator;
+    private Boolean selectedReadyState;
+    private Label liveStateLabel;
+    private Label liveCostLabel;
 
     public GreenhouseScreen(PvzApplication app) {
         super(app);
@@ -51,6 +53,11 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
 
     private void buildUi() {
         root.clearChildren();
+        GreenhouseSlot selected = user.getGreenhouse().getSlot(selectedX, selectedY);
+        selectedReadyState = selected.isEmpty()
+            ? null : selected.isReady(System.currentTimeMillis());
+        liveStateLabel = null;
+        liveCostLabel = null;
 
         Table screen = new Table();
         screen.top();
@@ -153,17 +160,20 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
             textLayer.add(theme.settingsLabel("LOCKED")).center().padBottom(5f);
         } else if (slot.isEmpty()) {
             addImage(artLayer, POT_ICON, 80f);
-            textLayer.add(theme.settingsLabel("EMPTY")).center().padBottom(5f);
+            Label empty = greenhouseLabel("EMPTY");
+            textLayer.add(empty).width(146f).center().padBottom(5f);
         } else {
             addPlantArt(artLayer, slot.getPlantName(), 76f);
             Label name = theme.settingsLabel(slot.getPlantName());
             name.setAlignment(Align.center);
-            name.setFontScale(0.76f);
+            name.setWrap(true);
+            name.setFontScale(0.68f);
             textLayer.add(name).width(146f).center();
             textLayer.row();
             Label state = theme.settingsLabel(slotState(slot, now));
             state.setAlignment(Align.center);
-            state.setFontScale(0.70f);
+            state.setWrap(true);
+            state.setFontScale(0.64f);
             textLayer.add(state).width(146f).center().padBottom(3f);
         }
 
@@ -233,7 +243,10 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
         long now = System.currentTimeMillis();
         addPlantPreview(panel, slot.getPlantName());
         panel.row().padTop(4f);
-        panel.add(theme.heading(slot.getPlantName())).center();
+        Label plantName = theme.heading(slot.getPlantName());
+        plantName.setWrap(true);
+        plantName.setFontScale(0.82f);
+        panel.add(plantName).width(280f).height(34f).center();
         panel.row().padTop(7f);
 
         String kind = slot.isMarigold() ? "Marigold reward" : "Stored battle boost";
@@ -241,7 +254,8 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
         panel.row().padTop(6f);
 
         if (slot.isReady(now)) {
-            panel.add(theme.settingsLabel("READY TO HARVEST")).center();
+            liveStateLabel = greenhouseLabel("READY TO HARVEST");
+            panel.add(liveStateLabel).center();
             panel.row().padTop(12f);
             TextButton collect = theme.primaryButton(
                 slot.isMarigold() ? "Collect 500 Coins" : "Collect Boost"
@@ -252,10 +266,12 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
         }
 
         long remaining = slot.remainingMillis(now);
-        panel.add(theme.settingsLabel("Remaining: " + formatDuration(remaining))).center();
+        liveStateLabel = greenhouseLabel("Remaining: " + formatDuration(remaining));
+        panel.add(liveStateLabel).center();
         panel.row().padTop(6f);
         int gems = growthCost(remaining);
-        panel.add(theme.settingsLabel("Finish now: " + gems + " gem(s)")).center();
+        liveCostLabel = greenhouseLabel("Finish now: " + gems + " gem(s)");
+        panel.add(liveCostLabel).center();
         panel.row().padTop(12f);
         TextButton grow = theme.tertiaryButton("Speed Up");
         UiActions.onClick(grow, this::growSelected);
@@ -265,7 +281,9 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
     private Table buildFooter() {
         Table footer = new Table();
         Label status = theme.statusLabel();
-        status.setWrap(false);
+        status.setWrap(true);
+        status.setAlignment(Align.left);
+        status.setFontScale(0.78f);
         if (messageSuccess) {
             theme.showSuccess(status, message);
         } else {
@@ -329,6 +347,7 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
         }
         PlantAnimationActor animation = new PlantAnimationActor(app.assets(), definition.get());
         if (animation.hasAnimation()) {
+            animation.setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.disabled);
             preview.add(animation);
         }
         panel.add(preview).size(160f, 130f).center();
@@ -372,6 +391,14 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
         return label;
     }
 
+    private Label greenhouseLabel(String text) {
+        Label label = theme.settingsLabel(text);
+        label.setAlignment(Align.center);
+        label.setWrap(true);
+        label.setFontScale(0.78f);
+        return label;
+    }
+
     private String slotState(GreenhouseSlot slot, long now) {
         if (slot.isReady(now)) {
             return "READY";
@@ -395,14 +422,31 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
 
     @Override
     public void render(float delta) {
+        refreshSelectedPlantDetails();
         super.render(delta);
-        refreshAccumulator += Math.max(0f, delta);
-        if (refreshAccumulator >= 1f) {
-            refreshAccumulator = 0f;
-            GreenhouseSlot slot = user.getGreenhouse().getSlot(selectedX, selectedY);
-            if (!slot.isEmpty()) {
+    }
+
+    private void refreshSelectedPlantDetails() {
+        GreenhouseSlot slot = user.getGreenhouse().getSlot(selectedX, selectedY);
+        if (slot.isEmpty()) {
+            if (selectedReadyState != null) {
                 buildUi();
             }
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        boolean ready = slot.isReady(now);
+        if (selectedReadyState == null || ready != selectedReadyState) {
+            buildUi();
+            return;
+        }
+        if (liveStateLabel != null) {
+            liveStateLabel.setText(ready
+                ? "READY TO HARVEST" : "Remaining: " + formatDuration(slot.remainingMillis(now)));
+        }
+        if (liveCostLabel != null && !ready) {
+            liveCostLabel.setText("Finish now: " + growthCost(slot.remainingMillis(now)) + " gem(s)");
         }
     }
 }

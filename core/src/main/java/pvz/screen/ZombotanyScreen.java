@@ -78,6 +78,7 @@ public final class ZombotanyScreen extends MiniGamePlayScreen {
         panel.row();
         Label hint = theme.bodyLabel("Choose plants before START. During battle, select a plant and click a tile to grow it.");
         hint.setAlignment(Align.left);
+        hint.setWrap(true);
         hint.setFontScale(0.68f);
         panel.add(hint).width(280f).height(70f).left();
         panel.row();

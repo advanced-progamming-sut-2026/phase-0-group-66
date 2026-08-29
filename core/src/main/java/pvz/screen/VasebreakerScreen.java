@@ -77,6 +77,7 @@ public final class VasebreakerScreen extends MiniGamePlayScreen {
                 + "an empty tile in columns 1 to 6 to plant it."
         );
         hint.setAlignment(Align.left);
+        hint.setWrap(true);
         hint.setFontScale(0.72f);
         panel.add(hint).width(266f).height(94f).left();
         panel.row().padTop(8f);

@@ -1,5 +1,10 @@
 package pvz.screen;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -35,6 +40,7 @@ public final class IZombieScreen extends MiniGamePlayScreen {
     private final Label reactionLabel;
     private String selectedCard;
     private String selectedPlant = "Sunflower";
+    private String lastReactionKey;
 
     public IZombieScreen(PvzApplication app) {
         super(app);
@@ -50,6 +56,41 @@ public final class IZombieScreen extends MiniGamePlayScreen {
         selectedCard = cards.isEmpty() ? null : cards.get(0).key();
         buildUi();
         refreshFromSession();
+    }
+
+    @Override
+    public void show() {
+        super.show();
+        if (iZombie.isMultiplayer() && onlineSession() == null
+            && Gdx.input.getInputProcessor() instanceof InputMultiplexer multiplexer) {
+            multiplexer.addProcessor(new InputAdapter() {
+                @Override
+                public boolean keyDown(int keycode) {
+                    if (keycode >= Input.Keys.NUM_1 && keycode <= Input.Keys.NUM_5) {
+                        List<IZombieSession.ZombieCardView> cards = iZombie.getCardViews();
+                        int index = keycode - Input.Keys.NUM_1;
+                        if (index < cards.size()) {
+                            selectedCard = cards.get(index).key();
+                            theme.showSuccess(message, selectedCard + " selected. Press Q/W/E/R/T to deploy.");
+                        }
+                        return true;
+                    }
+                    int row = switch (keycode) {
+                        case Input.Keys.Q -> 1;
+                        case Input.Keys.W -> 2;
+                        case Input.Keys.E -> 3;
+                        case Input.Keys.R -> 4;
+                        case Input.Keys.T -> 5;
+                        default -> 0;
+                    };
+                    if (row > 0 && selectedCard != null) {
+                        execute("deploy " + selectedCard + " " + row);
+                        return true;
+                    }
+                    return false;
+                }
+            });
+        }
     }
 
     private void buildUi() {
@@ -90,6 +131,11 @@ public final class IZombieScreen extends MiniGamePlayScreen {
             } else {
                 panel.add(buildZombieControls()).width(285f).height(365f).top();
             }
+        } else if (iZombie.isMultiplayer()) {
+            panel.add(compactHeading("COUCH PLAY: MOUSE PLANTS / KEYS ZOMBIES"))
+                .width(280f).height(42f).padBottom(5f);
+            panel.row();
+            panel.add(buildPlantControls()).width(285f).height(365f).top();
         } else {
             panel.add(theme.heading("ZOMBIE CARDS")).padBottom(5f);
             panel.row();
@@ -134,7 +180,9 @@ public final class IZombieScreen extends MiniGamePlayScreen {
         for (int index = 0; index < plants.length; index++) {
             String plant = plants[index];
             TextButton button = theme.primaryButton(plant);
-            button.getLabel().setFontScale(0.55f);
+            button.getLabel().setFontScale(0.42f);
+            button.getLabel().setWrap(true);
+            button.getLabel().setAlignment(Align.center);
             UiActions.onClick(button, () -> {
                 selectedPlant = plant;
                 theme.showSuccess(message, plant + " selected. Choose a tile.");
@@ -179,6 +227,13 @@ public final class IZombieScreen extends MiniGamePlayScreen {
             UiActions.onClick(button, () -> sendReaction("emoji", value));
             reactions.add(button).width(48f).height(32f).padRight(4f);
         }
+        String[] stickers = {"APPLAUSE", "LAUGH", "BOOM"};
+        for (String value : stickers) {
+            TextButton button = theme.tertiaryButton("[" + value + "]");
+            button.getLabel().setFontScale(0.48f);
+            UiActions.onClick(button, () -> sendReaction("sticker", value));
+            reactions.add(button).width(92f).height(32f).padRight(4f);
+        }
         reactions.add(reactionLabel).width(260f).height(28f);
         return reactions;
     }
@@ -221,6 +276,26 @@ public final class IZombieScreen extends MiniGamePlayScreen {
         if (online != null && !online.getReactions().isEmpty()) {
             MatchReaction latest = online.getReactions().get(online.getReactions().size() - 1);
             reactionLabel.setText(latest.sender() + ": " + latest.value());
+            String reactionKey = latest.sender() + ":" + latest.category() + ":" + latest.value();
+            if (!reactionKey.equals(lastReactionKey)) {
+                lastReactionKey = reactionKey;
+                reactionLabel.clearActions();
+                reactionLabel.addAction(Actions.sequence(
+                    Actions.scaleTo(1.2f, 1.2f, 0.12f),
+                    Actions.scaleTo(1f, 1f, 0.28f)));
+            }
+        }
+        if (session.isFinished()) {
+            String result;
+            if (online != null && online.getWinnerRole() != null) {
+                result = session.isWon() ? "Victory - " + online.getWinnerRole()
+                    + " won." : "Defeat - " + online.getWinnerRole() + " won.";
+            } else if (iZombie.isPlantVictory()) {
+                result = "Victory - plants survived for two minutes.";
+            } else {
+                result = session.isWon() ? "Victory - all brains were eaten." : "Defeat.";
+            }
+            theme.showSuccess(message, result + " Score: " + session.getScore());
         }
     }
 
@@ -256,7 +331,9 @@ public final class IZombieScreen extends MiniGamePlayScreen {
             TextButton select = card.key().equals(selectedCard)
                 ? theme.tertiaryButton(text)
                 : theme.primaryButton(text);
-            select.getLabel().setFontScale(0.58f);
+            select.getLabel().setFontScale(0.48f);
+            select.getLabel().setWrap(true);
+            select.getLabel().setAlignment(Align.center);
             UiActions.onClick(select, () -> selectCard(card.key()));
             item.add(select).width(214f).height(42f);
             cardTray.add(item).width(280f).height(53f).padBottom(3f);
@@ -293,6 +370,14 @@ public final class IZombieScreen extends MiniGamePlayScreen {
         selectedCard = key;
         rebuildCards(iZombie.getCardViews());
         theme.showSuccess(message, key + " selected. Choose a row.");
+    }
+
+    private Label compactHeading(String text) {
+        Label label = theme.heading(text);
+        label.setWrap(true);
+        label.setFontScale(0.58f);
+        label.setAlignment(Align.center);
+        return label;
     }
 
     private void sendReaction(String category, String value) {

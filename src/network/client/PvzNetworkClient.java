@@ -7,6 +7,8 @@ import network.protocol.Phase3Protocol;
 import network.game.MatchInvite;
 import network.game.MatchTicket;
 import network.game.NetworkIZombieState;
+import model.LeaderboardEntry;
+import model.MiniGameType;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -110,6 +112,25 @@ public final class PvzNetworkClient {
                                              String category, String value) throws IOException {
         return payload(request(NetworkOperation.MATCH_REACTION, username, matchId, category, value),
             NetworkIZombieState.class);
+    }
+
+    public int submitMiniGameScore(String username, MiniGameType type, int level, int score)
+        throws IOException {
+        Object value = successfulPayload(request(NetworkOperation.SUBMIT_MINIGAME_SCORE,
+            username, type, level, score));
+        if (!(value instanceof Number number)) {
+            throw new IOException("Server returned an invalid score.");
+        }
+        return number.intValue();
+    }
+
+    public List<LeaderboardEntry> getLeaderboard() throws IOException {
+        Object value = successfulPayload(request(NetworkOperation.GET_LEADERBOARD));
+        if (!(value instanceof List<?> values)) {
+            throw new IOException("Server returned an invalid leaderboard.");
+        }
+        return values.stream().filter(LeaderboardEntry.class::isInstance)
+            .map(LeaderboardEntry.class::cast).toList();
     }
 
     private <T> T payload(NetworkResponse response, Class<T> type) throws IOException {

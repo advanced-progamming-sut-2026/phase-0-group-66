@@ -13,7 +13,7 @@ public final class MiniGameHubScreen extends AuthenticatedUiScreen {
     private static final String VASE_ICON =
         "IMAGE_VASEBREAKER_VASE_BROWN_VASE_BROWN_115X150";
     private static final String BOWLING_ICON =
-        "IMAGE_PLANT_WALLNUT_WALLNUT_100X106";
+        "IMAGE_PLANT_WALLNUT_WALLNUT_169X187";
     private static final String BRAIN_ICON =
         "IMAGE_UI_GAMEOVER_FAIL_SCREEN_BRAIN_ONLY";
 
@@ -103,6 +103,8 @@ public final class MiniGameHubScreen extends AuthenticatedUiScreen {
 
         Label titleLabel = theme.heading(title);
         titleLabel.setAlignment(Align.center);
+        titleLabel.setWrap(true);
+        titleLabel.setFontScale(0.84f);
         card.add(titleLabel).growX().height(50f);
         card.row().padTop(8f);
 
@@ -144,8 +146,18 @@ public final class MiniGameHubScreen extends AuthenticatedUiScreen {
         if (!app.startMiniGame(type, level)) {
             theme.showError(
                 status,
-                "Could not start " + type + " level " + level + "."
+                "Could not start " + displayName(type) + " level " + level + "."
             );
         }
+    }
+
+    private String displayName(MiniGameType type) {
+        return switch (type) {
+            case VASEBREAKER -> "VASEBREAKER";
+            case WALLNUT_BOWLING -> "WALL-NUT BOWLING";
+            case I_ZOMBIE -> "I, ZOMBIE";
+            case BEGHOULD -> "BEGHOULed";
+            case ZOMBOTANY -> "ZOMBOTANY";
+        };
     }
 }

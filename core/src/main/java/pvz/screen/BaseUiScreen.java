@@ -86,6 +86,7 @@ public abstract class BaseUiScreen extends ScreenAdapter {
     @Override
     public void render(float delta) {
         app.assets().update();
+        app.audio().update();
         Gdx.gl.glClearColor(0.02f, 0.04f, 0.07f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act(Math.min(delta, 1f / 30f));

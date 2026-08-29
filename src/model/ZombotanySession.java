@@ -29,7 +29,7 @@ public final class ZombotanySession extends MiniGameSession {
             level, SpecialLevelType.NORMAL, 8, 300);
         game.prepareLevel(null, battleLevel);
         game.setExternalWinControlled(true);
-        nextSpawnTick = 10;
+        nextSpawnTick = 15 * Game.TICKS_PER_SECOND;
     }
 
     @Override

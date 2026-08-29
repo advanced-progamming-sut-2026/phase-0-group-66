@@ -20,7 +20,8 @@ public record NetworkIZombieState(
     List<Card> cards,
     List<Plant> plants,
     List<Zombie> zombies,
-    List<MatchReaction> reactions
+    List<MatchReaction> reactions,
+    MatchRole winnerRole
 ) implements Serializable {
     public NetworkIZombieState {
         brains = brains == null ? new boolean[0] : brains.clone();

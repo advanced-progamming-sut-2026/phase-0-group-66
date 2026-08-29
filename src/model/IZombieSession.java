@@ -19,6 +19,7 @@ public class IZombieSession extends MiniGameSession {
     private int sun = 150;
     private int plantSun = 500;
     private int brainsEaten;
+    private boolean plantVictory;
 
     public IZombieSession(MiniGameDefinition definition, int level) {
         this(definition, level, false);
@@ -193,7 +194,14 @@ public class IZombieSession extends MiniGameSession {
             }
         }
         plants.removeIf(MiniGamePlantUnit::isDead);
-        evaluateLoss();
+        if (multiplayer) {
+            if (getElapsedTicks() >= 120 * Game.TICKS_PER_SECOND && brainsEaten < brains.length) {
+                plantVictory = true;
+                win();
+            }
+        } else {
+            evaluateLoss();
+        }
     }
 
     private void produceSunIfReady(MiniGameUnit zombie) {
@@ -392,6 +400,10 @@ public class IZombieSession extends MiniGameSession {
 
     public boolean isMultiplayer() {
         return multiplayer;
+    }
+
+    public boolean isPlantVictory() {
+        return plantVictory;
     }
 
     private String arg(List<String> args, int index) {

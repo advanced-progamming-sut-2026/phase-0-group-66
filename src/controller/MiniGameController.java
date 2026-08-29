@@ -9,6 +9,7 @@ import model.User;
 import network.client.NetworkIZombieSession;
 import network.client.PvzNetworkClient;
 import network.game.MatchRole;
+import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -114,6 +115,20 @@ public class MiniGameController {
         }
     }
 
+    public ActionResult startCouchIZombie(int level) {
+        if (authController.getCurrentUser() == null) {
+            return ActionResult.failure("Login is required.");
+        }
+        try {
+            MiniGameDefinition definition = definitions.get(MiniGameType.I_ZOMBIE);
+            currentSession = new model.IZombieSession(definition, level, true);
+            rewardRecorded = false;
+            return ActionResult.success("Couch Play I, Zombie started.");
+        } catch (IllegalArgumentException exception) {
+            return ActionResult.failure(exception.getMessage());
+        }
+    }
+
     public ActionResult advanceTime(int ticks) {
         return executeCommand("advance " + ticks);
     }
@@ -151,11 +166,21 @@ public class MiniGameController {
             return;
         }
         rewardRecorded = true;
+        User user = authController.getCurrentUser();
+        if (networkClient != null && user != null) {
+            try {
+                int serverBest = networkClient.submitMiniGameScore(user.getUsername(),
+                    currentSession.getDefinition().type(), currentSession.getLevel(),
+                    currentSession.getScore());
+                user.getProgress().updateBestScore(serverBest);
+            } catch (IOException ignored) {
+                // The normal save below still reports the connection problem to the user.
+            }
+        }
         if (!currentSession.isWon()) {
             authController.saveCurrentState();
             return;
         }
-        User user = authController.getCurrentUser();
         MiniGameType type = currentSession.getDefinition().type();
         int level = currentSession.getLevel();
         int score = currentSession.getScore();

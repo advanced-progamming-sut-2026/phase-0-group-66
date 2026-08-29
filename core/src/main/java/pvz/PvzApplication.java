@@ -8,6 +8,7 @@ import controller.ActionResult;
 import pvz.app.AudioSettings;
 import pvz.app.DisplaySettings;
 import pvz.app.PvzServices;
+import pvz.app.PvzAudio;
 import pvz.assets.PvzAssets;
 import pvz.screen.AdventureScreen;
 import pvz.screen.BattleScreen;
@@ -49,6 +50,7 @@ public final class PvzApplication extends Game {
     private PvzServices services;
     private DisplaySettings displaySettings;
     private AudioSettings audioSettings;
+    private PvzAudio audio;
     private boolean miniGamesOpenedFromQuests;
 
     @Override
@@ -59,6 +61,7 @@ public final class PvzApplication extends Game {
 
         try {
             assets = new PvzAssets();
+            audio = new PvzAudio(assets, audioSettings);
             services = new PvzServices();
         } catch (IOException exception) {
             throw new GdxRuntimeException("Could not initialize PVZ data.", exception);
@@ -87,6 +90,10 @@ public final class PvzApplication extends Game {
         return audioSettings;
     }
 
+    public PvzAudio audio() {
+        return audio;
+    }
+
     public void showRegister() {
         changeScreen(new RegisterScreen(this));
     }
@@ -108,6 +115,7 @@ public final class PvzApplication extends Game {
             showLogin();
             return;
         }
+        audio.playMenuMusic();
         changeScreen(new MainMenuScreen(this));
     }
 
@@ -125,6 +133,7 @@ public final class PvzApplication extends Game {
             showLogin();
             return;
         }
+        audio.playChapterMusic(null);
         changeScreen(new AdventureScreen(this));
     }
 
@@ -133,6 +142,7 @@ public final class PvzApplication extends Game {
             showLogin();
             return;
         }
+        audio.playChapterMusic(chapter);
         changeScreen(new ChapterLevelsScreen(this, chapter));
     }
 
@@ -141,6 +151,7 @@ public final class PvzApplication extends Game {
             showLogin();
             return;
         }
+        audio.playChapterMusic(chapter);
         changeScreen(new LevelBriefingScreen(this, chapter, level));
     }
 
@@ -149,6 +160,7 @@ public final class PvzApplication extends Game {
             showLogin();
             return;
         }
+        audio.playChapterMusic(chapter);
         changeScreen(new PlantSelectionScreen(this, chapter, level));
     }
 
@@ -157,6 +169,7 @@ public final class PvzApplication extends Game {
             showLogin();
             return;
         }
+        audio.playChapterMusic(chapter);
         changeScreen(new BattleScreen(this, chapter, level));
     }
 
@@ -189,6 +202,7 @@ public final class PvzApplication extends Game {
             showLogin();
             return;
         }
+        audio.playMenuMusic();
         changeScreen(new NetworkScreen(this));
     }
 
@@ -243,11 +257,13 @@ public final class PvzApplication extends Game {
 
     public void showMiniGames() {
         miniGamesOpenedFromQuests = false;
+        audio.playMenuMusic();
         openMiniGameHub();
     }
 
     public void showMiniGamesFromQuests() {
         miniGamesOpenedFromQuests = true;
+        audio.playMenuMusic();
         openMiniGameHub();
     }
 
@@ -302,6 +318,15 @@ public final class PvzApplication extends Game {
         return true;
     }
 
+    public boolean startCouchIZombie(int level) {
+        ActionResult result = services.miniGames().startCouchIZombie(level);
+        if (!result.isSuccessful()) {
+            return false;
+        }
+        changeScreen(new IZombieScreen(this));
+        return true;
+    }
+
     public void playMiniGame(MiniGameType type) {
         if (!services.auth().isAuthenticated()) {
             showLogin();
@@ -315,7 +340,10 @@ public final class PvzApplication extends Game {
         switch (type) {
             case VASEBREAKER -> changeScreen(new VasebreakerScreen(this));
             case WALLNUT_BOWLING -> changeScreen(new WallnutBowlingScreen(this));
-            case I_ZOMBIE -> changeScreen(new IZombieScreen(this));
+            case I_ZOMBIE -> {
+                audio.playZombossMusic();
+                changeScreen(new IZombieScreen(this));
+            }
             case BEGHOULD -> changeScreen(new BeghouledScreen(this));
             case ZOMBOTANY -> changeScreen(new ZombotanyScreen(this));
         }
@@ -338,6 +366,9 @@ public final class PvzApplication extends Game {
             getScreen().dispose();
         }
         if (assets != null) {
+            if (audio != null) {
+                audio.dispose();
+            }
             assets.dispose();
         }
     }

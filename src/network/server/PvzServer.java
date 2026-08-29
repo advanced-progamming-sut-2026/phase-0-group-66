@@ -5,6 +5,8 @@ import model.UserRepository;
 import model.IZombieSession;
 import model.MiniGameDefinition;
 import model.MiniGameType;
+import model.GameProgress;
+import model.LeaderboardEntry;
 import network.game.MatchInvite;
 import network.game.MatchReaction;
 import network.game.MatchRole;
@@ -32,7 +34,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/** Phase 3 authoritative server for account data. Multiplayer handlers are added in later stages. */
+/** Phase 3 authoritative server for account data, matchmaking, and mini-games. */
 public final class PvzServer implements AutoCloseable {
     private final int port;
     private final UserRepository userRepository;
@@ -136,6 +138,11 @@ public final class PvzServer implements AutoCloseable {
                     (String) request.argument(0), (String) request.argument(1),
                     (String) request.argument(2), (String) request.argument(3)
                 );
+                case SUBMIT_MINIGAME_SCORE -> submitMiniGameScore(
+                    (String) request.argument(0), (MiniGameType) request.argument(1),
+                    intValue(request.argument(2)), intValue(request.argument(3))
+                );
+                case GET_LEADERBOARD -> getLeaderboard();
             };
         } catch (IndexOutOfBoundsException | ClassCastException exception) {
             return NetworkResponse.failure("Invalid arguments for " + request.getOperation() + ".");
@@ -316,12 +323,16 @@ public final class PvzServer implements AutoCloseable {
                 return NetworkResponse.failure("Match was not found.");
             }
             String normalizedCategory = category == null ? "" : category.toLowerCase();
-            if (!(normalizedCategory.equals("message") || normalizedCategory.equals("emoji"))) {
-                return NetworkResponse.failure("Reaction category must be message or emoji.");
+            List<String> allowed = switch (normalizedCategory) {
+                case "message" -> List.of("Nice move!", "Good luck!", "Well played!");
+                case "emoji" -> List.of("😀", "🔥", "😮");
+                case "sticker" -> List.of("APPLAUSE", "LAUGH", "BOOM");
+                default -> List.of();
+            };
+            if (!(normalizedCategory.equals("message") || normalizedCategory.equals("emoji")
+                || normalizedCategory.equals("sticker"))) {
+                return NetworkResponse.failure("Reaction category is not supported.");
             }
-            List<String> allowed = normalizedCategory.equals("message")
-                ? List.of("Nice move!", "Good luck!", "Well played!")
-                : List.of("😀", "🔥", "😮");
             if (!allowed.contains(value)) {
                 return NetworkResponse.failure("That reaction is not available.");
             }
@@ -331,6 +342,36 @@ public final class PvzServer implements AutoCloseable {
             match.reactions.add(new MatchReaction(username, normalizedCategory, value));
             return NetworkResponse.success("Reaction sent.", stateFor(match, username));
         }
+    }
+
+    private NetworkResponse submitMiniGameScore(String username, MiniGameType type,
+                                                  int level, int score) throws IOException {
+        if (username == null || username.isBlank() || type == null || level < 1 || level > 3
+            || score < 0 || !userRepository.usernameExists(username)) {
+            return NetworkResponse.failure("Invalid mini-game score submission.");
+        }
+        User user = userRepository.findByUsername(username).orElseThrow();
+        GameProgress progress = user.getProgress();
+        int previous = progress.getBestMiniGameScore();
+        if (score > previous) {
+            progress.updateBestScore(score);
+            userRepository.replace(user);
+        }
+        return NetworkResponse.success("Score saved on server.", Math.max(previous, score));
+    }
+
+    private NetworkResponse getLeaderboard() {
+        ArrayList<LeaderboardEntry> entries = new ArrayList<>();
+        for (User user : userRepository.getAllUsers()) {
+            GameProgress progress = user.getProgress();
+            entries.add(new LeaderboardEntry(user.getUsername(),
+                progress.getLastChapterNumber(), progress.getLastLevelNumber(),
+                progress.getCompletedMiniGames(), progress.getCompletedDailyQuests(),
+                progress.getCompletedOtherQuests(), progress.getBestMiniGameScore()));
+        }
+        entries.sort(java.util.Comparator.comparingInt(LeaderboardEntry::bestScore).reversed()
+            .thenComparing(LeaderboardEntry::username));
+        return NetworkResponse.success("Leaderboard loaded from server.", List.copyOf(entries));
     }
 
     private NetworkResponse validatePlayer(String username, int level) {
@@ -394,10 +435,16 @@ public final class PvzServer implements AutoCloseable {
         List<NetworkIZombieState.Zombie> zombies = match.session.getZombieViews().stream()
             .map(zombie -> new NetworkIZombieState.Zombie(zombie.type(), zombie.row(), zombie.column(),
                 zombie.health(), zombie.maximumHealth(), zombie.damage(), zombie.speed())).toList();
+        MatchRole role = match.members.get(username);
+        MatchRole winner = match.session.isFinished()
+            ? (match.session.isPlantVictory() ? MatchRole.PLANTS : MatchRole.ZOMBIES) : null;
+        boolean won = winner == role;
+        boolean lost = winner != null && winner != role;
         return new NetworkIZombieState(match.id, username, match.opponentOf(username),
-            match.members.get(username), match.level, match.session.getScore(), match.session.getElapsedTicks(),
-            match.session.isWon(), match.session.isLost(), match.session.getSun(), match.session.getPlantSun(),
-            match.session.getBrainsEaten(), match.session.getBrains(), cards, plants, zombies, match.reactions);
+            role, match.level, match.session.getScore(), match.session.getElapsedTicks(),
+            won, lost, match.session.getSun(), match.session.getPlantSun(),
+            match.session.getBrainsEaten(), match.session.getBrains(), cards, plants, zombies,
+            match.reactions, winner);
     }
 
     private static final class OnlineMatch {

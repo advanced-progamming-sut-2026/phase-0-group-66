@@ -26,6 +26,7 @@ import model.Wave;
 import model.Zombie;
 import pvz.PvzApplication;
 import pvz.app.AudioSettings;
+import pvz.app.PvzAudio;
 import pvz.ui.BattleBoardActor;
 import pvz.ui.UiTheme;
 
@@ -347,6 +348,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
             return;
         }
         ActionResult result;
+        String plantedPlant = selectedPlant;
         if (toolMode == ToolMode.SHOVEL) {
             result = controller.pluckPlant(col, row);
             toolMode = ToolMode.PLANT;
@@ -366,6 +368,9 @@ public final class BattleScreen extends AuthenticatedUiScreen {
             return;
         }
         showResult(result);
+        if (result.isSuccessful() && isExplosivePlant(plantedPlant)) {
+            app.audio().playSfx(PvzAudio.EXPLOSION_SOUND);
+        }
         refreshSeedBank();
         refreshHud();
     }
@@ -530,9 +535,21 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         }
         modelAccumulator -= MODEL_STEP_SECONDS;
         int speed = Math.max(1, Math.min(3, user.getGameSpeed()));
+        int previousWave = game.getCurrentWave() == null
+            ? 0 : game.getCurrentWave().getWaveNumber();
+        int previousMowerKills = game.getLawnMowerKills();
         ActionResult result = controller.advanceTime(BASE_TICKS_PER_STEP * speed);
         if (!result.isSuccessful()) {
             theme.showError(status, result.getMessage());
+        } else {
+            if (game.getCurrentWave() != null
+                && game.getCurrentWave().getWaveNumber() > previousWave) {
+                app.audio().playSfx(PvzAudio.ZOMBIES_COMING_SOUND);
+                app.audio().playSfx(PvzAudio.ZOMBIES_SOUND);
+            }
+            if (game.getLawnMowerKills() > previousMowerKills) {
+                app.audio().playSfx(PvzAudio.LAWN_MOWER_SOUND);
+            }
         }
         refreshSeedBank();
     }
@@ -542,7 +559,15 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         plantFoodLabel.setText("x" + game.getPlantFoodCount());
         Wave wave = game.getCurrentWave();
         int current = wave == null ? 0 : wave.getWaveNumber();
-        waveLabel.setText("Wave " + current + " / " + level.getWaves().size());
+        if (game.areZombieWavesStarted() && wave == null
+            && game.getElapsedTicks() < Game.INITIAL_PREPARATION_TICKS) {
+            int remaining = (int) Math.ceil(
+                (Game.INITIAL_PREPARATION_TICKS - game.getElapsedTicks())
+                    / (double) Game.TICKS_PER_SECOND);
+            waveLabel.setText("PREPARE " + remaining + "s");
+        } else {
+            waveLabel.setText("Wave " + current + " / " + level.getWaves().size());
+        }
         startWavesButton.setVisible(!isIntroRunning() && !game.areZombieWavesStarted());
     }
 
@@ -606,7 +631,9 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         introLabel.setText("");
         boardActor.setCameraPan(0f);
         startWavesButton.setVisible(!game.areZombieWavesStarted());
-        if (game.areZombieWavesStarted()) {
+        if (game.areZombieWavesStarted() && game.getCurrentWave() == null) {
+            theme.showSuccess(status, "Preparation phase: the first wave starts in 15 seconds.");
+        } else if (game.areZombieWavesStarted()) {
             theme.showSuccess(status, "The first wave is coming!");
         } else {
             theme.showSuccess(status, "Set up your defense, then start the waves.");
@@ -636,7 +663,19 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         }
         resultShown = true;
         paused = true;
+        app.audio().playSfx(game.getGameState() == GameState.WON
+            ? PvzAudio.WIN_SOUND : PvzAudio.LOSS_SOUND);
         showEndOverlay(game.getGameState() == GameState.WON);
+    }
+
+    private boolean isExplosivePlant(String plantName) {
+        if (plantName == null) {
+            return false;
+        }
+        String normalized = plantName.toLowerCase().replace("-", "").replace(" ", "");
+        return normalized.contains("cherrybomb") || normalized.contains("jalapeno")
+            || normalized.contains("squash") || normalized.contains("potatomine")
+            || normalized.contains("explodeonut") || normalized.contains("grapeshot");
     }
 
     private void showEndOverlay(boolean won) {

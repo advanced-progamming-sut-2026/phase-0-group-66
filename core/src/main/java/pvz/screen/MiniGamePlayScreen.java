@@ -7,6 +7,7 @@ import model.Game;
 import model.MiniGameSession;
 import network.client.NetworkIZombieSession;
 import pvz.PvzApplication;
+import pvz.app.PvzAudio;
 
 public abstract class MiniGamePlayScreen extends AuthenticatedUiScreen {
     private static final float TICK_SECONDS = 1f / Game.TICKS_PER_SECOND;
@@ -16,6 +17,7 @@ public abstract class MiniGamePlayScreen extends AuthenticatedUiScreen {
     protected final Label message;
     private float tickAccumulator;
     private float networkPollAccumulator;
+    private boolean completionSoundPlayed;
 
     protected MiniGamePlayScreen(PvzApplication app) {
         super(app);
@@ -48,11 +50,13 @@ public abstract class MiniGamePlayScreen extends AuthenticatedUiScreen {
     protected final void execute(String command) {
         ActionResult result = miniGames.executeCommand(command);
         if (result.isSuccessful()) {
+            playCommandSound(command);
             theme.showSuccess(message, shortStatus());
         } else {
             theme.showError(message, result.getMessage());
         }
         refreshFromSession();
+        playCompletionSoundIfNeeded();
     }
 
     protected final String shortStatus() {
@@ -86,6 +90,28 @@ public abstract class MiniGamePlayScreen extends AuthenticatedUiScreen {
         if (changed) {
             theme.showSuccess(message, shortStatus());
             refreshFromSession();
+            playCompletionSoundIfNeeded();
         }
+    }
+
+    private void playCommandSound(String command) {
+        String normalized = command == null ? "" : command.trim().toLowerCase();
+        if (normalized.startsWith("break")) {
+            app.audio().playSfx(PvzAudio.EXPLOSION_SOUND);
+        } else if (normalized.startsWith("bowl") && normalized.contains("explosive")) {
+            app.audio().playSfx(PvzAudio.EXPLOSION_SOUND);
+        } else if (normalized.startsWith("start")) {
+            app.audio().playSfx(PvzAudio.ZOMBIES_COMING_SOUND);
+        } else if (normalized.startsWith("deploy")) {
+            app.audio().playSfx(PvzAudio.ZOMBIES_SOUND);
+        }
+    }
+
+    private void playCompletionSoundIfNeeded() {
+        if (completionSoundPlayed || !session.isFinished()) {
+            return;
+        }
+        completionSoundPlayed = true;
+        app.audio().playSfx(session.isWon() ? PvzAudio.WIN_SOUND : PvzAudio.LOSS_SOUND);
     }
 }

@@ -13,7 +13,7 @@ public final class MiniGamePreviewScreen extends AuthenticatedUiScreen {
     private static final String VASE_ICON =
         "IMAGE_VASEBREAKER_VASE_BROWN_VASE_BROWN_115X150";
     private static final String BOWLING_ICON =
-        "IMAGE_PLANT_WALLNUT_WALLNUT_100X106";
+        "IMAGE_PLANT_WALLNUT_WALLNUT_169X187";
     private static final String BRAIN_ICON =
         "IMAGE_UI_GAMEOVER_FAIL_SCREEN_BRAIN_ONLY";
 
@@ -48,17 +48,18 @@ public final class MiniGamePreviewScreen extends AuthenticatedUiScreen {
     private Table buildPreviewCard() {
         Table card = theme.settingsCardPanel(24f);
         card.top();
+        card.defaults().left();
 
         Image icon = theme.image(iconId());
         if (icon != null) {
-            card.add(icon).size(78f).padBottom(4f);
+            card.add(icon).size(92f).padBottom(4f).center();
             card.row();
         }
 
-        card.add(theme.title(displayName())).width(820f).height(42f).padBottom(3f);
+        card.add(theme.title(displayName())).width(820f).height(42f).padBottom(3f).center();
         card.row();
         Label level = theme.heading("LEVEL " + session.getLevel() + " PREVIEW");
-        card.add(level).width(820f).height(28f).padBottom(6f);
+        card.add(level).width(820f).height(28f).padBottom(6f).center();
         card.row();
 
         addInfo(card, "OBJECTIVE", session.getDefinition().objective());
@@ -69,7 +70,8 @@ public final class MiniGamePreviewScreen extends AuthenticatedUiScreen {
         Label rules = theme.bodyLabel(rulesText());
         rules.setAlignment(Align.left);
         rules.setWrap(true);
-        card.add(rules).width(820f).height(92f).left();
+        rules.setFontScale(0.72f);
+        card.add(rules).width(820f).height(86f).left();
         card.row().padTop(10f);
 
         TextButton play = theme.tertiaryButton("PLAY");
@@ -84,12 +86,16 @@ public final class MiniGamePreviewScreen extends AuthenticatedUiScreen {
     }
 
     private void addInfo(Table card, String name, String value) {
-        card.add(theme.fieldLabel(name)).width(170f).left();
+        Table row = new Table();
+        row.left();
+        row.add(theme.fieldLabel(name)).width(160f).left();
         Label label = theme.bodyLabel(value);
         label.setAlignment(Align.left);
         label.setWrap(true);
-        card.add(label).width(650f).height(42f).left();
-        card.row().padTop(5f);
+        label.setFontScale(0.72f);
+        row.add(label).width(660f).height(42f).left();
+        card.add(row).width(820f).height(46f).left();
+        card.row().padTop(4f);
     }
 
     private String targetText() {
@@ -123,7 +129,13 @@ public final class MiniGamePreviewScreen extends AuthenticatedUiScreen {
     }
 
     private String displayName() {
-        return type == MiniGameType.I_ZOMBIE ? "I, ZOMBIE" : type.toString();
+        return switch (type) {
+            case VASEBREAKER -> "VASEBREAKER";
+            case WALLNUT_BOWLING -> "WALL-NUT BOWLING";
+            case I_ZOMBIE -> "I, ZOMBIE";
+            case BEGHOULD -> "BEGHOULed";
+            case ZOMBOTANY -> "ZOMBOTANY";
+        };
     }
 
     private String iconId() {

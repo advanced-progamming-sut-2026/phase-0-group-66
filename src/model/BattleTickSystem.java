@@ -415,7 +415,11 @@ final class BattleTickSystem {
 
     static void startNextWaveIfReady(Game engine) {
         if (!engine.zombieWavesStarted || engine.nextWaveIndex >= engine.currentLevel.getWaves().size()
-            || engine.currentWave == null) {
+            || engine.elapsedTicks < Game.INITIAL_PREPARATION_TICKS) {
+            return;
+        }
+        if (engine.currentWave == null) {
+            engine.startNextWave();
             return;
         }
         if (engine.currentWave.hasLostAtLeastSeventyFivePercentHealth()) {

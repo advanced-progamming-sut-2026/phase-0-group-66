@@ -29,7 +29,7 @@ public final class BeghouledSession extends MiniGameSession {
         random = new Random(40_000L + level * 1237L);
         fillBoard();
         removeInitialMatches();
-        nextZombieTick = 20;
+        nextZombieTick = 15 * Game.TICKS_PER_SECOND;
     }
 
     @Override

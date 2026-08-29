@@ -143,7 +143,9 @@ public class User implements Serializable {
         collectionBook.unlockPlant("Wall-nut");
         progress.unlockChapterName("Ancient Egypt");
         progress.unlockLevelId("ancient-egypt-1");
-        progress.unlockMiniGameLevel(MiniGameType.VASEBREAKER, 1);
+        for (MiniGameType type : MiniGameType.values()) {
+            progress.unlockMiniGameLevel(type, 1);
+        }
     }
 
     private void setPassword(String password) {
