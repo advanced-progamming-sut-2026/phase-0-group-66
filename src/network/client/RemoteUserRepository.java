@@ -5,14 +5,17 @@ import model.User;
 import model.UserRepository;
 import network.protocol.NetworkOperation;
 import network.protocol.NetworkResponse;
+import network.protocol.SecurityProfile;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * UserRepository adapter backed by the Phase 3 server.
@@ -24,6 +27,7 @@ public final class RemoteUserRepository extends UserRepository {
     private final PvzNetworkClient client;
     private final Map<String, User> cache = new LinkedHashMap<>();
     private volatile String lastNetworkError;
+    private volatile String recoveryToken;
 
     public RemoteUserRepository(Path localSessionDirectory, PvzNetworkClient client) throws IOException {
         super(localSessionDirectory, false);
@@ -32,26 +36,66 @@ public final class RemoteUserRepository extends UserRepository {
 
     @Override
     public synchronized AuthenticationResult authenticate(String username, String password) {
-        NetworkResponse response = request(NetworkOperation.AUTHENTICATE, username, password);
-        if (response == null) {
-            return AuthenticationResult.failure(lastNetworkError == null
-                ? "Could not contact the server." : lastNetworkError);
+        try {
+            var session = client.authenticate(username, password);
+            User user = session.user();
+            cache.put(user.getUsername(), user);
+            return AuthenticationResult.success(user);
+        } catch (IOException exception) {
+            lastNetworkError = friendlyMessage(exception);
+            return AuthenticationResult.failure(lastNetworkError);
         }
-        if (!response.isSuccessful() || !(response.getPayload() instanceof User user)) {
-            return AuthenticationResult.failure(response.getMessage());
-        }
-        cache.put(user.getUsername(), user);
-        return AuthenticationResult.success(user);
     }
 
     @Override
     public synchronized Optional<User> findByUsername(String username) {
         NetworkResponse response = request(NetworkOperation.FIND_USER, username);
-        if (response == null || !response.isSuccessful() || !(response.getPayload() instanceof User user)) {
+        if (response == null || !response.isSuccessful()) {
+            return Optional.empty();
+        }
+        User user;
+        if (response.getPayload() instanceof User fullUser) {
+            user = fullUser;
+        } else if (response.getPayload() instanceof SecurityProfile profile) {
+            user = new User(profile.username(), UUID.randomUUID().toString(),
+                profile.nickname(), profile.email(), profile.gender(), profile.securityQuestion(),
+                UUID.randomUUID().toString());
+        } else {
             return Optional.empty();
         }
         cache.put(user.getUsername(), user);
         return Optional.of(user);
+    }
+
+    @Override
+    public synchronized boolean verifySecurityAnswer(String username, String answer) {
+        NetworkResponse response = request(NetworkOperation.VERIFY_SECURITY_ANSWER, username, answer);
+        if (response == null || !response.isSuccessful() || !(response.getPayload() instanceof String token)) {
+            return false;
+        }
+        recoveryToken = token;
+        return true;
+    }
+
+    @Override
+    public synchronized void resetPassword(String username, String newPassword) throws IOException {
+        if (recoveryToken == null || recoveryToken.isBlank()) {
+            throw new IllegalStateException("Verify the security answer first.");
+        }
+        NetworkResponse response = requestOrThrowUnauthenticated(NetworkOperation.RESET_PASSWORD,
+            username, newPassword, recoveryToken);
+        if (!response.isSuccessful()) {
+            throw new IOException(response.getMessage());
+        }
+        recoveryToken = null;
+    }
+
+    public synchronized List<model.LeaderboardEntry> getNetworkLeaderboard() throws IOException {
+        Object value = client.getLeaderboard();
+        return value instanceof List<?> values
+            ? values.stream().filter(model.LeaderboardEntry.class::isInstance)
+                .map(model.LeaderboardEntry.class::cast).toList()
+            : List.of();
     }
 
     @Override
@@ -62,18 +106,7 @@ public final class RemoteUserRepository extends UserRepository {
 
     @Override
     public synchronized Collection<User> getAllUsers() {
-        NetworkResponse response = request(NetworkOperation.GET_ALL_USERS);
-        if (response == null || !response.isSuccessful() || !(response.getPayload() instanceof Collection<?> values)) {
-            return new ArrayList<>();
-        }
-        ArrayList<User> users = new ArrayList<>();
-        for (Object value : values) {
-            if (value instanceof User user) {
-                users.add(user);
-                cache.put(user.getUsername(), user);
-            }
-        }
-        return users;
+        return new ArrayList<>(cache.values());
     }
 
     @Override
@@ -151,6 +184,11 @@ public final class RemoteUserRepository extends UserRepository {
         return client.getHost() + ":" + client.getPort();
     }
 
+    public void clearAuthentication() {
+        client.clearAuthentication();
+        recoveryToken = null;
+    }
+
     private NetworkResponse request(NetworkOperation operation, Object... arguments) {
         try {
             NetworkResponse response = client.request(operation, arguments);
@@ -165,6 +203,18 @@ public final class RemoteUserRepository extends UserRepository {
     private NetworkResponse requestOrThrow(NetworkOperation operation, Object... arguments) throws IOException {
         try {
             NetworkResponse response = client.request(operation, arguments);
+            lastNetworkError = null;
+            return response;
+        } catch (IOException exception) {
+            lastNetworkError = friendlyMessage(exception);
+            throw new IOException(lastNetworkError, exception);
+        }
+    }
+
+    private NetworkResponse requestOrThrowUnauthenticated(NetworkOperation operation, Object... arguments)
+        throws IOException {
+        try {
+            NetworkResponse response = client.requestUnauthenticated(operation, arguments);
             lastNetworkError = null;
             return response;
         } catch (IOException exception) {

@@ -161,7 +161,7 @@ public class MiniGameController {
 
     public MiniGameSession getCurrentSession() { return currentSession; }
 
-    private void finishCurrentSessionIfNeeded() {
+    public void finishCurrentSessionIfNeeded() {
         if (currentSession == null || rewardRecorded || !currentSession.isFinished()) {
             return;
         }

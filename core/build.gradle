@@ -27,5 +27,6 @@ tasks.register('runServer', JavaExec) {
   description = 'Runs the Phase 3 PvZ account server.'
   classpath = sourceSets.main.runtimeClasspath
   mainClass = 'network.server.PvzServerMain'
+  workingDir = rootProject.file('.').path
   standardInput = System.in
 }

@@ -16,6 +16,8 @@ import network.protocol.NetworkOperation;
 import network.protocol.NetworkRequest;
 import network.protocol.NetworkResponse;
 import network.protocol.Phase3Protocol;
+import network.protocol.AuthenticatedSession;
+import network.protocol.SecurityProfile;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -31,19 +33,25 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /** Phase 3 authoritative server for account data, matchmaking, and mini-games. */
 public final class PvzServer implements AutoCloseable {
     private final int port;
     private final UserRepository userRepository;
     private final ExecutorService clientExecutor;
+    private final ScheduledExecutorService matchTicker;
     // ponytail: one lock keeps the assignment-sized match registry correct; split locks if throughput matters.
     private final Object matchLock = new Object();
     private final Map<String, Ticket> tickets = new LinkedHashMap<>();
     private final Map<String, OnlineMatch> matches = new LinkedHashMap<>();
     private final Deque<String> randomQueue = new ArrayDeque<>();
+    private final Map<String, String> sessions = new ConcurrentHashMap<>();
+    private final Map<String, String> passwordResetTokens = new ConcurrentHashMap<>();
     private volatile boolean running;
     private ServerSocket serverSocket;
 
@@ -58,11 +66,17 @@ public final class PvzServer implements AutoCloseable {
             thread.setDaemon(true);
             return thread;
         });
+        this.matchTicker = Executors.newSingleThreadScheduledExecutor(runnable -> {
+            Thread thread = new Thread(runnable, "pvz-match-ticker");
+            thread.setDaemon(true);
+            return thread;
+        });
     }
 
     public void start() throws IOException {
         serverSocket = new ServerSocket(port);
         running = true;
+        matchTicker.scheduleAtFixedRate(this::tickMatches, 100, 100, TimeUnit.MILLISECONDS);
         while (running) {
             try {
                 Socket socket = serverSocket.accept();
@@ -102,17 +116,35 @@ public final class PvzServer implements AutoCloseable {
     private NetworkResponse process(NetworkRequest request) {
         try {
             NetworkOperation operation = request.getOperation();
+            cleanupExpiredState();
+            if (requiresSession(operation)) {
+                String authToken = request.getAuthToken();
+                String sessionUser = authToken == null ? null : sessions.get(authToken);
+                if (sessionUser == null) {
+                    return NetworkResponse.failure("Login is required for this operation.");
+                }
+                String claimedUsername = claimedUsername(request);
+                if (claimedUsername != null && !sessionUser.equals(claimedUsername)) {
+                    return NetworkResponse.failure("The request user does not match the logged-in account.");
+                }
+            }
             return switch (operation) {
                 case PING -> NetworkResponse.success("pong");
                 case AUTHENTICATE -> authenticate(
                     (String) request.argument(0),
                     (String) request.argument(1)
                 );
-                case FIND_USER -> findUser((String) request.argument(0));
+                case FIND_USER -> findUser(request, (String) request.argument(0));
+                case GET_SECURITY_PROFILE -> getSecurityProfile((String) request.argument(0));
+                case VERIFY_SECURITY_ANSWER -> verifySecurityAnswer(
+                    (String) request.argument(0), (String) request.argument(1)
+                );
+                case RESET_PASSWORD -> resetPassword(
+                    (String) request.argument(0), (String) request.argument(1), (String) request.argument(2)
+                );
                 case USERNAME_EXISTS -> NetworkResponse.success("Username lookup complete.",
                     userRepository.usernameExists((String) request.argument(0)));
-                case GET_ALL_USERS -> NetworkResponse.success("Users loaded.",
-                    new ArrayList<>(userRepository.getAllUsers()));
+                case GET_ALL_USERS -> NetworkResponse.failure("Listing all user accounts is not available.");
                 case ADD_USER -> addUser((User) request.argument(0));
                 case RENAME_USER -> renameUser(
                     (String) request.argument(0),
@@ -146,23 +178,79 @@ public final class PvzServer implements AutoCloseable {
             };
         } catch (IndexOutOfBoundsException | ClassCastException exception) {
             return NetworkResponse.failure("Invalid arguments for " + request.getOperation() + ".");
-        } catch (IOException | IllegalArgumentException exception) {
+        } catch (IOException | IllegalArgumentException | IllegalStateException exception) {
             return NetworkResponse.failure(exception.getMessage());
         }
     }
 
     private NetworkResponse authenticate(String username, String password) {
         return userRepository.findByUsername(username)
-            .<NetworkResponse>map(user -> user.checkPassword(password)
-                ? NetworkResponse.success("Logged in successfully.", user)
-                : NetworkResponse.failure("Password is incorrect."))
+            .<NetworkResponse>map(user -> {
+                if (!user.checkPassword(password)) {
+                    return NetworkResponse.failure("Password is incorrect.");
+                }
+                String token = UUID.randomUUID().toString();
+                sessions.put(token, user.getUsername());
+                return NetworkResponse.success("Logged in successfully.",
+                    new AuthenticatedSession(token, user));
+            })
             .orElseGet(() -> NetworkResponse.failure("Username does not exist."));
     }
 
-    private NetworkResponse findUser(String username) {
+    private NetworkResponse findUser(NetworkRequest request, String username) {
+        String authToken = request.getAuthToken();
+        String sessionUser = authToken == null ? null : sessions.get(authToken);
+        if (sessionUser == null || !sessionUser.equals(username)) {
+            return getSecurityProfile(username);
+        }
         return userRepository.findByUsername(username)
             .<NetworkResponse>map(user -> NetworkResponse.success("User found.", user))
             .orElseGet(() -> NetworkResponse.failure("Username does not exist."));
+    }
+
+    private NetworkResponse getSecurityProfile(String username) {
+        return userRepository.findByUsername(username)
+            .<NetworkResponse>map(user -> NetworkResponse.success("Security profile loaded.",
+                new SecurityProfile(user.getUsername(), user.getNickname(), user.getEmail(),
+                    user.getGender(), user.getSecurityQuestion())))
+            .orElseGet(() -> NetworkResponse.failure("Username does not exist."));
+    }
+
+    private NetworkResponse verifySecurityAnswer(String username, String answer) {
+        if (!userRepository.verifySecurityAnswer(username, answer)) {
+            return NetworkResponse.failure("Security answer is incorrect.");
+        }
+        String token = UUID.randomUUID().toString();
+        passwordResetTokens.put(token, username);
+        return NetworkResponse.success("Security answer verified.", token);
+    }
+
+    private NetworkResponse resetPassword(String username, String newPassword, String token) throws IOException {
+        if (token == null || !username.equals(passwordResetTokens.get(token))) {
+            return NetworkResponse.failure("Password reset authorization is invalid or expired.");
+        }
+        userRepository.resetPassword(username, newPassword);
+        passwordResetTokens.remove(token);
+        return NetworkResponse.success("Password reset successfully.");
+    }
+
+    private boolean requiresSession(NetworkOperation operation) {
+        return switch (operation) {
+            case PING, AUTHENTICATE, FIND_USER, GET_SECURITY_PROFILE, VERIFY_SECURITY_ANSWER,
+                RESET_PASSWORD, USERNAME_EXISTS, ADD_USER, GET_LEADERBOARD -> false;
+            default -> true;
+        };
+    }
+
+    private String claimedUsername(NetworkRequest request) {
+        return switch (request.getOperation()) {
+            case RENAME_USER, MATCH_CHALLENGE -> (String) request.argument(0);
+            case ADD_USER, SAVE_USER -> request.getOperation() == NetworkOperation.ADD_USER
+                ? null : ((User) request.argument(0)).getUsername();
+            case DELETE_USER, MATCH_RANDOM, MATCH_REQUESTS, MATCH_RESPONSE, MATCH_STATUS,
+                MATCH_STATE, MATCH_ACTION, MATCH_REACTION, SUBMIT_MINIGAME_SCORE -> (String) request.argument(0);
+            default -> null;
+        };
     }
 
     private NetworkResponse addUser(User user) throws IOException {
@@ -200,16 +288,17 @@ public final class PvzServer implements AutoCloseable {
             if (validation != null) {
                 return validation;
             }
-            Ticket existing = waitingTicket(username);
+            Ticket existing = waitingRandomTicket(username);
             if (existing != null) {
                 return NetworkResponse.success("Waiting for a random opponent.", existing.view(username));
             }
             Ticket ticket = new Ticket(username, null, level);
             tickets.put(ticket.id, ticket);
-            while (!randomQueue.isEmpty()) {
-                Ticket opponent = tickets.get(randomQueue.removeFirst());
+            for (String ticketId : new ArrayList<>(randomQueue)) {
+                Ticket opponent = tickets.get(ticketId);
                 if (opponent != null && opponent.status.equals("WAITING")
                     && opponent.level == level && !opponent.requester.equals(username)) {
+                    randomQueue.remove(ticketId);
                     startMatch(opponent, ticket, opponent.requester, username);
                     return NetworkResponse.success("Random opponent found.", ticket.view(username));
                 }
@@ -230,6 +319,13 @@ public final class PvzServer implements AutoCloseable {
             }
             if (!userRepository.usernameExists(opponent)) {
                 return NetworkResponse.failure("Opponent username does not exist.");
+            }
+            Ticket existing = waitingTicket(username, opponent);
+            if (existing != null) {
+                return NetworkResponse.success("Match request already sent.", existing.view(username));
+            }
+            if (waitingRandomTicket(username) != null) {
+                return NetworkResponse.failure("Cancel the pending random match before sending a challenge.");
             }
             Ticket ticket = new Ticket(username, opponent, level);
             tickets.put(ticket.id, ticket);
@@ -306,6 +402,9 @@ public final class PvzServer implements AutoCloseable {
             }
             if (role == MatchRole.PLANTS && action.equals("advance")) {
                 return NetworkResponse.success("The zombie player advances the match.", stateFor(match, username));
+            }
+            if (action.equals("advance")) {
+                return NetworkResponse.success("The server advances the match clock.", stateFor(match, username));
             }
             try {
                 match.session.execute(action, Arrays.asList(tokens).subList(1, tokens.length));
@@ -385,12 +484,50 @@ public final class PvzServer implements AutoCloseable {
     }
 
     private Ticket waitingTicket(String username) {
+        return waitingTicket(username, null);
+    }
+
+    private Ticket waitingTicket(String username, String target) {
         for (Ticket ticket : tickets.values()) {
-            if (ticket.status.equals("WAITING") && ticket.requester.equals(username)) {
+            if (ticket.status.equals("WAITING") && ticket.requester.equals(username)
+                && (target == null || target.equals(ticket.target))) {
                 return ticket;
             }
         }
         return null;
+    }
+
+    private Ticket waitingRandomTicket(String username) {
+        for (Ticket ticket : tickets.values()) {
+            if (ticket.status.equals("WAITING") && ticket.requester.equals(username)
+                && ticket.target == null) {
+                return ticket;
+            }
+        }
+        return null;
+    }
+
+    private void cleanupExpiredState() {
+        synchronized (matchLock) {
+            long now = System.currentTimeMillis();
+            tickets.entrySet().removeIf(entry -> entry.getValue().expired(now));
+            randomQueue.removeIf(ticketId -> !tickets.containsKey(ticketId));
+            matches.entrySet().removeIf(entry -> now - entry.getValue().createdAt > 30 * 60 * 1000L);
+        }
+    }
+
+    private void tickMatches() {
+        synchronized (matchLock) {
+            for (OnlineMatch match : matches.values()) {
+                if (!match.session.isFinished()) {
+                    try {
+                        match.session.advanceTime(1);
+                    } catch (IllegalStateException ignored) {
+                        // A match may finish between the check and the tick.
+                    }
+                }
+            }
+        }
     }
 
     private void startMatch(Ticket first, Ticket second, String zombies, String plants) {
@@ -451,6 +588,7 @@ public final class PvzServer implements AutoCloseable {
         private final String id;
         private final int level;
         private final IZombieSession session;
+        private final long createdAt = System.currentTimeMillis();
         private final Map<String, MatchRole> members = new LinkedHashMap<>();
         private final ArrayList<MatchReaction> reactions = new ArrayList<>();
 
@@ -471,15 +609,21 @@ public final class PvzServer implements AutoCloseable {
     }
 
     private static final class Ticket {
+        private static final long WAIT_TIMEOUT_MS = 2 * 60 * 1000L;
         private final String id = UUID.randomUUID().toString();
         private final String requester;
         private final String target;
         private final int level;
+        private final long createdAt = System.currentTimeMillis();
         private final Map<String, MatchRole> roles = new LinkedHashMap<>();
         private final Map<String, String> opponents = new LinkedHashMap<>();
         private String status = "WAITING";
         private String opponent;
         private String matchId;
+
+        private boolean expired(long now) {
+            return status.equals("WAITING") && now - createdAt > WAIT_TIMEOUT_MS;
+        }
 
         private Ticket(String requester, String target, int level) {
             this.requester = requester;
@@ -508,5 +652,8 @@ public final class PvzServer implements AutoCloseable {
             }
         }
         clientExecutor.shutdownNow();
+        matchTicker.shutdownNow();
+        sessions.clear();
+        passwordResetTokens.clear();
     }
 }

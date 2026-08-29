@@ -49,6 +49,20 @@ public class UserRepository {
         return AuthenticationResult.success(user);
     }
 
+    public synchronized boolean verifySecurityAnswer(String username, String answer) {
+        User user = users.get(username);
+        return user != null && user.checkSecurityAnswer(answer);
+    }
+
+    public synchronized void resetPassword(String username, String newPassword) throws IOException {
+        User user = users.get(username);
+        if (user == null) {
+            throw new IllegalArgumentException("Username does not exist.");
+        }
+        user.changePassword(newPassword);
+        save();
+    }
+
     public synchronized boolean usernameExists(String username) {
         return users.containsKey(username);
     }

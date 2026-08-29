@@ -4,6 +4,7 @@ import model.GameProgress;
 import model.LeaderboardEntry;
 import model.User;
 import model.UserRepository;
+import network.client.RemoteUserRepository;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -18,20 +19,32 @@ public class LeaderboardController {
     }
 
     public List<LeaderboardEntry> getLeaderboard(String column, String order) {
+        if (repository instanceof RemoteUserRepository remote) {
+            try {
+                return sort(remote.getNetworkLeaderboard(), column, order);
+            } catch (java.io.IOException exception) {
+                return List.of();
+            }
+        }
         ArrayList<LeaderboardEntry> entries = new ArrayList<>();
         for (User user : repository.getAllUsers()) {
             GameProgress progress = user.getProgress();
             entries.add(new LeaderboardEntry(user.getUsername(),
                 progress.getLastChapterNumber(), progress.getLastLevelNumber(),
                 progress.getCompletedMiniGames(), progress.getCompletedDailyQuests(),
-                progress.getCompletedOtherQuests(), progress.getBestMeowPoints()));
+                progress.getCompletedOtherQuests(), progress.getBestMiniGameScore()));
         }
+        return sort(entries, column, order);
+    }
+
+    private List<LeaderboardEntry> sort(List<LeaderboardEntry> entries, String column, String order) {
+        ArrayList<LeaderboardEntry> sorted = new ArrayList<>(entries);
         Comparator<LeaderboardEntry> comparator = comparator(column);
         if ("desc".equalsIgnoreCase(order)) {
             comparator = comparator.reversed();
         }
-        entries.sort(comparator.thenComparing(LeaderboardEntry::username));
-        return List.copyOf(entries);
+        sorted.sort(comparator.thenComparing(LeaderboardEntry::username));
+        return List.copyOf(sorted);
     }
 
     private Comparator<LeaderboardEntry> comparator(String column) {

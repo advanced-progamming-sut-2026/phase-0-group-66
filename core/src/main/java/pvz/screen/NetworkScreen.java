@@ -1,5 +1,6 @@
 package pvz.screen;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -12,7 +13,11 @@ import pvz.PvzApplication;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class NetworkScreen extends AuthenticatedUiScreen {
     private final TextField opponent;
@@ -22,6 +27,12 @@ public final class NetworkScreen extends AuthenticatedUiScreen {
     private float refreshTimer;
     private boolean launched;
     private final Set<String> announcedRequests = new HashSet<>();
+    private final ExecutorService networkExecutor = Executors.newSingleThreadExecutor(runnable -> {
+        Thread thread = new Thread(runnable, "pvz-network-screen");
+        thread.setDaemon(true);
+        return thread;
+    });
+    private final AtomicBoolean refreshInFlight = new AtomicBoolean();
 
     public NetworkScreen(PvzApplication app) {
         super(app);
@@ -36,10 +47,9 @@ public final class NetworkScreen extends AuthenticatedUiScreen {
     @Override
     public void render(float delta) {
         refreshTimer += Math.min(delta, 0.25f);
-        if (refreshTimer >= 0.75f && !launched) {
+        if (refreshTimer >= 0.75f && !launched && refreshInFlight.compareAndSet(false, true)) {
             refreshTimer = 0f;
-            pollMatch();
-            refreshRequests();
+            loadNetworkState();
         }
         super.render(delta);
     }
@@ -89,7 +99,10 @@ public final class NetworkScreen extends AuthenticatedUiScreen {
         panel.row().padTop(12f);
 
         TextButton back = theme.secondaryButton("BACK");
-        UiActions.onClick(back, app::showMainMenu);
+        UiActions.onClick(back, () -> {
+            app.services().network().clear();
+            app.showMainMenu();
+        });
         panel.add(back).width(220f).height(48f);
 
         screen.add(panel).width(850f).height(480f).center();
@@ -109,16 +122,50 @@ public final class NetworkScreen extends AuthenticatedUiScreen {
             MatchTicket ticket = app.services().network().pollActive();
             if (ticket != null && ticket.isMatched()) {
                 launched = app.startOnlineIZombie(ticket);
+                if (launched) {
+                    app.services().network().clear();
+                }
             }
         } catch (IOException exception) {
             theme.showError(status, exception.getMessage());
         }
     }
 
+    private void loadNetworkState() {
+        networkExecutor.submit(() -> {
+            try {
+                MatchTicket ticket = app.services().network().pollActive();
+                List<MatchInvite> invites = app.services().network().getRequests();
+                Gdx.app.postRunnable(() -> {
+                    refreshInFlight.set(false);
+                    if (ticket != null && ticket.isMatched()) {
+                        launched = app.startOnlineIZombie(ticket);
+                        if (launched) {
+                            app.services().network().clear();
+                        }
+                    }
+                    renderRequests(invites);
+                });
+            } catch (IOException exception) {
+                Gdx.app.postRunnable(() -> {
+                    refreshInFlight.set(false);
+                    theme.showError(status, exception.getMessage());
+                });
+            }
+        });
+    }
+
     private void refreshRequests() {
         try {
-            requests.clearChildren();
-        for (MatchInvite invite : app.services().network().getRequests()) {
+            renderRequests(app.services().network().getRequests());
+        } catch (IOException exception) {
+            theme.showError(status, exception.getMessage());
+        }
+    }
+
+    private void renderRequests(List<MatchInvite> invites) {
+        requests.clearChildren();
+        for (MatchInvite invite : invites) {
                 requests.add(theme.bodyLabel(invite.requester() + " wants to play level " + invite.level()))
                     .width(350f).height(36f).padRight(8f);
                 TextButton accept = theme.primaryButton("ACCEPT");
@@ -131,9 +178,6 @@ public final class NetworkScreen extends AuthenticatedUiScreen {
                 if (announcedRequests.add(invite.requestId())) {
                     showInviteDialog(invite);
                 }
-            }
-        } catch (IOException exception) {
-            theme.showError(status, exception.getMessage());
         }
     }
 
@@ -174,5 +218,11 @@ public final class NetworkScreen extends AuthenticatedUiScreen {
         dialog.button("REJECT", Boolean.FALSE);
         dialog.button("CLOSE", null);
         dialog.show(stage);
+    }
+
+    @Override
+    public void dispose() {
+        networkExecutor.shutdownNow();
+        super.dispose();
     }
 }

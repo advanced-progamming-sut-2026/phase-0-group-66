@@ -4,6 +4,7 @@ import network.protocol.NetworkOperation;
 import network.protocol.NetworkRequest;
 import network.protocol.NetworkResponse;
 import network.protocol.Phase3Protocol;
+import network.protocol.AuthenticatedSession;
 import network.game.MatchInvite;
 import network.game.MatchTicket;
 import network.game.NetworkIZombieState;
@@ -29,6 +30,7 @@ public final class PvzNetworkClient {
     private final int port;
     private final int connectTimeoutMs;
     private final int readTimeoutMs;
+    private volatile String authToken;
 
     public PvzNetworkClient(String host, int port) {
         this(host, port, DEFAULT_CONNECT_TIMEOUT_MS, DEFAULT_READ_TIMEOUT_MS);
@@ -48,7 +50,35 @@ public final class PvzNetworkClient {
     }
 
     public NetworkResponse request(NetworkOperation operation, Object... arguments) throws IOException {
-        NetworkRequest request = new NetworkRequest(Phase3Protocol.VERSION, operation, arguments);
+        return requestWithToken(authToken, operation, arguments);
+    }
+
+    public NetworkResponse requestUnauthenticated(NetworkOperation operation, Object... arguments)
+        throws IOException {
+        return requestWithToken(null, operation, arguments);
+    }
+
+    public AuthenticatedSession authenticate(String username, String password) throws IOException {
+        NetworkResponse response = requestUnauthenticated(NetworkOperation.AUTHENTICATE, username, password);
+        Object value = successfulPayload(response);
+        if (!(value instanceof AuthenticatedSession session)) {
+            throw new IOException("Server returned an invalid authentication response.");
+        }
+        authToken = session.token();
+        return session;
+    }
+
+    public void clearAuthentication() {
+        authToken = null;
+    }
+
+    public boolean isAuthenticated() {
+        return authToken != null && !authToken.isBlank();
+    }
+
+    private NetworkResponse requestWithToken(String token, NetworkOperation operation, Object... arguments)
+        throws IOException {
+        NetworkRequest request = new NetworkRequest(Phase3Protocol.VERSION, operation, token, arguments);
         try (Socket socket = new Socket()) {
             socket.connect(new InetSocketAddress(host, port), connectTimeoutMs);
             socket.setSoTimeout(readTimeoutMs);

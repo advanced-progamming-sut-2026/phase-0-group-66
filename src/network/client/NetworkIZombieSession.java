@@ -10,6 +10,9 @@ import network.game.NetworkIZombieState;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class NetworkIZombieSession extends IZombieSession {
     private final PvzNetworkClient client;
@@ -18,6 +21,14 @@ public final class NetworkIZombieSession extends IZombieSession {
     private final MatchRole role;
     private final String opponent;
     private NetworkIZombieState state;
+    private final ExecutorService pollExecutor = Executors.newSingleThreadExecutor(runnable -> {
+        Thread thread = new Thread(runnable, "pvz-online-match-poll");
+        thread.setDaemon(true);
+        return thread;
+    });
+    private final AtomicBoolean pollInFlight = new AtomicBoolean();
+    private volatile NetworkIZombieState pendingState;
+    private volatile String lastNetworkError;
 
     public NetworkIZombieSession(MiniGameDefinition definition, int level, PvzNetworkClient client,
                                   String username, String matchId, MatchRole role,
@@ -49,14 +60,34 @@ public final class NetworkIZombieSession extends IZombieSession {
     }
 
     public void poll() {
-        if (isFinished()) {
+        NetworkIZombieState next = pendingState;
+        if (next != null) {
+            pendingState = null;
+            apply(next);
+        }
+        if (isFinished() || !pollInFlight.compareAndSet(false, true)) {
             return;
         }
-        try {
-            apply(client.matchState(username, matchId));
-        } catch (IOException ignored) {
-            // The next action will surface a readable connection error to the player.
-        }
+        pollExecutor.submit(() -> {
+            try {
+                pendingState = client.matchState(username, matchId);
+                lastNetworkError = null;
+            } catch (IOException exception) {
+                lastNetworkError = exception.getMessage();
+            } finally {
+                pollInFlight.set(false);
+            }
+        });
+    }
+
+    public String consumeNetworkError() {
+        String error = lastNetworkError;
+        lastNetworkError = null;
+        return error;
+    }
+
+    public void close() {
+        pollExecutor.shutdownNow();
     }
 
     public void sendReaction(String category, String value) {

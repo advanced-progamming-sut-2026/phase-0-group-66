@@ -36,10 +36,17 @@ public abstract class MiniGamePlayScreen extends AuthenticatedUiScreen {
             if (networkPollAccumulator >= 0.5f) {
                 networkPollAccumulator = 0f;
                 online.poll();
+                String networkError = online.consumeNetworkError();
+                if (networkError != null && !networkError.isBlank()) {
+                    theme.showError(message, networkError);
+                }
+                miniGames.finishCurrentSessionIfNeeded();
                 refreshFromSession();
             }
         }
-        advanceSession(Math.min(delta, 0.25f));
+        if (!(session instanceof NetworkIZombieSession)) {
+            advanceSession(Math.min(delta, 0.25f));
+        }
         super.render(delta);
     }
 
@@ -113,5 +120,13 @@ public abstract class MiniGamePlayScreen extends AuthenticatedUiScreen {
         }
         completionSoundPlayed = true;
         app.audio().playSfx(session.isWon() ? PvzAudio.WIN_SOUND : PvzAudio.LOSS_SOUND);
+    }
+
+    @Override
+    public void dispose() {
+        if (session instanceof NetworkIZombieSession online) {
+            online.close();
+        }
+        super.dispose();
     }
 }

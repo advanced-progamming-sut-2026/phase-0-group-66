@@ -113,6 +113,9 @@ public class AuthController {
         pendingRegistration = null;
         recoveryUser = null;
         recoveryAnswerVerified = false;
+        if (userRepository instanceof network.client.RemoteUserRepository remote) {
+            remote.clearAuthentication();
+        }
         try {
             userRepository.clearSession();
             return ActionResult.success("Logged out successfully.");
@@ -182,7 +185,7 @@ public class AuthController {
         if (recoveryUser == null) {
             return ActionResult.failure("Start password recovery first.");
         }
-        if (!recoveryUser.checkSecurityAnswer(answer)) {
+        if (!userRepository.verifySecurityAnswer(recoveryUser.getUsername(), answer)) {
             recoveryUser = null;
             recoveryAnswerVerified = false;
             return ActionResult.failure("Security answer is incorrect.");
@@ -203,13 +206,12 @@ public class AuthController {
         if (!newPassword.equals(passwordConfirm)) {
             return ActionResult.failure("Password and password confirmation do not match.");
         }
-        if (recoveryUser.checkPassword(newPassword)) {
+        if (!userRepository.isRemote() && recoveryUser.checkPassword(newPassword)) {
             return ActionResult.failure("New password must be different from the current password.");
         }
 
-        recoveryUser.changePassword(newPassword);
         try {
-            userRepository.save(recoveryUser);
+            userRepository.resetPassword(recoveryUser.getUsername(), newPassword);
             recoveryUser = null;
             recoveryAnswerVerified = false;
             return ActionResult.success("Password changed successfully. You can now login.");
@@ -220,6 +222,10 @@ public class AuthController {
 
     public boolean restoreSession() {
         try {
+            if (userRepository.isRemote()) {
+                userRepository.clearSession();
+                return false;
+            }
             Optional<String> sessionUsername = userRepository.loadSessionUsername();
             if (sessionUsername.isEmpty()) {
                 return false;
