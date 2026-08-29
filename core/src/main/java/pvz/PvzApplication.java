@@ -40,6 +40,7 @@ import pvz.screen.ZombotanyScreen;
 import model.Chapter;
 import model.Level;
 import model.MiniGameType;
+import network.game.MatchTicket;
 
 import java.io.IOException;
 
@@ -284,6 +285,20 @@ public final class PvzApplication extends Game {
             return false;
         }
         changeScreen(new MiniGamePreviewScreen(this, type));
+        return true;
+    }
+
+    public boolean startOnlineIZombie(MatchTicket ticket) {
+        if (ticket == null || !ticket.isMatched()) {
+            return false;
+        }
+        ActionResult result = services.miniGames().startOnlineIZombie(
+            ticket.level(), ticket.matchId(), ticket.role(), ticket.opponent()
+        );
+        if (!result.isSuccessful()) {
+            return false;
+        }
+        changeScreen(new IZombieScreen(this));
         return true;
     }
 

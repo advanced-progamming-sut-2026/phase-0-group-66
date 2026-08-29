@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public final class IZombieSession extends MiniGameSession {
+public class IZombieSession extends MiniGameSession {
     private record ZombieCard(String type, int cost, int health, int damage, double speed) { }
 
     private final ArrayList<MiniGamePlantUnit> plants = new ArrayList<>();
@@ -388,6 +388,10 @@ public final class IZombieSession extends MiniGameSession {
 
     public int getBrainsEaten() {
         return brainsEaten;
+    }
+
+    public boolean isMultiplayer() {
+        return multiplayer;
     }
 
     private String arg(List<String> args, int index) {

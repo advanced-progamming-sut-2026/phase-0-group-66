@@ -60,6 +60,13 @@ public abstract class MiniGameSession {
         won = false;
     }
 
+    protected final void syncState(int score, int elapsedTicks, boolean won, boolean lost) {
+        this.score = Math.max(0, score);
+        this.elapsedTicks = Math.max(0, elapsedTicks);
+        this.won = won;
+        this.lost = lost && !won;
+    }
+
     protected final void ensureRunning() {
         if (won) {
             throw new IllegalStateException("Mini-game is already won.");

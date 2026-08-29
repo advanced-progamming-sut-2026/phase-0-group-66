@@ -6,6 +6,9 @@ import model.MiniGameSessionFactory;
 import model.MiniGameType;
 import model.QuestEventType;
 import model.User;
+import network.client.NetworkIZombieSession;
+import network.client.PvzNetworkClient;
+import network.game.MatchRole;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -15,13 +18,20 @@ import java.util.Map;
 public class MiniGameController {
     private final AuthController authController;
     private final QuestController questController;
+    private final PvzNetworkClient networkClient;
     private final Map<MiniGameType, MiniGameDefinition> definitions = new LinkedHashMap<>();
     private MiniGameSession currentSession;
     private boolean rewardRecorded;
 
     public MiniGameController(AuthController authController, QuestController questController) {
+        this(authController, questController, null);
+    }
+
+    public MiniGameController(AuthController authController, QuestController questController,
+                              PvzNetworkClient networkClient) {
         this.authController = authController;
         this.questController = questController;
+        this.networkClient = networkClient;
         registerDefaults();
     }
 
@@ -82,6 +92,25 @@ public class MiniGameController {
             return ActionResult.success(currentSession.status());
         } catch (IllegalArgumentException | IllegalStateException exception) {
             return ActionResult.failure(exception.getMessage());
+        }
+    }
+
+    public ActionResult startOnlineIZombie(int level, String matchId, MatchRole role,
+                                           String opponent) {
+        if (authController.getCurrentUser() == null) {
+            return ActionResult.failure("Login is required.");
+        }
+        if (networkClient == null) {
+            return ActionResult.failure("Network play is disabled.");
+        }
+        MiniGameDefinition definition = definitions.get(MiniGameType.I_ZOMBIE);
+        try {
+            currentSession = new NetworkIZombieSession(definition, level, networkClient,
+                authController.getCurrentUser().getUsername(), matchId, role, opponent);
+            rewardRecorded = false;
+            return ActionResult.success("Online I, Zombie match started as " + role + ".");
+        } catch (Exception exception) {
+            return ActionResult.failure("Could not join the online match: " + exception.getMessage());
         }
     }
 

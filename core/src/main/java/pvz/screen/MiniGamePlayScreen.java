@@ -5,6 +5,7 @@ import controller.ActionResult;
 import controller.MiniGameController;
 import model.Game;
 import model.MiniGameSession;
+import network.client.NetworkIZombieSession;
 import pvz.PvzApplication;
 
 public abstract class MiniGamePlayScreen extends AuthenticatedUiScreen {
@@ -14,6 +15,7 @@ public abstract class MiniGamePlayScreen extends AuthenticatedUiScreen {
     protected final MiniGameSession session;
     protected final Label message;
     private float tickAccumulator;
+    private float networkPollAccumulator;
 
     protected MiniGamePlayScreen(PvzApplication app) {
         super(app);
@@ -27,8 +29,20 @@ public abstract class MiniGamePlayScreen extends AuthenticatedUiScreen {
 
     @Override
     public void render(float delta) {
+        if (session instanceof NetworkIZombieSession online) {
+            networkPollAccumulator += Math.min(delta, 0.25f);
+            if (networkPollAccumulator >= 0.5f) {
+                networkPollAccumulator = 0f;
+                online.poll();
+                refreshFromSession();
+            }
+        }
         advanceSession(Math.min(delta, 0.25f));
         super.render(delta);
+    }
+
+    protected final NetworkIZombieSession onlineSession() {
+        return session instanceof NetworkIZombieSession online ? online : null;
     }
 
     protected final void execute(String command) {

@@ -12,5 +12,13 @@ public enum NetworkOperation implements Serializable {
     ADD_USER,
     RENAME_USER,
     DELETE_USER,
-    SAVE_USER
+    SAVE_USER,
+    MATCH_RANDOM,
+    MATCH_CHALLENGE,
+    MATCH_REQUESTS,
+    MATCH_RESPONSE,
+    MATCH_STATUS,
+    MATCH_STATE,
+    MATCH_ACTION,
+    MATCH_REACTION
 }

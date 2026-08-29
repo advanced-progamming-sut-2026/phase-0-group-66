@@ -6,6 +6,7 @@ import controller.GameController;
 import controller.GreenhouseController;
 import controller.LeaderboardController;
 import controller.MiniGameController;
+import controller.NetworkMatchController;
 import controller.NewsController;
 import controller.QuestController;
 import controller.ProfileController;
@@ -42,6 +43,7 @@ public final class PvzServices {
     private final ShopController shopController;
     private final LeaderboardController leaderboardController;
     private final MiniGameController miniGameController;
+    private final NetworkMatchController networkMatchController;
     private final AdventureFactory adventureFactory;
     private final GameData gameData;
     public PvzServices() throws IOException {
@@ -50,10 +52,12 @@ public final class PvzServices {
         if (!networkEnabled) {
             migrateLegacyUserData(userDataDirectory);
         }
+        PvzNetworkClient networkClient = networkEnabled ? createNetworkClient() : null;
         UserRepository repository = networkEnabled
-            ? new RemoteUserRepository(userDataDirectory, createNetworkClient())
+            ? new RemoteUserRepository(userDataDirectory, networkClient)
             : new UserRepository(userDataDirectory);
         authController = new AuthController(repository);
+        networkMatchController = new NetworkMatchController(authController, networkClient);
         leaderboardController = new LeaderboardController(repository);
         gameData = GameData.loadDefault();
         profileController = new ProfileController(authController);
@@ -70,7 +74,7 @@ public final class PvzServices {
             gameData.getQuestFactory(),
             gameData.getPlantFactory()
         );
-        miniGameController = new MiniGameController(authController, questController);
+        miniGameController = new MiniGameController(authController, questController, networkClient);
         gameController = new GameController(
             authController,
             gameData,
@@ -122,6 +126,10 @@ public final class PvzServices {
 
     public MiniGameController miniGames() {
         return miniGameController;
+    }
+
+    public NetworkMatchController network() {
+        return networkMatchController;
     }
 
     public GreenhouseController greenhouse() {
