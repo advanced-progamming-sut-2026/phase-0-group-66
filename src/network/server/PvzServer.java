@@ -174,6 +174,9 @@ public final class PvzServer implements AutoCloseable {
                     (String) request.argument(0), (MiniGameType) request.argument(1),
                     intValue(request.argument(2)), intValue(request.argument(3))
                 );
+                case SUBMIT_SCORED_SCORE -> submitScoredScore(
+                    (String) request.argument(0), intValue(request.argument(1))
+                );
                 case GET_LEADERBOARD -> getLeaderboard();
             };
         } catch (IndexOutOfBoundsException | ClassCastException exception) {
@@ -248,7 +251,8 @@ public final class PvzServer implements AutoCloseable {
             case ADD_USER, SAVE_USER -> request.getOperation() == NetworkOperation.ADD_USER
                 ? null : ((User) request.argument(0)).getUsername();
             case DELETE_USER, MATCH_RANDOM, MATCH_REQUESTS, MATCH_RESPONSE, MATCH_STATUS,
-                MATCH_STATE, MATCH_ACTION, MATCH_REACTION, SUBMIT_MINIGAME_SCORE -> (String) request.argument(0);
+                MATCH_STATE, MATCH_ACTION, MATCH_REACTION, SUBMIT_MINIGAME_SCORE,
+                SUBMIT_SCORED_SCORE -> (String) request.argument(0);
             default -> null;
         };
     }
@@ -459,6 +463,22 @@ public final class PvzServer implements AutoCloseable {
         return NetworkResponse.success("Score saved on server.", Math.max(previous, score));
     }
 
+    private NetworkResponse submitScoredScore(String username, int score) throws IOException {
+        if (username == null || username.isBlank() || score < 0
+            || !userRepository.usernameExists(username)) {
+            return NetworkResponse.failure("Invalid scored-game score submission.");
+        }
+        User user = userRepository.findByUsername(username).orElseThrow();
+        GameProgress progress = user.getProgress();
+        int previous = progress.getBestMeowPoints();
+        if (score > previous) {
+            progress.updateBestMeowPoints(score);
+            userRepository.replace(user);
+        }
+        return NetworkResponse.success("Scored-game result saved on server.",
+            Math.max(previous, score));
+    }
+
     private NetworkResponse getLeaderboard() {
         ArrayList<LeaderboardEntry> entries = new ArrayList<>();
         for (User user : userRepository.getAllUsers()) {
@@ -466,7 +486,7 @@ public final class PvzServer implements AutoCloseable {
             entries.add(new LeaderboardEntry(user.getUsername(),
                 progress.getLastChapterNumber(), progress.getLastLevelNumber(),
                 progress.getCompletedMiniGames(), progress.getCompletedDailyQuests(),
-                progress.getCompletedOtherQuests(), progress.getBestMiniGameScore()));
+                progress.getCompletedOtherQuests(), progress.getBestMeowPoints()));
         }
         entries.sort(java.util.Comparator.comparingInt(LeaderboardEntry::bestScore).reversed()
             .thenComparing(LeaderboardEntry::username));

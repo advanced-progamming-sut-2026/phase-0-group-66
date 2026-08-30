@@ -477,6 +477,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
 
     private void togglePause() {
         paused = !paused;
+        boardActor.setAnimationPaused(paused);
         pauseLayer.setVisible(paused);
     }
 
@@ -663,6 +664,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         }
         resultShown = true;
         paused = true;
+        boardActor.setAnimationPaused(true);
         app.audio().playSfx(game.getGameState() == GameState.WON
             ? PvzAudio.WIN_SOUND : PvzAudio.LOSS_SOUND);
         showEndOverlay(game.getGameState() == GameState.WON);

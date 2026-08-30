@@ -32,7 +32,7 @@ public class LeaderboardController {
             entries.add(new LeaderboardEntry(user.getUsername(),
                 progress.getLastChapterNumber(), progress.getLastLevelNumber(),
                 progress.getCompletedMiniGames(), progress.getCompletedDailyQuests(),
-                progress.getCompletedOtherQuests(), progress.getBestMiniGameScore()));
+                progress.getCompletedOtherQuests(), progress.getBestMeowPoints()));
         }
         return sort(entries, column, order);
     }

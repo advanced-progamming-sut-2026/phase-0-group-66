@@ -8,8 +8,10 @@ import model.Level;
 import model.MeowPointTracker;
 import model.News;
 import model.User;
+import network.client.PvzNetworkClient;
 import view.GameView;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -19,6 +21,7 @@ final class GameProgressHandler {
     private final QuestController questController;
     private final AdventureFactory adventureFactory;
     private final GameView view;
+    private final PvzNetworkClient networkClient;
     private final LinkedHashMap<String, Integer> syncedPlantKills = new LinkedHashMap<>();
     private boolean resultRecorded;
     private boolean scoredMode;
@@ -33,10 +36,17 @@ final class GameProgressHandler {
 
     GameProgressHandler(AuthController authController, QuestController questController,
                             AdventureFactory adventureFactory, GameView view) {
+        this(authController, questController, adventureFactory, view, null);
+    }
+
+    GameProgressHandler(AuthController authController, QuestController questController,
+                            AdventureFactory adventureFactory, GameView view,
+                            PvzNetworkClient networkClient) {
         this.authController = authController;
         this.questController = questController;
         this.adventureFactory = adventureFactory;
         this.view = view;
+        this.networkClient = networkClient;
     }
 
     void beginAdventure() {
@@ -142,6 +152,14 @@ final class GameProgressHandler {
         }
         meowPointTracker.finalizeScore(game);
         int score = meowPointTracker.getTotalScore();
+        if (networkClient != null && networkClient.isAuthenticated()) {
+            try {
+                score = networkClient.submitScoredScore(user.getUsername(), score);
+            } catch (IOException exception) {
+                view.showMessage("Scored result was saved locally, but server sync failed: "
+                    + exception.getMessage());
+            }
+        }
         user.getProgress().updateBestMeowPoints(score);
         user.getWallet().addCoins(Math.max(100, score / 20));
         user.addNews(new News("Scored game result",

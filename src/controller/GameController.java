@@ -12,6 +12,7 @@ import model.News;
 import model.PlantDefinition;
 import model.User;
 import model.Zombie;
+import network.client.PvzNetworkClient;
 import view.GameView;
 
 import java.util.ArrayList;
@@ -30,6 +31,11 @@ public class GameController {
 
     public GameController(AuthController authController, GameData gameData, GameView view,
                           QuestController questController) {
+        this(authController, gameData, view, questController, null);
+    }
+
+    public GameController(AuthController authController, GameData gameData, GameView view,
+                          QuestController questController, PvzNetworkClient networkClient) {
         if (authController == null || gameData == null || view == null || questController == null) {
             throw new IllegalArgumentException("Game controller dependencies cannot be null.");
         }
@@ -39,7 +45,7 @@ public class GameController {
         this.questController = questController;
         this.adventureFactory = new AdventureFactory();
         this.progressHandler = new GameProgressHandler(authController, questController,
-            adventureFactory, view);
+            adventureFactory, view, networkClient);
     }
 
     public ActionResult startLevel(String chapterName) {

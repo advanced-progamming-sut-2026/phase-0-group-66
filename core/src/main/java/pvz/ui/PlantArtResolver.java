@@ -69,6 +69,7 @@ public final class PlantArtResolver {
         aliases.put("CHERRYBOMB", "CHERRY_BOMB");
         aliases.put("ICEBERGLETTUCE", "ICEBURG");
         aliases.put("PIERCEMINT", "SPEARMINT");
+        aliases.put("CATTAIL", "PEASHOOTER");
         aliases.put("CATTAILMINT", "MINTFAM_SHARP");
         aliases.put("PRIMALSUNFLOWER", "PRIMALSUNFLOWER");
         return aliases;

@@ -154,6 +154,15 @@ public final class PvzNetworkClient {
         return number.intValue();
     }
 
+    public int submitScoredScore(String username, int score) throws IOException {
+        Object value = successfulPayload(request(NetworkOperation.SUBMIT_SCORED_SCORE,
+            username, score));
+        if (!(value instanceof Number number)) {
+            throw new IOException("Server returned an invalid scored-game result.");
+        }
+        return number.intValue();
+    }
+
     public List<LeaderboardEntry> getLeaderboard() throws IOException {
         Object value = successfulPayload(request(NetworkOperation.GET_LEADERBOARD));
         if (!(value instanceof List<?> values)) {

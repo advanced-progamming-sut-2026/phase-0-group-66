@@ -25,5 +25,6 @@ public enum NetworkOperation implements Serializable {
     MATCH_ACTION,
     MATCH_REACTION,
     SUBMIT_MINIGAME_SCORE,
+    SUBMIT_SCORED_SCORE,
     GET_LEADERBOARD
 }

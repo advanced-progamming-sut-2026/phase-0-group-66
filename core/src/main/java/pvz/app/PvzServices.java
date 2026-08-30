@@ -79,7 +79,8 @@ public final class PvzServices {
             authController,
             gameData,
             new GameView(),
-            questController
+            questController,
+            networkClient
         );
         greenhouseController = new GreenhouseController(
             authController,

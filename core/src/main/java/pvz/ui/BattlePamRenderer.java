@@ -139,7 +139,8 @@ public final class BattlePamRenderer {
         if (projectile == null) {
             return false;
         }
-        String source = plantAlias(normalize(projectile.getSourcePlant()));
+        String source = normalize(projectile.getSourcePlant());
+        String alias = plantAlias(source);
         String typeEffect = switch (projectile.getImpactType() == null
             ? projectile.getType() : projectile.getImpactType()) {
             case FIRE -> "T_FIRE_PEA";
@@ -148,17 +149,20 @@ public final class BattlePamRenderer {
             case NORMAL -> "T_PEA_PROJECTILE";
         };
         AnimationSpec spec = effectSpec(
+            projectileEffectAlias(source),
+            "T_" + alias + "_PROJECTILE",
+            alias + "_PROJECTILE",
             "T_" + source + "_PROJECTILE",
             source + "_PROJECTILE",
             typeEffect,
             "T_PEA_PROJECTILE"
         );
-        return draw(batch, spec.path(), spec.primaryClip(), time, x, y, scale * 0.52f, false);
+        return draw(batch, spec.path(), spec.primaryClip(), time, x, y, scale * 0.62f, false);
     }
 
     public boolean drawSun(Batch batch, Sun sun, float time, float x, float y, float scale) {
         AnimationSpec spec = effectSpec("SUN", "animation");
-        return draw(batch, spec.path(), spec.primaryClip(), time, x, y, scale * 0.32f, false);
+        return draw(batch, spec.path(), spec.primaryClip(), time, x, y, scale * 0.58f, false);
     }
 
     public boolean drawWaterTile(Batch batch, float time, float x, float y, float scale) {
@@ -196,6 +200,11 @@ public final class BattlePamRenderer {
         boolean flipped
     ) {
         if (path == null || clip == null) {
+            return false;
+        }
+        try {
+            player.loadSync(path);
+        } catch (RuntimeException exception) {
             return false;
         }
         Color previous = new Color(batch.getColor());
@@ -335,6 +344,23 @@ public final class BattlePamRenderer {
         return specFromEntry(catalog.effect(candidates), preferredClip, false);
     }
 
+    private String projectileEffectAlias(String source) {
+        return switch (source) {
+            case "CABBAGEPULT" -> "T_CABBAGEPULT_PROJECTILE";
+            case "KERNELPULT" -> "T_KERNALPULT_PROJECTILE";
+            case "MELONPULT" -> "T_MELON_PROJECTILE";
+            case "ROTORUTABAGA" -> "T_ROTORUTABAGA_PROJECTILE1";
+            case "WINTERMELON" -> "T_WINTERMELON_PROJECTILE";
+            case "HOMINGTHISTLE", "CATTAIL" -> "T_HOMING_THISTLE_PROJECTILE";
+            case "DUSKLOBBER" -> "T_DUSKLOBBER_PROJECTILE";
+            case "NIGHTSHADE" -> "T_NIGHTSHADE_PROJECTILE";
+            case "REDSTINGER" -> "T_REDSTINGER_PROJECTILE";
+            case "GUACODILE" -> "T_GUACODILE_PROJECTILE";
+            case "PEPPERPULT" -> "T_PEPPERPULT_PROJECTILE";
+            default -> "T_" + source + "_PROJECTILE";
+        };
+    }
+
     private String choosePlantFoodClip(List<String> clips, String actionFallback) {
         for (String clip : clips) {
             if (clip.equalsIgnoreCase("plantfood")) {
@@ -419,6 +445,8 @@ public final class BattlePamRenderer {
             case "ICEBERGLETTUCE" -> "ICEBURG";
             case "PHATBEET" -> "PHATBEETS";
             case "PIERCEMINT" -> "SPEARMINT";
+            case "CATTAIL" -> "PEASHOOTER";
+            case "CATTAILMINT" -> "SPEARMINT";
             default -> normalized;
         };
     }

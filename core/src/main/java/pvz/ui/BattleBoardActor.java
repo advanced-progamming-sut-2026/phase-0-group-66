@@ -63,6 +63,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
     private TextureRegion tombIcon;
     private TextureRegion craterIcon;
     private float animationTime;
+    private boolean animationPaused;
     private float cameraPan;
     private boolean showGrid;
 
@@ -134,7 +135,13 @@ public final class BattleBoardActor extends Actor implements Disposable {
     @Override
     public void act(float delta) {
         super.act(delta);
-        animationTime += Math.max(0f, delta);
+        if (!animationPaused) {
+            animationTime += Math.max(0f, delta);
+        }
+    }
+
+    public void setAnimationPaused(boolean animationPaused) {
+        this.animationPaused = animationPaused;
     }
 
     @Override
@@ -542,7 +549,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
             float y = cellBottom(row) + cellHeight() * 0.55f;
             float size = Math.max(12f, Math.min(cellWidth(), cellHeight()) * 0.20f);
             boolean animated = pamRenderer.drawProjectile(
-                batch, projectile, animationTime, x, y, size / 315f
+                batch, projectile, animationTime, x, y, size / 220f
             );
             if (!animated && projectileIcon != null) {
                 batch.draw(projectileIcon, x - size / 2f, y - size / 2f, size, size);
@@ -587,13 +594,11 @@ public final class BattleBoardActor extends Actor implements Disposable {
             float x = cellCenterX(col);
             float y = cellBottom(row) + cellHeight() * 0.66f;
             float size = Math.min(cellWidth(), cellHeight()) * 0.46f;
-            if (sunIcon != null) {
-                boolean animated = pamRenderer.drawSun(batch, sun, animationTime, x, y,
-                    size / 144f);
-                if (!animated) {
-                    batch.draw(sunIcon, x - size / 2f, y - size / 2f, size, size);
-                }
-            } else {
+            boolean animated = pamRenderer.drawSun(batch, sun, animationTime, x, y,
+                size / 135f);
+            if (!animated && sunIcon != null) {
+                batch.draw(sunIcon, x - size / 2f, y - size / 2f, size, size);
+            } else if (!animated) {
                 batch.setColor(1f, 0.85f, 0.12f, 1f);
                 batch.draw(pixel, x - size / 2f, y - size / 2f, size, size);
                 batch.setColor(Color.WHITE);

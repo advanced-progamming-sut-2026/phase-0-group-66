@@ -108,6 +108,8 @@ public final class PlantAnimationActor extends Actor {
         aliases.put("ICEBERGLETTUCE", "ICEBURG");
         aliases.put("PHATBEET", "PHATBEETS");
         aliases.put("PIERCEMINT", "SPEARMINT");
+        aliases.put("CATTAIL", "PEASHOOTER");
+        aliases.put("CATTAILMINT", "SPEARMINT");
         return aliases;
     }
 }

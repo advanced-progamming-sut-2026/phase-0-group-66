@@ -277,6 +277,10 @@ public class IZombieSession extends MiniGameSession {
                 || zombie.getColumn() < plant.getColumn()) {
                 continue;
             }
+            // Sun producers are stationary resource sources, not attack targets.
+            if (zombie.getType().equals("Sun Producer Zombie")) {
+                continue;
+            }
             if (result == null || zombie.getColumn() < result.getColumn()) {
                 result = zombie;
             }
