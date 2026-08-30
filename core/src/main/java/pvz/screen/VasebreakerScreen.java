@@ -7,6 +7,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Scaling;
+import model.Game;
 import model.VasebreakerSession;
 import pvz.PvzApplication;
 import pvz.ui.PlantArtResolver;
@@ -123,14 +124,22 @@ public final class VasebreakerScreen extends MiniGamePlayScreen {
                 row.add(plant).size(48f).padRight(4f);
             }
             TextButton select = packet.id() == selectedPacket
-                ? theme.tertiaryButton("#" + packet.id() + " SELECTED")
-                : theme.primaryButton("#" + packet.id() + " " + packet.plantType());
+                ? theme.tertiaryButton(packetLabel(packet, true))
+                : theme.primaryButton(packetLabel(packet, false));
             select.getLabel().setFontScale(0.66f);
             UiActions.onClick(select, () -> selectPacket(packet.id()));
             row.add(select).width(184f).height(43f);
             packetTray.add(row).width(250f).height(54f).padBottom(4f);
             packetTray.row();
         }
+    }
+
+    private String packetLabel(VasebreakerSession.PacketView packet, boolean selected) {
+        int remainingTicks = Math.max(0, packet.expiresAt() - vaseSession.getElapsedTicks());
+        int remainingSeconds = (remainingTicks + Game.TICKS_PER_SECOND - 1)
+            / Game.TICKS_PER_SECOND;
+        return "#" + packet.id() + " " + (selected ? "SELECTED" : packet.plantType())
+            + " (" + remainingSeconds + "s)";
     }
 
     private Image packetImage(String type) {

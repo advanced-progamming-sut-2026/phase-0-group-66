@@ -19,12 +19,16 @@ public final class PlantAnimationActor extends Actor {
     private final PamPlayer player;
     private final String pamPath;
     private final String clip;
+    private final String actionClip;
+    private final float actionDuration;
     private float stateTime;
 
     public PlantAnimationActor(PvzAssets assets, PlantDefinition plant) {
         player = assets.animations();
         pamPath = resolvePam(assets, plant);
         clip = chooseClip(player, pamPath);
+        actionClip = chooseActionClip(player, pamPath, clip);
+        actionDuration = actionClip == null ? 0f : safeDuration(player, pamPath, actionClip);
     }
 
     public boolean hasAnimation() {
@@ -48,7 +52,9 @@ public final class PlantAnimationActor extends Actor {
         float scale = Math.min(getWidth() / 230f, getHeight() / 230f);
         float x = getX() + getWidth() * 0.5f;
         float y = getY() + getHeight() * 0.52f;
-        player.draw(batch, pamPath, clip, stateTime, x, y, scale, scale, true);
+        String currentClip = actionClip != null && actionDuration > 0f
+            && stateTime % 2.4f < actionDuration ? actionClip : clip;
+        player.draw(batch, pamPath, currentClip, stateTime, x, y, scale, scale, true);
         batch.setColor(before);
     }
 
@@ -90,6 +96,33 @@ public final class PlantAnimationActor extends Actor {
         }
     }
 
+    private static String chooseActionClip(PamPlayer player, String pam, String idleClip) {
+        if (pam == null) {
+            return null;
+        }
+        try {
+            for (String name : player.clips(pam)) {
+                String lower = name.toLowerCase(Locale.ROOT);
+                if (!name.equals(idleClip) && (lower.contains("attack")
+                    || lower.contains("shoot") || lower.contains("fire")
+                    || lower.contains("action"))) {
+                    return name;
+                }
+            }
+        } catch (RuntimeException exception) {
+            return null;
+        }
+        return null;
+    }
+
+    private static float safeDuration(PamPlayer player, String pam, String action) {
+        try {
+            return Math.max(0.08f, player.clipDurationSeconds(pam, action));
+        } catch (RuntimeException exception) {
+            return 0.32f;
+        }
+    }
+
     private static String normalize(String value) {
         if (value == null) {
             return "";
@@ -108,7 +141,7 @@ public final class PlantAnimationActor extends Actor {
         aliases.put("ICEBERGLETTUCE", "ICEBURG");
         aliases.put("PHATBEET", "PHATBEETS");
         aliases.put("PIERCEMINT", "SPEARMINT");
-        aliases.put("CATTAIL", "PEASHOOTER");
+        aliases.put("CATTAIL", "HOMINGTHISTLE");
         aliases.put("CATTAILMINT", "SPEARMINT");
         return aliases;
     }

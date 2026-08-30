@@ -18,6 +18,7 @@ import com.badlogic.gdx.utils.Scaling;
 import model.IZombieSession;
 import model.ZombieDefinition;
 import pvz.PvzApplication;
+import pvz.ui.MiniGameGridInputActor;
 import pvz.ui.MiniGameUnitLayer;
 import pvz.ui.ZombieArtResolver;
 
@@ -250,7 +251,18 @@ public final class IZombieScreen extends MiniGamePlayScreen {
         }
         board.add(units);
         board.add(brainLayer);
+        if (iZombie.isMultiplayer()) {
+            board.add(new MiniGameGridInputActor(ROWS, COLS,
+                cell -> placePlant(cell.row() + 1, cell.column() + 1)));
+        }
         return board;
+    }
+
+    private void placePlant(int row, int column) {
+        if (session.isFinished()) {
+            return;
+        }
+        execute("plant " + selectedPlant + " " + row + " " + column);
     }
 
     private void deploy(int row) {

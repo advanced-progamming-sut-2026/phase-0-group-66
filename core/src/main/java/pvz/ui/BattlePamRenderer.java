@@ -445,7 +445,7 @@ public final class BattlePamRenderer {
             case "ICEBERGLETTUCE" -> "ICEBURG";
             case "PHATBEET" -> "PHATBEETS";
             case "PIERCEMINT" -> "SPEARMINT";
-            case "CATTAIL" -> "PEASHOOTER";
+            case "CATTAIL" -> "HOMINGTHISTLE";
             case "CATTAILMINT" -> "SPEARMINT";
             default -> normalized;
         };

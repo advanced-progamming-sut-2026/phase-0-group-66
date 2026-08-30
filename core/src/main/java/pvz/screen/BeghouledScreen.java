@@ -1,6 +1,5 @@
 package pvz.screen;
 
-import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Stack;
@@ -11,7 +10,9 @@ import com.badlogic.gdx.utils.Scaling;
 import model.BeghouledSession;
 import model.MiniGamePlantSnapshot;
 import pvz.PvzApplication;
+import pvz.ui.MiniGameGridInputActor;
 import pvz.ui.MiniGameUnitLayer;
+import pvz.ui.UiTheme;
 
 public final class BeghouledScreen extends MiniGamePlayScreen {
     private static final int ROWS = 5;
@@ -21,6 +22,7 @@ public final class BeghouledScreen extends MiniGamePlayScreen {
 
     private final BeghouledSession beghouled;
     private final MiniGameUnitLayer units;
+    private final com.badlogic.gdx.scenes.scene2d.Group selectionLayer;
     private final Label sunLabel;
     private final Label progress;
     private int selectedRow = -1;
@@ -30,6 +32,7 @@ public final class BeghouledScreen extends MiniGamePlayScreen {
         super(app);
         beghouled = (BeghouledSession) session;
         units = new MiniGameUnitLayer(app);
+        selectionLayer = new com.badlogic.gdx.scenes.scene2d.Group();
         sunLabel = theme.heading("");
         progress = theme.settingsLabel("");
         buildUi();
@@ -103,24 +106,10 @@ public final class BeghouledScreen extends MiniGamePlayScreen {
             board.add(background);
         }
         board.add(units);
-        board.add(interactionGrid());
+        board.add(selectionLayer);
+        board.add(new MiniGameGridInputActor(ROWS, COLS,
+            cell -> selectCell(cell.row(), cell.column())));
         return board;
-    }
-
-    private Table interactionGrid() {
-        Table grid = new Table();
-        for (int row = 0; row < ROWS; row++) {
-            for (int column = 0; column < COLS; column++) {
-                Button cell = new Button(theme.skin());
-                cell.setColor(1f, 1f, 1f, 0f);
-                int selectedRow = row;
-                int selectedColumn = column;
-                UiActions.onClick(cell, () -> selectCell(selectedRow, selectedColumn));
-                grid.add(cell).width(BOARD_WIDTH / COLS).height(BOARD_HEIGHT / ROWS);
-            }
-            grid.row();
-        }
-        return grid;
     }
 
     private void selectCell(int row, int column) {
@@ -130,12 +119,14 @@ public final class BeghouledScreen extends MiniGamePlayScreen {
         if (selectedRow < 0) {
             selectedRow = row;
             selectedColumn = column;
+            showSelection();
             theme.showSuccess(message, "Plant selected. Choose an adjacent plant.");
             return;
         }
         if (selectedRow == row && selectedColumn == column) {
             selectedRow = -1;
             selectedColumn = -1;
+            selectionLayer.clearChildren();
             message.setText(shortStatus());
             return;
         }
@@ -143,8 +134,24 @@ public final class BeghouledScreen extends MiniGamePlayScreen {
         int firstColumn = selectedColumn;
         selectedRow = -1;
         selectedColumn = -1;
+        selectionLayer.clearChildren();
         execute("swap " + (firstColumn + 1) + " " + (firstRow + 1) + " "
             + (column + 1) + " " + (row + 1));
+    }
+
+    private void showSelection() {
+        selectionLayer.clearChildren();
+        Image highlight = theme.image(UiTheme.DIVIDER);
+        if (highlight == null) {
+            return;
+        }
+        highlight.setScaling(Scaling.stretch);
+        highlight.setColor(0.86f, 1f, 0.30f, 0.38f);
+        float cellWidth = BOARD_WIDTH / COLS;
+        float cellHeight = BOARD_HEIGHT / ROWS;
+        highlight.setBounds(selectedColumn * cellWidth + 3f,
+            selectedRow * cellHeight + 3f, cellWidth - 6f, cellHeight - 6f);
+        selectionLayer.addActor(highlight);
     }
 
     @Override

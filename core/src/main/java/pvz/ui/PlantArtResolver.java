@@ -35,7 +35,8 @@ public final class PlantArtResolver {
         if (theme.drawable(candidate) != null) {
             return candidate;
         }
-        return null;
+        return theme.drawable("IMAGE_UI_PACKETS_PEASHOOTER") != null
+            ? "IMAGE_UI_PACKETS_PEASHOOTER" : null;
     }
 
     public static Image familyIcon(UiTheme theme, PlantDefinition plant) {
@@ -52,7 +53,8 @@ public final class PlantArtResolver {
         if (theme.drawable(candidate) != null) {
             return candidate;
         }
-        return null;
+        return theme.drawable("IMAGE_UI_PACKETS_MINTFAM_SUN") != null
+            ? "IMAGE_UI_PACKETS_MINTFAM_SUN" : null;
     }
 
     private static String normalize(String value) {
@@ -69,7 +71,7 @@ public final class PlantArtResolver {
         aliases.put("CHERRYBOMB", "CHERRY_BOMB");
         aliases.put("ICEBERGLETTUCE", "ICEBURG");
         aliases.put("PIERCEMINT", "SPEARMINT");
-        aliases.put("CATTAIL", "PEASHOOTER");
+        aliases.put("CATTAIL", "HOMINGTHISTLE");
         aliases.put("CATTAILMINT", "MINTFAM_SHARP");
         aliases.put("PRIMALSUNFLOWER", "PRIMALSUNFLOWER");
         return aliases;

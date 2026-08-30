@@ -1,5 +1,6 @@
 package pvz.ui;
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.WidgetGroup;
@@ -79,7 +80,9 @@ public final class MiniGameUnitLayer extends WidgetGroup {
             return true;
         }
         for (int index = 0; index < next.size(); index++) {
-            if (!next.get(index).type().equals(plants.get(index).type())) {
+            MiniGamePlantSnapshot before = plants.get(index);
+            MiniGamePlantSnapshot after = next.get(index);
+            if (!plantSignature(before).equals(plantSignature(after))) {
                 return true;
             }
         }
@@ -91,11 +94,21 @@ public final class MiniGameUnitLayer extends WidgetGroup {
             return true;
         }
         for (int index = 0; index < next.size(); index++) {
-            if (!next.get(index).type().equals(zombies.get(index).type())) {
+            MiniGameUnitSnapshot before = zombies.get(index);
+            MiniGameUnitSnapshot after = next.get(index);
+            if (!zombieSignature(before).equals(zombieSignature(after))) {
                 return true;
             }
         }
         return false;
+    }
+
+    private String plantSignature(MiniGamePlantSnapshot plant) {
+        return plant.type() + "@" + plant.row();
+    }
+
+    private String zombieSignature(MiniGameUnitSnapshot zombie) {
+        return zombie.type() + "@" + zombie.row();
     }
 
     private void rebuildPlants(List<MiniGamePlantSnapshot> next) {
@@ -136,7 +149,9 @@ public final class MiniGameUnitLayer extends WidgetGroup {
                 return image;
             }
         }
-        return new Image(app.assets().skin().getDrawable("image_ui_dialog_asset_inner_bkgd_10"));
+        Image fallback = app.assets().uiTheme().image("IMAGE_UI_PACKETS_PEASHOOTER");
+        return fallback != null ? fallback
+            : new Image(app.assets().skin().getDrawable("image_ui_dialog_asset_inner_bkgd_10"));
     }
 
     private Actor createZombieActor(String type) {
@@ -147,19 +162,41 @@ public final class MiniGameUnitLayer extends WidgetGroup {
                 return sun;
             }
         }
+        Actor actor = null;
         ZombieDefinition definition = resolveZombie(type);
         if (definition != null) {
             ZombieAnimationActor animation = new ZombieAnimationActor(app.assets(), definition);
             if (animation.hasAnimation()) {
-                return animation;
-            }
-            Image image = ZombieArtResolver.image(app.assets().uiTheme(), definition);
-            if (image != null) {
-                image.setScaling(Scaling.fit);
-                return image;
+                actor = animation;
+            } else {
+                Image image = ZombieArtResolver.image(app.assets().uiTheme(), definition);
+                if (image != null) {
+                    image.setScaling(Scaling.fit);
+                    actor = image;
+                }
             }
         }
-        return new Image(app.assets().skin().getDrawable("image_ui_dialog_asset_inner_bkgd_10"));
+        if (actor == null) {
+            actor = app.assets().uiTheme().image("IMAGE_UI_ALMANAC_PACKETS_ZOMBIES_MUMMY");
+        }
+        if (actor == null) {
+            actor = new Image(app.assets().skin().getDrawable("image_ui_dialog_asset_inner_bkgd_10"));
+        }
+        tintPoweredZombie(actor, type);
+        return actor;
+    }
+
+    private void tintPoweredZombie(Actor actor, String type) {
+        Color tint = switch (normalize(type)) {
+            case "peashooterzombie" -> new Color(0.62f, 1f, 0.62f, 1f);
+            case "wallnutzombie" -> new Color(1f, 0.78f, 0.50f, 1f);
+            case "jalapenozombie" -> new Color(1f, 0.48f, 0.32f, 1f);
+            case "squashzombie" -> new Color(1f, 0.95f, 0.38f, 1f);
+            default -> null;
+        };
+        if (tint != null) {
+            actor.setColor(tint);
+        }
     }
 
     private ZombieDefinition resolveZombie(String type) {
@@ -178,6 +215,8 @@ public final class MiniGameUnitLayer extends WidgetGroup {
             case "dodorider" -> "Dodo Rider Zombie";
             case "wizard" -> "Wizard Zombie";
             case "bowlingzombie" -> "Basic Zombie";
+            case "peashooterzombie", "wallnutzombie", "jalapenozombie", "squashzombie" ->
+                "Basic Zombie";
             default -> type;
         };
         return app.services().gameData().getZombieFactory().findDefinition(lookup)

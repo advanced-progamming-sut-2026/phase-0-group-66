@@ -1,7 +1,6 @@
 package pvz.screen;
 
 import com.badlogic.gdx.scenes.scene2d.Group;
-import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Stack;
@@ -12,6 +11,7 @@ import com.badlogic.gdx.utils.Scaling;
 import model.PlantDefinition;
 import model.ZombotanySession;
 import pvz.PvzApplication;
+import pvz.ui.MiniGameGridInputActor;
 import pvz.ui.MiniGameUnitLayer;
 
 import java.util.List;
@@ -115,24 +115,9 @@ public final class ZombotanyScreen extends MiniGamePlayScreen {
         }
         board.add(units);
         board.add(sunLayer);
-        board.add(interactionGrid());
+        board.add(new MiniGameGridInputActor(ROWS, COLS,
+            cell -> clickCell(cell.row(), cell.column())));
         return board;
-    }
-
-    private Table interactionGrid() {
-        Table grid = new Table();
-        for (int row = 0; row < ROWS; row++) {
-            for (int column = 0; column < COLS; column++) {
-                Button cell = new Button(theme.skin());
-                cell.setColor(1f, 1f, 1f, 0f);
-                int selectedRow = row;
-                int selectedColumn = column;
-                UiActions.onClick(cell, () -> clickCell(selectedRow, selectedColumn));
-                grid.add(cell).width(BOARD_WIDTH / COLS).height(BOARD_HEIGHT / ROWS);
-            }
-            grid.row();
-        }
-        return grid;
     }
 
     private void clickCell(int row, int column) {
@@ -189,7 +174,7 @@ public final class ZombotanyScreen extends MiniGamePlayScreen {
                 continue;
             }
             image.setScaling(Scaling.fit);
-            float size = Math.min(cellWidth, cellHeight) * 0.55f;
+            float size = Math.min(cellWidth, cellHeight) * 0.68f;
             image.setBounds(sun.column() * cellWidth + (cellWidth - size) * 0.5f,
                 (ROWS - 1 - sun.row()) * cellHeight + (cellHeight - size) * 0.5f,
                 size, size);

@@ -11,6 +11,7 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Scaling;
 import model.WallnutBowlingSession;
 import pvz.PvzApplication;
+import pvz.ui.MiniGameGridInputActor;
 import pvz.ui.MiniGameUnitLayer;
 import pvz.ui.UiTheme;
 
@@ -100,11 +101,14 @@ public final class WallnutBowlingScreen extends MiniGamePlayScreen {
         board.add(units);
         board.add(nutLayer);
         board.add(redLineOverlay());
+        board.add(new MiniGameGridInputActor(ROWS, COLS,
+            cell -> bowl(cell.row() + 1)));
         return board;
     }
 
     private Table redLineOverlay() {
         Table layer = new Table();
+        layer.setFillParent(true);
         layer.left();
         layer.add().width(BOARD_WIDTH * 3f / COLS);
         Image divider = theme.image(UiTheme.DIVIDER);

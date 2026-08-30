@@ -22,11 +22,11 @@ public final class VasebreakerBoardActor extends WidgetGroup {
     public static final int COLS = 9;
 
     private static final String NORMAL_VASE =
-        "IMAGE_VASEBREAKER_VASE_BROWN_VASE_BROWN_115X150";
+        "IMAGE_EGGBREAKER_VASE_EGG_BROWN_VASE_EGG_BROWN_151X198";
     private static final String PLANT_VASE =
-        "IMAGE_VASEBREAKER_VASE_GREEN_VASE_GREEN_115X150";
+        "IMAGE_EGGBREAKER_VASE_EGG_GREEN_VASE_EGG_GREEN_151X198";
     private static final String GIANT_VASE =
-        "IMAGE_VASEBREAKER_VASE_GARGANTUAR_VASE_GARGANTUAR_115X150";
+        "IMAGE_EGGBREAKER_VASE_EGG_GARGANTUAR_VASE_EGG_GARGANTUAR_151X198";
 
     private final PvzApplication app;
     private final Consumer<Cell> cellClick;

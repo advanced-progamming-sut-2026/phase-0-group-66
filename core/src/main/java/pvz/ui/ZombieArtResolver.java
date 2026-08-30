@@ -47,10 +47,9 @@ public final class ZombieArtResolver {
         if (theme == null || zombie == null) {
             return null;
         }
-        String artId = PACKET_ART.get(zombie.getKey());
-        if (artId == null) {
-            return null;
-        }
-        return theme.image(artId);
+        String artId = PACKET_ART.getOrDefault(zombie.getKey(),
+            "IMAGE_UI_ALMANAC_PACKETS_ZOMBIES_MUMMY");
+        Image image = theme.image(artId);
+        return image != null ? image : theme.image("IMAGE_UI_ALMANAC_PACKETS_ZOMBIES_MUMMY");
     }
 }

@@ -337,15 +337,20 @@ public final class PvzApplication extends Game {
             returnToMiniGames();
             return;
         }
-        switch (type) {
-            case VASEBREAKER -> changeScreen(new VasebreakerScreen(this));
-            case WALLNUT_BOWLING -> changeScreen(new WallnutBowlingScreen(this));
-            case I_ZOMBIE -> {
-                audio.playZombossMusic();
-                changeScreen(new IZombieScreen(this));
+        try {
+            switch (type) {
+                case VASEBREAKER -> changeScreen(new VasebreakerScreen(this));
+                case WALLNUT_BOWLING -> changeScreen(new WallnutBowlingScreen(this));
+                case I_ZOMBIE -> {
+                    audio.playZombossMusic();
+                    changeScreen(new IZombieScreen(this));
+                }
+                case BEGHOULD -> changeScreen(new BeghouledScreen(this));
+                case ZOMBOTANY -> changeScreen(new ZombotanyScreen(this));
             }
-            case BEGHOULD -> changeScreen(new BeghouledScreen(this));
-            case ZOMBOTANY -> changeScreen(new ZombotanyScreen(this));
+        } catch (RuntimeException exception) {
+            Gdx.app.error("MiniGame", "Could not open " + type + " safely.", exception);
+            openMiniGameHub();
         }
     }
 

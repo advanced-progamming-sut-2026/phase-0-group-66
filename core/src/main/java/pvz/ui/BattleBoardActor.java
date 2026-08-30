@@ -593,7 +593,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
             int col = sun.getPosition().getColumn();
             float x = cellCenterX(col);
             float y = cellBottom(row) + cellHeight() * 0.66f;
-            float size = Math.min(cellWidth(), cellHeight()) * 0.46f;
+            float size = Math.min(cellWidth(), cellHeight()) * 0.62f;
             boolean animated = pamRenderer.drawSun(batch, sun, animationTime, x, y,
                 size / 135f);
             if (!animated && sunIcon != null) {
@@ -700,6 +700,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
             case "CHERRYBOMB" -> "CHERRY_BOMB";
             case "ICEBERGLETTUCE" -> "ICEBURG";
             case "PIERCEMINT" -> "SPEARMINT";
+            case "CATTAIL" -> "HOMINGTHISTLE";
             default -> normalized;
         };
         return assets.uiAtlas().region("IMAGE_UI_PACKETS_" + normalized);
