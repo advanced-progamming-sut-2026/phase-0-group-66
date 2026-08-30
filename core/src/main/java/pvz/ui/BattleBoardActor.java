@@ -17,6 +17,8 @@ import model.Plant;
 import model.Projectile;
 import model.SeasonType;
 import model.Sun;
+import model.Tile;
+import model.TileType;
 import model.Zombie;
 import pvz.assets.PvzAssets;
 
@@ -44,9 +46,13 @@ public final class BattleBoardActor extends Actor implements Disposable {
     private final Map<Zombie, Float> previousZombieColumns = new IdentityHashMap<>();
     private final Map<Zombie, Float> zombieMotionStarts = new IdentityHashMap<>();
     private final Map<Zombie, Float> zombieMotionOrigins = new IdentityHashMap<>();
+    private final Map<Zombie, Float> lastZombieColumns = new IdentityHashMap<>();
+    private final Map<Zombie, Integer> lastZombieRows = new IdentityHashMap<>();
+    private final Map<Zombie, Float> zombieDeathStartedAt = new IdentityHashMap<>();
     private final Map<Projectile, Float> previousProjectileColumns = new IdentityHashMap<>();
     private final Map<Projectile, Float> projectileMotionStarts = new IdentityHashMap<>();
     private final Map<Projectile, Float> projectileMotionOrigins = new IdentityHashMap<>();
+    private final Map<LawnMower, Float> mowerActivatedAt = new IdentityHashMap<>();
 
     private TextureRegion backgroundLeft;
     private TextureRegion backgroundMain;
@@ -54,6 +60,8 @@ public final class BattleBoardActor extends Actor implements Disposable {
     private TextureRegion sunIcon;
     private TextureRegion projectileIcon;
     private TextureRegion mowerIcon;
+    private TextureRegion tombIcon;
+    private TextureRegion craterIcon;
     private float animationTime;
     private float cameraPan;
     private boolean showGrid;
@@ -138,6 +146,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
         Color previous = new Color(batch.getColor());
         batch.setColor(1f, 1f, 1f, parentAlpha);
         drawBackground(batch);
+        drawEnvironment(batch, game.getBoard(), parentAlpha);
         if (showGrid) {
             drawGrid(batch, parentAlpha);
         }
@@ -173,6 +182,95 @@ public final class BattleBoardActor extends Actor implements Disposable {
     private void drawFallbackBackground(Batch batch) {
         batch.setColor(0.22f, 0.48f, 0.20f, 1f);
         batch.draw(pixel, getX(), getY(), getWidth(), getHeight());
+        batch.setColor(Color.WHITE);
+    }
+
+    private void drawEnvironment(Batch batch, Board board, float parentAlpha) {
+        float width = cellWidth();
+        float height = cellHeight();
+        for (int row = 0; row < board.getRows(); row++) {
+            for (int col = 0; col < board.getCols(); col++) {
+                Tile tile = board.getTile(row, col);
+                TileType type = tile.getType();
+                float left = gridLeft() + col * width;
+                float bottom = cellBottom(row);
+                float centerX = left + width * 0.5f;
+                float centerY = bottom + height * 0.5f;
+                if (type == TileType.WATER) {
+                    boolean animated = pamRenderer.drawWaterTile(
+                        batch, animationTime, centerX, centerY,
+                        width / (390f * 1.5625f)
+                    );
+                    if (!animated) {
+                        drawTileTint(batch, left, bottom, width, height,
+                            0.13f, 0.42f, 0.78f, parentAlpha * 0.70f);
+                    }
+                } else if (type == TileType.LOW_TIDE) {
+                    drawTileTint(batch, left, bottom, width, height,
+                        0.16f, 0.47f, 0.70f, parentAlpha * 0.58f);
+                    drawTileTint(batch, left, bottom + height * 0.08f, width,
+                        height * 0.16f, 0.72f, 0.62f, 0.35f, parentAlpha * 0.55f);
+                } else if (type == TileType.ICE) {
+                    drawTileTint(batch, left, bottom, width, height,
+                        0.55f, 0.86f, 0.98f, parentAlpha * 0.62f);
+                    drawTileTint(batch, left + 2f, bottom + 2f, width - 4f,
+                        height - 4f, 0.86f, 0.97f, 1f, parentAlpha * 0.20f);
+                } else if (type == TileType.SLIPPERY_UP || type == TileType.SLIPPERY_DOWN) {
+                    drawTileTint(batch, left, bottom, width, height,
+                        0.48f, 0.75f, 0.92f, parentAlpha * 0.40f);
+                    drawSlipMarks(batch, left, bottom, width, height,
+                        type == TileType.SLIPPERY_UP, parentAlpha);
+                } else if (type == TileType.NECROMANCY) {
+                    drawTileTint(batch, left, bottom, width, height,
+                        0.30f, 0.12f, 0.35f, parentAlpha * 0.48f);
+                } else if (type == TileType.CRATER) {
+                    if (craterIcon != null) {
+                        float size = Math.min(width, height) * 0.86f;
+                        batch.draw(craterIcon, centerX - size / 2f, centerY - size / 2f,
+                            size, size);
+                    } else {
+                        drawTileTint(batch, left + width * 0.12f, bottom + height * 0.20f,
+                            width * 0.76f, height * 0.58f,
+                            0.19f, 0.10f, 0.06f, parentAlpha * 0.58f);
+                    }
+                } else if (type == TileType.TOMB) {
+                    drawTileTint(batch, left, bottom, width, height,
+                        0.16f, 0.12f, 0.08f, parentAlpha * 0.18f);
+                    if (tombIcon != null) {
+                        float tombHeight = height * 0.80f;
+                        float tombWidth = tombHeight
+                            * tombIcon.getRegionWidth()
+                            / Math.max(1f, tombIcon.getRegionHeight());
+                        float maxWidth = width * 0.72f;
+                        if (tombWidth > maxWidth) {
+                            tombWidth = maxWidth;
+                            tombHeight = tombWidth * tombIcon.getRegionHeight()
+                                / Math.max(1f, tombIcon.getRegionWidth());
+                        }
+                        batch.draw(tombIcon, centerX - tombWidth / 2f,
+                            bottom + height * 0.10f, tombWidth, tombHeight);
+                    }
+                }
+            }
+        }
+        batch.setColor(Color.WHITE);
+    }
+
+    private void drawTileTint(Batch batch, float x, float y, float width, float height,
+                              float red, float green, float blue, float alpha) {
+        batch.setColor(red, green, blue, Math.max(0f, Math.min(1f, alpha)));
+        batch.draw(pixel, x, y, width, height);
+    }
+
+    private void drawSlipMarks(Batch batch, float x, float y, float width, float height,
+                               boolean upward, float parentAlpha) {
+        batch.setColor(1f, 1f, 1f, parentAlpha * 0.45f);
+        float diagonal = upward ? width * 0.28f : -width * 0.28f;
+        for (int index = 1; index <= 3; index++) {
+            float startX = x + width * (0.16f + index * 0.20f);
+            float startY = y + height * 0.16f;
+            batch.draw(pixel, startX, startY, diagonal, 2f);
+        }
         batch.setColor(Color.WHITE);
     }
 
@@ -316,6 +414,9 @@ public final class BattleBoardActor extends Actor implements Disposable {
             }
             int row = zombie.getPosition().getRow();
             double column = renderZombieColumn(zombie, zombie.getPosition().getColumn());
+            lastZombieColumns.put(zombie, (float) column);
+            lastZombieRows.put(zombie, row);
+            zombieDeathStartedAt.remove(zombie);
             if (cameraPan > 0.05f && row >= 0 && row < previewLaneCount.length) {
                 column += previewLaneCount[row]++ * 0.34d;
             }
@@ -337,7 +438,38 @@ public final class BattleBoardActor extends Actor implements Disposable {
                 barWidth
             );
         }
+        drawRecentZombieDeaths(batch, board, season, scale);
         drawPlantFoodDeathGhosts(batch, season, scale);
+    }
+
+    private void drawRecentZombieDeaths(Batch batch, Board board, SeasonType season, float scale) {
+        for (Zombie zombie : List.copyOf(lastZombieColumns.keySet())) {
+            if (board.getZombies().contains(zombie) || !zombie.isDead()) {
+                if (board.getZombies().contains(zombie)) {
+                    zombieDeathStartedAt.remove(zombie);
+                }
+                continue;
+            }
+            float startedAt = zombieDeathStartedAt.computeIfAbsent(zombie,
+                ignored -> animationTime);
+            float elapsed = animationTime - startedAt;
+            if (elapsed > 2.15f) {
+                lastZombieColumns.remove(zombie);
+                lastZombieRows.remove(zombie);
+                zombieDeathStartedAt.remove(zombie);
+                continue;
+            }
+            Integer row = lastZombieRows.get(zombie);
+            Float column = lastZombieColumns.get(zombie);
+            if (row == null || column == null) {
+                continue;
+            }
+            float x = gridLeft() + (column + 0.5f) * cellWidth();
+            float y = cellBottom(row) + cellHeight() * 0.34f;
+            if (!pamRenderer.drawZombieDeath(batch, zombie, season, elapsed, x, y, scale)) {
+                drawFallbackZombie(batch, x, y);
+            }
+        }
     }
 
     private double renderZombieColumn(Zombie zombie, double modelColumn) {
@@ -381,7 +513,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
             float x = gridLeft() + (float) ((column + 0.5d) * cellWidth());
             float y = cellBottom(row) + cellHeight() * (0.34f - 0.08f * progress);
             batch.setColor(1f, 1f, 1f, original.a * alpha);
-            pamRenderer.drawZombie(batch, zombie, season, animationTime, x, y, scale);
+            pamRenderer.drawZombieDeath(batch, zombie, season, animationTime, x, y, scale);
         }
         batch.setColor(original);
     }
@@ -409,9 +541,12 @@ public final class BattleBoardActor extends Actor implements Disposable {
             int row = projectile.getPosition().getRow();
             float y = cellBottom(row) + cellHeight() * 0.55f;
             float size = Math.max(12f, Math.min(cellWidth(), cellHeight()) * 0.20f);
-            if (projectileIcon != null) {
+            boolean animated = pamRenderer.drawProjectile(
+                batch, projectile, animationTime, x, y, size / 315f
+            );
+            if (!animated && projectileIcon != null) {
                 batch.draw(projectileIcon, x - size / 2f, y - size / 2f, size, size);
-            } else {
+            } else if (!animated) {
                 batch.setColor(0.25f, 0.92f, 0.18f, 1f);
                 batch.draw(pixel, x - size / 2f, y - size / 2f, size, size);
                 batch.setColor(Color.WHITE);
@@ -453,7 +588,11 @@ public final class BattleBoardActor extends Actor implements Disposable {
             float y = cellBottom(row) + cellHeight() * 0.66f;
             float size = Math.min(cellWidth(), cellHeight()) * 0.46f;
             if (sunIcon != null) {
-                batch.draw(sunIcon, x - size / 2f, y - size / 2f, size, size);
+                boolean animated = pamRenderer.drawSun(batch, sun, animationTime, x, y,
+                    size / 144f);
+                if (!animated) {
+                    batch.draw(sunIcon, x - size / 2f, y - size / 2f, size, size);
+                }
             } else {
                 batch.setColor(1f, 0.85f, 0.12f, 1f);
                 batch.draw(pixel, x - size / 2f, y - size / 2f, size, size);
@@ -463,13 +602,15 @@ public final class BattleBoardActor extends Actor implements Disposable {
     }
 
     private void drawMowers(Batch batch) {
-        if (mowerIcon == null) {
+        if (mowerIcon == null && controller.getGame() == null) {
             return;
         }
         Board board = controller.getGame().getBoard();
         float maxWidth = cellWidth() * 0.82f;
         float maxHeight = cellHeight() * 0.62f;
-        float aspect = mowerIcon.getRegionWidth() / (float) Math.max(1, mowerIcon.getRegionHeight());
+        float aspect = mowerIcon == null
+            ? 1.70f
+            : mowerIcon.getRegionWidth() / (float) Math.max(1, mowerIcon.getRegionHeight());
         float width = maxWidth;
         float height = width / aspect;
         if (height > maxHeight) {
@@ -477,12 +618,32 @@ public final class BattleBoardActor extends Actor implements Disposable {
             width = height * aspect;
         }
         for (LawnMower mower : board.getLawnMowers()) {
-            if (mower.isActivated()) {
+            boolean moving = mower.isActivated();
+            if (moving) {
+                mowerActivatedAt.putIfAbsent(mower, animationTime);
+                if (animationTime - mowerActivatedAt.get(mower) > 1.2f) {
+                    mowerActivatedAt.remove(mower);
+                    continue;
+                }
+            } else {
+                mowerActivatedAt.remove(mower);
+            }
+            float progress = moving
+                ? Math.min(1f, (animationTime - mowerActivatedAt.get(mower)) / 1.2f)
+                : 0f;
+            float centerX = gridLeft() - width * 0.42f
+                + progress * (gridWidth() + width);
+            float centerY = cellBottom(mower.getRow()) + cellHeight() * 0.5f;
+            if (pamRenderer.drawMower(batch, level.getSeason(), animationTime,
+                centerX, centerY, cellHeight() / 390f * 0.90f, moving)) {
                 continue;
             }
             float x = gridLeft() - width * 0.90f;
+            x += progress * (gridWidth() + width);
             float y = cellBottom(mower.getRow()) + (cellHeight() - height) / 2f;
-            batch.draw(mowerIcon, x, y, width, height);
+            if (mowerIcon != null) {
+                batch.draw(mowerIcon, x, y, width, height);
+            }
         }
     }
 
@@ -642,6 +803,13 @@ public final class BattleBoardActor extends Actor implements Disposable {
             "IMAGE_EFFECTS_T_PEA_PROJECTILE_T_PEA_PROJECTILE_39X36_2"
         );
         mowerIcon = assets.uiAtlas().region(mowerId(level.getSeason()));
+        tombIcon = findFirstRegion(tombId(level.getSeason()),
+            "IMAGE_GRAVESTONES_EGYPT_HIEROGLYPH_EGYPT_HIEROGLYPH_109X119",
+            "IMAGE_GRAVESTONES_DARK_NOOP_DARK_NOOP_125X149");
+        craterIcon = findFirstRegion(
+            "IMAGE_EFFECTS_CRATER_CRATER_129X131",
+            "IMAGE_EFFECTS_CRATER_CRATER_84X53"
+        );
     }
 
     private TextureRegion findFirstRegion(String... ids) {
@@ -660,6 +828,15 @@ public final class BattleBoardActor extends Actor implements Disposable {
             case FROSTBITE_CAVES -> "IMAGE_BACKGROUNDS_ICEAGE";
             case BIG_WAVE_BEACH -> "IMAGE_BACKGROUNDS_BEACH";
             case DARK_AGES -> "IMAGE_BACKGROUNDS_DARK";
+        };
+    }
+
+    private String tombId(SeasonType season) {
+        return switch (season) {
+            case ANCIENT_EGYPT ->
+                "IMAGE_GRAVESTONES_EGYPT_HIEROGLYPH_EGYPT_HIEROGLYPH_109X119";
+            case DARK_AGES -> "IMAGE_GRAVESTONES_DARK_NOOP_DARK_NOOP_125X149";
+            default -> "IMAGE_GRAVESTONES_EGYPT_HIEROGLYPH_EGYPT_HIEROGLYPH_109X119";
         };
     }
 

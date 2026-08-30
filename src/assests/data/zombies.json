@@ -6,7 +6,7 @@
     "stats": {
       "health": 190,
       "eatDamagePerSecond": 100,
-      "speed": 0.16,
+      "speed": 0.185,
       "waveCost": 100,
       "selectionWeight": 1000
     },

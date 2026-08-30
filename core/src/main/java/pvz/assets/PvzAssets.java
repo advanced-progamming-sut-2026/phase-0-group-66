@@ -12,6 +12,7 @@ public final class PvzAssets implements Disposable {
     private final FileHandle root;
     private final TextureBank textureBank;
     private final PamPlayer pamPlayer;
+    private final AnimationCatalog animationCatalog;
     private final Skin skin;
     private final UiAtlasHelper uiAtlas;
     private final UiTheme uiTheme;
@@ -20,6 +21,7 @@ public final class PvzAssets implements Disposable {
         root = PvzAssetRoot.locate();
         textureBank = new TextureBank("768", root);
         pamPlayer = new PamPlayer(textureBank, root);
+        animationCatalog = new AnimationCatalog(root);
         skin = PvzSkin.get();
         uiAtlas = new UiAtlasHelper(textureBank);
         uiTheme = new UiTheme(skin, uiAtlas);
@@ -35,6 +37,10 @@ public final class PvzAssets implements Disposable {
 
     public PamPlayer animations() {
         return pamPlayer;
+    }
+
+    public AnimationCatalog animationCatalog() {
+        return animationCatalog;
     }
 
     public Skin skin() {

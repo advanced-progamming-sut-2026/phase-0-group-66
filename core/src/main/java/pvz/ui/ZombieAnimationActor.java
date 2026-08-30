@@ -1,10 +1,10 @@
 package pvz.ui;
 
-import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import model.ZombieDefinition;
+import pvz.assets.AnimationCatalog;
 import pvz.assets.PvzAssets;
 import pvz.libpvz.pam.PamPlayer;
 
@@ -86,11 +86,24 @@ public final class ZombieAnimationActor extends Actor {
             return null;
         }
         String path = PAM_BY_KEY.get(zombie.getKey());
-        if (path == null) {
-            return null;
+        if (path != null && assets.root().child("IMAGES").child(path).exists()) {
+            return path;
         }
-        FileHandle file = assets.root().child("IMAGES").child(path);
-        return file.exists() ? path : null;
+        String normalized = AnimationCatalog.normalize(zombie.getKey());
+        String alias = switch (normalized) {
+            case "GARGANTUAR" -> "GARGANTUAR";
+            case "IMP" -> "ZOMBIE_EGYPT_IMP";
+            case "CONEHEADZOMBIE", "BUCKETHEADZOMBIE" -> "ZOMBIE_EGYPT_BASIC";
+            case "BRICKHEADZOMBIE" -> "ZOMBIE_DARK_BASIC_BRICK";
+            case "KNIGHTZOMBIE" -> "ZOMBIE_DARK_BASIC";
+            default -> normalized;
+        };
+        AnimationCatalog.Entry entry = assets.animationCatalog().zombie(
+            alias,
+            AnimationCatalog.normalize(zombie.getAlias()),
+            AnimationCatalog.normalize(zombie.getDisplayName())
+        );
+        return entry == null ? null : entry.path();
     }
 
     private static String chooseClip(PamPlayer player, String pam) {

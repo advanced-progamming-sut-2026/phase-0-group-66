@@ -117,7 +117,11 @@ public final class TextureBank implements Disposable {
         return count;
     }
     public int exportImage(String imageId, FileHandle outDir) {
-        String atlasId = resourceIndex.image(imageId).atlasId;
+        ResourceIndex.ImageEntry requested = resourceIndex.image(imageId);
+        if (requested == null) {
+            return 0;
+        }
+        String atlasId = requested.atlasId;
         ResourceIndex.AtlasEntry atlas = resourceIndex.atlas(atlasId);
         if (atlas == null) {
             return 0;
@@ -130,7 +134,7 @@ public final class TextureBank implements Disposable {
         outDir.mkdirs();
         int count = 0;
         for (String image : resourceIndex.imageIds()) {
-            if(image != imageId) continue;
+            if (!image.equals(imageId)) continue;
             ResourceIndex.ImageEntry img = resourceIndex.image(image);
             if (img == null || !atlasId.equals(img.atlasId) || img.aw <= 0 || img.ah <= 0) {
                 continue;

@@ -5,9 +5,13 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import model.Plant;
 import model.PlantDefinition;
+import model.Projectile;
+import model.ProjectileType;
 import model.SeasonType;
+import model.Sun;
 import model.Zombie;
 import model.ZombieDefinition;
+import pvz.assets.AnimationCatalog;
 import pvz.assets.PvzAssets;
 import pvz.libpvz.pam.PamPlayer;
 
@@ -20,12 +24,14 @@ public final class BattlePamRenderer {
     private static final float WORLD_ASSET_SCALE = 1.5625f;
     private final PvzAssets assets;
     private final PamPlayer player;
+    private final AnimationCatalog catalog;
     private final Map<String, AnimationSpec> plantSpecs = new HashMap<>();
     private final Map<String, AnimationSpec> zombieSpecs = new HashMap<>();
 
     public BattlePamRenderer(PvzAssets assets) {
         this.assets = assets;
         this.player = assets.animations();
+        this.catalog = assets.animationCatalog();
     }
 
     public boolean drawPlant(
@@ -53,7 +59,12 @@ public final class BattlePamRenderer {
         } else {
             clip = spec.primaryClip();
         }
-        return draw(batch, spec.path(), clip, time, x, y, scale, false);
+        boolean drawn = draw(batch, spec.path(), clip, time, x, y, scale, false);
+        if (drawn && plantFoodActive) {
+            AnimationSpec food = effectSpec("PLANTFOOD_FX", "plantfood");
+            draw(batch, food.path(), food.primaryClip(), time, x, y, scale * 0.92f, false);
+        }
+        return drawn;
     }
 
     public float plantActionDuration(Plant plant) {
@@ -96,6 +107,84 @@ public final class BattlePamRenderer {
         );
     }
 
+    public boolean drawZombieDeath(
+        Batch batch,
+        Zombie zombie,
+        SeasonType season,
+        float time,
+        float x,
+        float y,
+        float scale
+    ) {
+        if (zombie == null) {
+            return false;
+        }
+        String key = season.name() + ":" + zombie.getDefinition().getKey();
+        AnimationSpec spec = zombieSpecs.computeIfAbsent(
+            key,
+            ignored -> resolveZombie(zombie.getDefinition(), season)
+        );
+        return draw(batch, spec.path(), spec.deathClip(), time, x, y, scale,
+            zombie.isHypnotized());
+    }
+
+    public boolean drawProjectile(
+        Batch batch,
+        Projectile projectile,
+        float time,
+        float x,
+        float y,
+        float scale
+    ) {
+        if (projectile == null) {
+            return false;
+        }
+        String source = plantAlias(normalize(projectile.getSourcePlant()));
+        String typeEffect = switch (projectile.getImpactType() == null
+            ? projectile.getType() : projectile.getImpactType()) {
+            case FIRE -> "T_FIRE_PEA";
+            case ICE -> "T_SNOW_PEA";
+            case POISON -> "GOOPEASHOOTER_PROJECTILES";
+            case NORMAL -> "T_PEA_PROJECTILE";
+        };
+        AnimationSpec spec = effectSpec(
+            "T_" + source + "_PROJECTILE",
+            source + "_PROJECTILE",
+            typeEffect,
+            "T_PEA_PROJECTILE"
+        );
+        return draw(batch, spec.path(), spec.primaryClip(), time, x, y, scale * 0.52f, false);
+    }
+
+    public boolean drawSun(Batch batch, Sun sun, float time, float x, float y, float scale) {
+        AnimationSpec spec = effectSpec("SUN", "animation");
+        return draw(batch, spec.path(), spec.primaryClip(), time, x, y, scale * 0.32f, false);
+    }
+
+    public boolean drawWaterTile(Batch batch, float time, float x, float y, float scale) {
+        AnimationSpec spec = specFromEntry(catalog.background("WATER_SQUARE"), "Water", false);
+        return draw(batch, spec.path(), spec.primaryClip(), time, x, y, scale, false);
+    }
+
+    public boolean drawMower(
+        Batch batch,
+        SeasonType season,
+        float time,
+        float x,
+        float y,
+        float scale,
+        boolean moving
+    ) {
+        String name = switch (season) {
+            case ANCIENT_EGYPT -> "MOWER_EGYPT";
+            case FROSTBITE_CAVES -> "MOWER_ICEAGE";
+            case BIG_WAVE_BEACH -> "MOWER_BEACH";
+            case DARK_AGES -> "MOWER_DARK";
+        };
+        AnimationSpec spec = specFromEntry(catalog.mower(name), moving ? "attack" : "idle", false);
+        return draw(batch, spec.path(), spec.primaryClip(), time, x, y, scale, false);
+    }
+
     private boolean draw(
         Batch batch,
         String path,
@@ -123,6 +212,14 @@ public final class BattlePamRenderer {
     private AnimationSpec resolvePlant(PlantDefinition definition) {
         String normalized = normalize(definition.getKey());
         String alias = plantAlias(normalized);
+        AnimationCatalog.Entry catalogEntry = catalog.plant(alias, normalized,
+            normalize(definition.getName()));
+        if (catalogEntry != null) {
+            AnimationSpec spec = specFromEntry(catalogEntry, "idle", true);
+            if (spec.valid()) {
+                return spec;
+            }
+        }
         String[] roots = {
             "768/INITIAL/PLANT/",
             "768/FULL/PLANT/",
@@ -142,6 +239,27 @@ public final class BattlePamRenderer {
         String special = zombieSpecialAlias(definition.getKey());
         if (special != null) {
             AnimationSpec spec = findZombiePam(special, "walk");
+            if (spec.valid()) {
+                return spec;
+            }
+        }
+
+        String normalized = normalize(definition.getKey());
+        String seasonPrefix = switch (season) {
+            case ANCIENT_EGYPT -> "ZOMBIE_EGYPT";
+            case FROSTBITE_CAVES -> "ZOMBIE_ICEAGE";
+            case BIG_WAVE_BEACH -> "ZOMBIE_BEACH";
+            case DARK_AGES -> "ZOMBIE_DARK";
+        };
+        String[] names = switch (normalized) {
+            case "GARGANTUAR" -> new String[] {seasonPrefix + "_GARGANTUAR", "GARGANTUAR"};
+            case "IMP" -> new String[] {seasonPrefix + "_IMP", "ZOMBIE_EGYPT_IMP"};
+            case "BRICKHEADZOMBIE" -> new String[] {seasonPrefix + "_BASIC_BRICK",
+                "ZOMBIE_DARK_BASIC_BRICK"};
+            default -> new String[] {seasonPrefix + "_BASIC"};
+        };
+        for (String name : names) {
+            AnimationSpec spec = specFromEntry(catalog.zombie(name), "walk", false);
             if (spec.valid()) {
                 return spec;
             }
@@ -189,11 +307,32 @@ public final class BattlePamRenderer {
             String primary = chooseClip(clips, preferredClip);
             String action = includeActionClip ? chooseActionClip(clips) : null;
             String plantFood = includeActionClip ? choosePlantFoodClip(clips, action) : null;
+            String death = chooseDeathClip(clips);
             float actionDuration = action == null ? 0f : player.clipDurationSeconds(path, action);
-            return new AnimationSpec(path, primary, action, plantFood, actionDuration);
+            return new AnimationSpec(path, primary, action, plantFood, death, actionDuration);
         } catch (RuntimeException exception) {
             return AnimationSpec.missing();
         }
+    }
+
+    private AnimationSpec specFromEntry(
+        AnimationCatalog.Entry entry,
+        String preferredClip,
+        boolean includeActionClip
+    ) {
+        if (entry == null) {
+            return AnimationSpec.missing();
+        }
+        return specIfPresent(entry.path(), preferredClip, includeActionClip);
+    }
+
+    private AnimationSpec effectSpec(String name, String preferredClip, String... fallbacks) {
+        String[] candidates = new String[1 + (fallbacks == null ? 0 : fallbacks.length)];
+        candidates[0] = name;
+        if (fallbacks != null) {
+            System.arraycopy(fallbacks, 0, candidates, 1, fallbacks.length);
+        }
+        return specFromEntry(catalog.effect(candidates), preferredClip, false);
     }
 
     private String choosePlantFoodClip(List<String> clips, String actionFallback) {
@@ -230,6 +369,21 @@ public final class BattlePamRenderer {
                 if (clip.toLowerCase(Locale.ROOT).contains(name)) {
                     return clip;
                 }
+            }
+        }
+        return null;
+    }
+
+    private String chooseDeathClip(List<String> clips) {
+        for (String clip : clips) {
+            if (clip.equalsIgnoreCase("die") || clip.equalsIgnoreCase("death")) {
+                return clip;
+            }
+        }
+        for (String clip : clips) {
+            String lower = clip.toLowerCase(Locale.ROOT);
+            if (lower.contains("die") || lower.contains("death")) {
+                return clip;
             }
         }
         return null;
@@ -297,10 +451,7 @@ public final class BattlePamRenderer {
     }
 
     private String normalize(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
+        return AnimationCatalog.normalize(value);
     }
 
     private record AnimationSpec(
@@ -308,10 +459,11 @@ public final class BattlePamRenderer {
         String primaryClip,
         String actionClip,
         String plantFoodClip,
+        String deathClip,
         float actionDuration
     ) {
         static AnimationSpec missing() {
-            return new AnimationSpec(null, null, null, null, 0f);
+            return new AnimationSpec(null, null, null, null, null, 0f);
         }
 
         boolean valid() {

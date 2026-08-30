@@ -1,10 +1,10 @@
 package pvz.ui;
 
-import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import model.PlantDefinition;
+import pvz.assets.AnimationCatalog;
 import pvz.assets.PvzAssets;
 import pvz.libpvz.pam.PamPlayer;
 
@@ -58,19 +58,10 @@ public final class PlantAnimationActor extends Actor {
         }
         String normalized = normalize(plant.getKey());
         String alias = PAM_ALIASES.getOrDefault(normalized, normalized);
-        String[] roots = {
-            "768/INITIAL/PLANT/",
-            "768/FULL/PLANT/",
-            "768/INITIAL/EMPOWERMINTS/PLANT/"
-        };
-        for (String root : roots) {
-            String candidate = root + alias + "/" + alias + ".PAM";
-            FileHandle file = assets.root().child("IMAGES").child(candidate);
-            if (file.exists()) {
-                return candidate;
-            }
-        }
-        return null;
+        AnimationCatalog.Entry entry = assets.animationCatalog().plant(
+            alias, normalized, normalize(plant.getName())
+        );
+        return entry == null ? null : entry.path();
     }
 
     private static String chooseClip(PamPlayer player, String pam) {
