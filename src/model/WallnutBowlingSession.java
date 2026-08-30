@@ -40,6 +40,7 @@ public final class WallnutBowlingSession extends MiniGameSession {
     private final int normalImpactDamage;
     private int kills;
     private int nextCardTick;
+    private int nextZombieReleaseTick;
 
     public WallnutBowlingSession(MiniGameDefinition definition, int level) {
         super(definition, level);
@@ -51,8 +52,8 @@ public final class WallnutBowlingSession extends MiniGameSession {
         }
         addCard();
         spawnInitialZombies();
-        releaseZombies(Math.min(5, pendingZombies.size()));
         nextCardTick = 40;
+        nextZombieReleaseTick = 15 * Game.TICKS_PER_SECOND;
     }
 
     @Override
@@ -98,8 +99,9 @@ public final class WallnutBowlingSession extends MiniGameSession {
     protected void onTick() {
         addConveyorCardIfNeeded();
         moveNutsAndResolveCollisions();
-        if (getElapsedTicks() >= 15 * Game.TICKS_PER_SECOND && !pendingZombies.isEmpty()) {
-            releaseZombies(pendingZombies.size());
+        if (getElapsedTicks() >= nextZombieReleaseTick && !pendingZombies.isEmpty()) {
+            releaseZombies(Math.min(5, pendingZombies.size()));
+            nextZombieReleaseTick += 15 * Game.TICKS_PER_SECOND;
         }
         moveZombies();
         cleanupKills();

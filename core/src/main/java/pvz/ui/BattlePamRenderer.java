@@ -14,6 +14,7 @@ import model.ZombieDefinition;
 import pvz.assets.AnimationCatalog;
 import pvz.assets.PvzAssets;
 import pvz.libpvz.pam.PamPlayer;
+import pvz.libpvz.pam.ClipRef;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +28,7 @@ public final class BattlePamRenderer {
     private final AnimationCatalog catalog;
     private final Map<String, AnimationSpec> plantSpecs = new HashMap<>();
     private final Map<String, AnimationSpec> zombieSpecs = new HashMap<>();
+    private final Map<String, ClipRef> clipRefs = new HashMap<>();
 
     public BattlePamRenderer(PvzAssets assets) {
         this.assets = assets;
@@ -213,7 +215,16 @@ public final class BattlePamRenderer {
         }
         float worldScale = scale * WORLD_ASSET_SCALE;
         float scaleX = flipped ? -worldScale : worldScale;
-        player.draw(batch, path, clip, time, x, y, scaleX, worldScale, true);
+        String clipKey = path + "\u0000" + clip;
+        ClipRef clipRef = clipRefs.get(clipKey);
+        if (clipRef == null) {
+            clipRef = player.getClip(path, clip);
+            if (clipRef == null) {
+                return false;
+            }
+            clipRefs.put(clipKey, clipRef);
+        }
+        player.draw(batch, clipRef, time, x, y, scaleX, worldScale, true);
         batch.setColor(previous);
         return true;
     }

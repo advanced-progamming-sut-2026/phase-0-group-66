@@ -35,6 +35,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
     private final BattlePamRenderer pamRenderer;
     private final BiConsumer<Integer, Integer> cellClick;
     private final Texture pixel;
+    private final Texture orbFallback;
     private final BoardGeometry geometry;
     private final Map<Plant, Float> attackStartedAt = new IdentityHashMap<>();
     private final Map<Plant, Float> attackUntil = new IdentityHashMap<>();
@@ -79,6 +80,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
         this.cellClick = cellClick;
         this.pamRenderer = new BattlePamRenderer(assets);
         this.pixel = createPixel();
+        this.orbFallback = createOrbFallback();
         this.geometry = BoardGeometry.forSeason(level.getSeason());
         loadRegions();
         configureInput();
@@ -392,6 +394,9 @@ public final class BattleBoardActor extends Actor implements Disposable {
         boolean hasTarget = board.findNearestZombieAhead(
             plant.getPosition().getRow(),
             plant.getPosition().getColumn()
+        ) != null || board.findNearestFrozenZombieTileAhead(
+            plant.getPosition().getRow(),
+            plant.getPosition().getColumn()
         ) != null;
         if (actionFired && hasTarget) {
             attackStartedAt.put(plant, animationTime);
@@ -554,8 +559,15 @@ public final class BattleBoardActor extends Actor implements Disposable {
             if (!animated && projectileIcon != null) {
                 batch.draw(projectileIcon, x - size / 2f, y - size / 2f, size, size);
             } else if (!animated) {
-                batch.setColor(0.25f, 0.92f, 0.18f, 1f);
-                batch.draw(pixel, x - size / 2f, y - size / 2f, size, size);
+                Color projectileColor = switch (projectile.getImpactType() == null
+                    ? projectile.getType() : projectile.getImpactType()) {
+                    case FIRE -> new Color(1f, 0.28f, 0.08f, 1f);
+                    case ICE -> new Color(0.22f, 0.78f, 1f, 1f);
+                    case POISON -> new Color(0.68f, 0.28f, 0.92f, 1f);
+                    case NORMAL -> new Color(0.32f, 0.92f, 0.18f, 1f);
+                };
+                batch.setColor(projectileColor);
+                batch.draw(orbFallback, x - size / 2f, y - size / 2f, size, size);
                 batch.setColor(Color.WHITE);
             }
         }
@@ -592,15 +604,19 @@ public final class BattleBoardActor extends Actor implements Disposable {
             int row = sun.getPosition().getRow();
             int col = sun.getPosition().getColumn();
             float x = cellCenterX(col);
-            float y = cellBottom(row) + cellHeight() * 0.66f;
-            float size = Math.min(cellWidth(), cellHeight()) * 0.62f;
+            float landingY = cellBottom(row) + cellHeight() * 0.66f;
+            float fallProgress = sun.isFalling()
+                ? 1f - sun.getRemainingFallTicks() / (float) Sun.SKY_FALL_TICKS : 1f;
+            float y = landingY + cellHeight() * (1f - Math.max(0f,
+                Math.min(1f, fallProgress))) * 0.70f;
+            float size = Math.min(cellWidth(), cellHeight()) * 0.82f;
             boolean animated = pamRenderer.drawSun(batch, sun, animationTime, x, y,
                 size / 135f);
             if (!animated && sunIcon != null) {
                 batch.draw(sunIcon, x - size / 2f, y - size / 2f, size, size);
             } else if (!animated) {
                 batch.setColor(1f, 0.85f, 0.12f, 1f);
-                batch.draw(pixel, x - size / 2f, y - size / 2f, size, size);
+                batch.draw(orbFallback, x - size / 2f, y - size / 2f, size, size);
                 batch.setColor(Color.WHITE);
             }
         }
@@ -864,9 +880,19 @@ public final class BattleBoardActor extends Actor implements Disposable {
         return texture;
     }
 
+    private Texture createOrbFallback() {
+        Pixmap pixmap = new Pixmap(32, 32, Pixmap.Format.RGBA8888);
+        pixmap.setColor(Color.WHITE);
+        pixmap.fillCircle(16, 16, 15);
+        Texture texture = new Texture(pixmap);
+        pixmap.dispose();
+        return texture;
+    }
+
     @Override
     public void dispose() {
         pixel.dispose();
+        orbFallback.dispose();
     }
 
     private record BoardGeometry(float left, float bottom, float width, float height) {

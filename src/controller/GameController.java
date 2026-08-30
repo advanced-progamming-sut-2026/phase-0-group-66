@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.time.LocalDate;
 
 public class GameController {
+    private static final int GAMEPLAY_SAVE_INTERVAL_TICKS = 10 * Game.TICKS_PER_SECOND;
     private final AuthController authController;
     private final GameData gameData;
     private final AdventureFactory adventureFactory;
@@ -28,6 +29,7 @@ public class GameController {
     private final QuestController questController;
     private final GameProgressHandler progressHandler;
     private Game game;
+    private int unsavedGameplayTicks;
 
     public GameController(AuthController authController, GameData gameData, GameView view,
                           QuestController questController) {
@@ -78,6 +80,7 @@ public class GameController {
             user.getDifficultyLevel(), user.getCollectionBook().getPlantLevels(),
             user.getInventory(), user.getWallet());
         game.prepareLevel(chapter, playLevel);
+        unsavedGameplayTicks = 0;
         progressHandler.beginAdventure();
         flushEvents();
         return ActionResult.success("Choose up to " + level.getAllowedPlantCount()
@@ -101,6 +104,7 @@ public class GameController {
             user.getDifficultyLevel(), user.getCollectionBook().getPlantLevels(),
             user.getInventory(), user.getWallet(), scored.randomSeed());
         game.prepareLevel(scored.chapter(), scored.level());
+        unsavedGameplayTicks = 0;
         progressHandler.beginScored(scored.date());
         flushEvents();
         return ActionResult.success("Daily scored game for " + scored.date()
@@ -141,7 +145,8 @@ public class GameController {
         ActionResult result = perform(() -> game.startGame(), "Game started.");
         if (result.isSuccessful()) {
             progressHandler.synchronizeSeenZombies(game);
-            authController.saveCurrentState();
+            unsavedGameplayTicks = 0;
+            return saveResult(result);
         }
         return result;
     }
@@ -150,7 +155,8 @@ public class GameController {
         ActionResult result = perform(() -> game.startZombieWaves(), "Zombie waves started.");
         if (result.isSuccessful()) {
             progressHandler.synchronizeSeenZombies(game);
-            authController.saveCurrentState();
+            unsavedGameplayTicks = 0;
+            return saveResult(result);
         }
         return result;
     }
@@ -196,13 +202,15 @@ public class GameController {
         }, "Planting completed.");
         if (result.isSuccessful()) {
             progressHandler.synchronizeQuestProgress(game);
-            authController.saveCurrentState();
+            return saveResult(result);
         }
         return result;
     }
 
     public ActionResult pluckPlant(int col, int row) {
-        return perform(() -> game.pluckPlant(toRow(row), toColumn(col)), "Plant removed.");
+        ActionResult result = perform(() -> game.pluckPlant(toRow(row), toColumn(col)),
+            "Plant removed.");
+        return result.isSuccessful() ? saveResult(result) : result;
     }
 
     public ActionResult collectSun(int col, int row) {
@@ -211,7 +219,7 @@ public class GameController {
         if (result.isSuccessful()) {
             progressHandler.synchronizeQuestProgress(game);
             progressHandler.recordGameResultIfNeeded(game);
-            authController.saveCurrentState();
+            return saveResult(result);
         }
         return result;
     }
@@ -221,7 +229,7 @@ public class GameController {
             "Plant food used.");
         if (result.isSuccessful()) {
             progressHandler.synchronizeQuestProgress(game);
-            authController.saveCurrentState();
+            return saveResult(result);
         }
         return result;
     }
@@ -249,17 +257,27 @@ public class GameController {
             progressHandler.synchronizeSeenZombies(game);
             progressHandler.synchronizeQuestProgress(game);
             progressHandler.recordGameResultIfNeeded(game);
-            authController.saveCurrentState();
+            unsavedGameplayTicks += Math.max(0, ticks);
+            if (game.getGameState() != GameState.RUNNING
+                || unsavedGameplayTicks >= GAMEPLAY_SAVE_INTERVAL_TICKS) {
+                ActionResult saved = saveResult(result);
+                if (saved.isSuccessful()) {
+                    unsavedGameplayTicks = 0;
+                }
+                return saved;
+            }
         }
         return result;
     }
 
     public ActionResult addSuns(int count) {
-        return perform(() -> game.addSun(count), "Sun cheat applied.");
+        ActionResult result = perform(() -> game.addSun(count), "Sun cheat applied.");
+        return result.isSuccessful() ? saveResult(result) : result;
     }
 
     public ActionResult removeCooldowns() {
-        return perform(() -> game.removeAllCooldowns(), "Cooldown cheat applied.");
+        ActionResult result = perform(() -> game.removeAllCooldowns(), "Cooldown cheat applied.");
+        return result.isSuccessful() ? saveResult(result) : result;
     }
 
     public ActionResult releaseNuke() {
@@ -267,7 +285,7 @@ public class GameController {
         if (result.isSuccessful()) {
             progressHandler.synchronizeQuestProgress(game);
             progressHandler.recordGameResultIfNeeded(game);
-            authController.saveCurrentState();
+            return saveResult(result);
         }
         return result;
     }
@@ -277,7 +295,7 @@ public class GameController {
             "Zombie spawned.");
         if (result.isSuccessful()) {
             progressHandler.synchronizeSeenZombies(game);
-            authController.saveCurrentState();
+            return saveResult(result);
         }
         return result;
     }
@@ -389,6 +407,11 @@ public class GameController {
             return "gem";
         }
         return normalized;
+    }
+
+    private ActionResult saveResult(ActionResult result) {
+        ActionResult save = authController.saveCurrentState();
+        return save.isSuccessful() ? result : save;
     }
 
     public List<String> getChapterDescriptions() {

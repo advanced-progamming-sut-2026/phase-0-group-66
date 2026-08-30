@@ -198,6 +198,7 @@ final class BattleTickSystem {
         double shortRange = plant.getEffectiveRange(
             plant.getDefinition().getAbilityParameter("rangeTiles", 3.0));
         if (plant.getAbility() == PlantAbility.SHORT_RANGE_SHROOM
+            && target != null
             && target.getPosition().getColumn() - position.getColumn() > shortRange + 0.5) {
             return;
         }
