@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 public final class NetworkScreen extends AuthenticatedUiScreen {
     private final TextField opponent;
@@ -27,12 +28,16 @@ public final class NetworkScreen extends AuthenticatedUiScreen {
     private float refreshTimer;
     private boolean launched;
     private final Set<String> announcedRequests = new HashSet<>();
+    private TextButton randomButton;
+    private TextButton challengeButton;
     private final ExecutorService networkExecutor = Executors.newSingleThreadExecutor(runnable -> {
         Thread thread = new Thread(runnable, "pvz-network-screen");
         thread.setDaemon(true);
         return thread;
     });
     private final AtomicBoolean refreshInFlight = new AtomicBoolean();
+    private final AtomicBoolean matchRequestInFlight = new AtomicBoolean();
+    private volatile boolean disposed;
 
     public NetworkScreen(PvzApplication app) {
         super(app);
@@ -68,19 +73,28 @@ public final class NetworkScreen extends AuthenticatedUiScreen {
         panel.add(help).width(760f).height(48f);
         panel.row().padTop(16f);
 
-        TextButton random = theme.primaryButton("FIND RANDOM OPPONENT");
-        UiActions.onClick(random, () -> showResult(app.services().network().findRandom(selectedLevel())));
-        panel.add(random).width(360f).height(52f);
+        randomButton = theme.primaryButton("FIND RANDOM OPPONENT");
+        UiActions.onClick(randomButton, () -> {
+            int selected = selectedLevel();
+            if (selected > 0) {
+                requestMatch(() -> app.services().network().findRandom(selected));
+            }
+        });
+        panel.add(randomButton).width(360f).height(52f);
         panel.row().padTop(12f);
 
         Table direct = new Table();
         direct.add(opponent).width(330f).height(48f).padRight(10f);
         direct.add(level).width(110f).height(48f).padRight(10f);
-        TextButton challenge = theme.secondaryButton("CHALLENGE");
-        UiActions.onClick(challenge, () -> showResult(
-            app.services().network().challenge(opponent.getText().trim(), selectedLevel())
-        ));
-        direct.add(challenge).width(190f).height(48f);
+        challengeButton = theme.secondaryButton("CHALLENGE");
+        UiActions.onClick(challengeButton, () -> {
+            int selected = selectedLevel();
+            if (selected > 0) {
+                requestMatch(() -> app.services().network()
+                    .challenge(opponent.getText().trim(), selected));
+            }
+        });
+        direct.add(challengeButton).width(190f).height(48f);
         panel.add(direct);
         panel.row().padTop(10f);
         TextButton couch = theme.tertiaryButton("COUCH PLAY - ONE DEVICE");
@@ -106,7 +120,40 @@ public final class NetworkScreen extends AuthenticatedUiScreen {
         panel.add(back).width(220f).height(48f);
 
         screen.add(panel).width(850f).height(480f).center();
-        root.add(screen).grow();
+        addScrollable(screen);
+    }
+
+    private void requestMatch(Supplier<ActionResult> request) {
+        if (!matchRequestInFlight.compareAndSet(false, true)) {
+            return;
+        }
+        randomButton.setDisabled(true);
+        challengeButton.setDisabled(true);
+        networkExecutor.submit(() -> {
+            try {
+                ActionResult result = request.get();
+                Gdx.app.postRunnable(() -> finishMatchRequest(result));
+            } catch (RuntimeException exception) {
+                Gdx.app.postRunnable(() -> {
+                    matchRequestInFlight.set(false);
+                    if (!disposed) {
+                        randomButton.setDisabled(false);
+                        challengeButton.setDisabled(false);
+                        theme.showError(status, exception.getMessage());
+                    }
+                });
+            }
+        });
+    }
+
+    private void finishMatchRequest(ActionResult result) {
+        matchRequestInFlight.set(false);
+        if (disposed) {
+            return;
+        }
+        randomButton.setDisabled(false);
+        challengeButton.setDisabled(false);
+        showResult(result);
     }
 
     private void showResult(ActionResult result) {
@@ -138,6 +185,9 @@ public final class NetworkScreen extends AuthenticatedUiScreen {
                 List<MatchInvite> invites = app.services().network().getRequests();
                 Gdx.app.postRunnable(() -> {
                     refreshInFlight.set(false);
+                    if (disposed) {
+                        return;
+                    }
                     if (ticket != null && ticket.isMatched()) {
                         launched = app.startOnlineIZombie(ticket);
                         if (launched) {
@@ -149,6 +199,9 @@ public final class NetworkScreen extends AuthenticatedUiScreen {
             } catch (IOException exception) {
                 Gdx.app.postRunnable(() -> {
                     refreshInFlight.set(false);
+                    if (disposed) {
+                        return;
+                    }
                     theme.showError(status, exception.getMessage());
                 });
             }
@@ -200,7 +253,7 @@ public final class NetworkScreen extends AuthenticatedUiScreen {
             // Fall through to a readable validation message.
         }
         theme.showError(status, "Level must be between 1 and 3.");
-        return 1;
+        return -1;
     }
 
     private void showInviteDialog(MatchInvite invite) {
@@ -222,6 +275,7 @@ public final class NetworkScreen extends AuthenticatedUiScreen {
 
     @Override
     public void dispose() {
+        disposed = true;
         networkExecutor.shutdownNow();
         super.dispose();
     }

@@ -26,6 +26,11 @@ public final class QuestScreen extends AuthenticatedUiScreen {
         buildUi();
     }
 
+    @Override
+    protected void handleEscape() {
+        app.showAdventure();
+    }
+
     private void buildUi() {
         Table screen = new Table();
         screen.top();

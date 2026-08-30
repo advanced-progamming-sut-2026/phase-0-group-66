@@ -252,6 +252,16 @@ public final class UiTheme implements Disposable {
         return atlas.image(imageId, Scaling.fit);
     }
 
+    public Image imageOrFallback(String imageId) {
+        Image image = image(imageId);
+        if (image != null) {
+            return image;
+        }
+        Image fallback = new Image(skin.getDrawable("image_ui_dialog_asset_inner_bkgd_10"));
+        fallback.setScaling(Scaling.fit);
+        return fallback;
+    }
+
     public Drawable drawable(String imageId) {
         return atlas.drawable(imageId);
     }

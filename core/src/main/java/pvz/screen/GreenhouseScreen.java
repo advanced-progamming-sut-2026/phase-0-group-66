@@ -41,6 +41,7 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
     private Boolean selectedReadyState;
     private Label liveStateLabel;
     private Label liveCostLabel;
+    private boolean actionInFlight;
 
     public GreenhouseScreen(PvzApplication app) {
         super(app);
@@ -49,6 +50,11 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
             root.setBackground(zen);
         }
         buildUi();
+    }
+
+    @Override
+    protected void handleEscape() {
+        app.showAdventure();
     }
 
     private void buildUi() {
@@ -89,7 +95,7 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
         screen.row().padTop(8f);
 
         screen.add(buildFooter()).width(1180f).height(54f);
-        root.add(screen).grow();
+        addScrollable(screen);
     }
 
     private Table buildInventoryBar() {
@@ -235,6 +241,7 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
         panel.row().padTop(10f);
 
         TextButton plant = theme.primaryButton("Plant Pot");
+        plant.setDisabled(user.getInventory().getPots() <= 0);
         UiActions.onClick(plant, this::plantSelected);
         panel.add(plant).width(220f).height(54f);
     }
@@ -274,6 +281,7 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
         panel.add(liveCostLabel).center();
         panel.row().padTop(12f);
         TextButton grow = theme.tertiaryButton("Speed Up");
+        grow.setDisabled(user.getWallet().getGems() < gems);
         UiActions.onClick(grow, this::growSelected);
         panel.add(grow).width(220f).height(54f);
     }
@@ -311,15 +319,39 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
     }
 
     private void plantSelected() {
-        apply(app.services().greenhouse().plantPot(selectedX, selectedY));
+        if (actionInFlight) {
+            return;
+        }
+        actionInFlight = true;
+        try {
+            apply(app.services().greenhouse().plantPot(selectedX, selectedY));
+        } finally {
+            actionInFlight = false;
+        }
     }
 
     private void collectSelected() {
-        apply(app.services().greenhouse().collect(selectedX, selectedY));
+        if (actionInFlight) {
+            return;
+        }
+        actionInFlight = true;
+        try {
+            apply(app.services().greenhouse().collect(selectedX, selectedY));
+        } finally {
+            actionInFlight = false;
+        }
     }
 
     private void growSelected() {
-        apply(app.services().greenhouse().grow(selectedX, selectedY));
+        if (actionInFlight) {
+            return;
+        }
+        actionInFlight = true;
+        try {
+            apply(app.services().greenhouse().grow(selectedX, selectedY));
+        } finally {
+            actionInFlight = false;
+        }
     }
 
     private void apply(ActionResult result) {
@@ -360,28 +392,18 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
             .findDefinition(plantName);
         Image image = definition
             .map(plant -> PlantArtResolver.packetImage(theme, plant))
-            .orElseGet(() -> theme.image(MARIGOLD_PACKET));
-        if (image != null) {
-            table.add(image).size(size);
-        }
+            .orElse(null);
+        table.add(image == null ? theme.imageOrFallback(MARIGOLD_PACKET) : image).size(size);
     }
 
     private void addImage(Table table, String id, float size) {
-        Image image = theme.image(id);
-        if (image != null) {
-            table.add(image).size(size);
-        }
+        table.add(theme.imageOrFallback(id)).size(size);
     }
 
     private Image icon(String id, float size) {
-        Image image = theme.image(id);
-        if (image != null) {
-            image.setSize(size, size);
-            return image;
-        }
-        Image fallback = new Image(theme.skin().getDrawable("image_ui_dialog_asset_inner_bkgd_10"));
-        fallback.setSize(size, size);
-        return fallback;
+        Image image = theme.imageOrFallback(id);
+        image.setSize(size, size);
+        return image;
     }
 
     private Label wrapped(String text) {

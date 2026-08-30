@@ -51,6 +51,7 @@ public final class WallnutBowlingSession extends MiniGameSession {
         }
         addCard();
         spawnInitialZombies();
+        releaseZombies(Math.min(5, pendingZombies.size()));
         nextCardTick = 40;
     }
 
@@ -98,8 +99,7 @@ public final class WallnutBowlingSession extends MiniGameSession {
         addConveyorCardIfNeeded();
         moveNutsAndResolveCollisions();
         if (getElapsedTicks() >= 15 * Game.TICKS_PER_SECOND && !pendingZombies.isEmpty()) {
-            zombies.addAll(pendingZombies);
-            pendingZombies.clear();
+            releaseZombies(pendingZombies.size());
         }
         moveZombies();
         cleanupKills();
@@ -107,6 +107,13 @@ public final class WallnutBowlingSession extends MiniGameSession {
         if (!isLost() && kills >= getTarget()) {
             win();
             addScore(1000);
+        }
+    }
+
+    private void releaseZombies(int count) {
+        int safeCount = Math.max(0, Math.min(count, pendingZombies.size()));
+        for (int index = 0; index < safeCount; index++) {
+            zombies.add(pendingZombies.remove(0));
         }
     }
 

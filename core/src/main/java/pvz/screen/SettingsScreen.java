@@ -97,7 +97,7 @@ public final class SettingsScreen extends AuthenticatedUiScreen {
         actions.add(back).width(180f).height(48f);
         panel.add(actions).padTop(3f);
 
-        root.add(panel).width(PANEL_WIDTH).height(PANEL_HEIGHT).center();
+        addScrollable(panel);
     }
 
     private Table buildHeader() {

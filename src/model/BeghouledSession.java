@@ -437,8 +437,13 @@ public final class BeghouledSession extends MiniGameSession {
     }
 
     private void resetBoard() {
-        fillBoard();
-        removeInitialMatches();
+        for (int attempt = 0; attempt < 32; attempt++) {
+            fillBoard();
+            removeInitialMatches();
+            if (hasPossibleMove()) {
+                break;
+            }
+        }
         addScore(-100);
     }
 

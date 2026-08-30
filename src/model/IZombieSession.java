@@ -87,7 +87,8 @@ public class IZombieSession extends MiniGameSession {
             "Cabbage-pult"};
         for (int row = 0; row < 5; row++) {
             int count = 2 + getLevel();
-            for (int index = 0; index < count; index++) {
+            int placed = 0;
+            while (placed < count) {
                 int column = random.nextInt(5);
                 if (findPlant(row, column) != null) {
                     continue;
@@ -97,6 +98,7 @@ public class IZombieSession extends MiniGameSession {
                 int damage = type.equals("Repeater") ? 55
                     : type.equals("Snow Pea") ? 30 : 35;
                 plants.add(new MiniGamePlantUnit(type, row, column, health, damage));
+                placed++;
             }
         }
     }

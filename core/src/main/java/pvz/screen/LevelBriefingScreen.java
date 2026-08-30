@@ -33,7 +33,12 @@ public final class LevelBriefingScreen extends AuthenticatedUiScreen {
         screen.add(buildBriefing()).expand().center().padTop(14f);
         screen.row();
         screen.add(buildFooter()).growX().pad(0f, 42f, 24f, 42f);
-        root.add(screen).grow();
+        addScrollable(screen);
+    }
+
+    @Override
+    protected void handleEscape() {
+        app.showChapterLevels(chapter);
     }
 
     private Table buildBriefing() {

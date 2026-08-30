@@ -31,6 +31,7 @@ public final class ShopScreen extends AuthenticatedUiScreen {
     private final SelectBox<String> plantSelect;
     private String message = "Choose an item to purchase.";
     private boolean messageSuccess = true;
+    private boolean purchaseInFlight;
 
     public ShopScreen(PvzApplication app) {
         super(app);
@@ -42,9 +43,18 @@ public final class ShopScreen extends AuthenticatedUiScreen {
         buildUi();
     }
 
+    @Override
+    protected void handleEscape() {
+        app.showGreenhouse();
+    }
+
     private void buildUi() {
         root.clearChildren();
-        app.services().shop().dailyOffer();
+        String dailyStatus = app.services().shop().dailyOffer();
+        if (dailyStatus.startsWith("Could not save daily offer:")) {
+            message = dailyStatus;
+            messageSuccess = false;
+        }
 
         Table screen = new Table();
         screen.top();
@@ -74,7 +84,7 @@ public final class ShopScreen extends AuthenticatedUiScreen {
         screen.row().padTop(8f);
 
         screen.add(buildFooter()).width(1180f).height(54f);
-        root.add(screen).grow();
+        addScrollable(screen);
     }
 
     private Table buildInventoryStrip() {
@@ -128,7 +138,8 @@ public final class ShopScreen extends AuthenticatedUiScreen {
         TextButton buy = theme.tertiaryButton(
             state.isDailyPurchased() ? "Purchased" : "Buy Daily"
         );
-        buy.setDisabled(state.isDailyPurchased());
+        buy.setDisabled(state.isDailyPurchased()
+            || user.getWallet().getCoins() < 1600);
         if (!state.isDailyPurchased()) {
             UiActions.onClick(buy, () -> purchase(6, 1, null));
         }
@@ -196,6 +207,9 @@ public final class ShopScreen extends AuthenticatedUiScreen {
             && user.getGreenhouse().getUnlockedSlotCount() >= Greenhouse.MAX_SLOTS) {
             buy.setDisabled(true);
         }
+        if (!canBuy(entry)) {
+            buy.setDisabled(true);
+        }
         UiActions.onClick(buy, () -> buyEntry(entry.id()));
         buyRow.add(buy).width(120f).height(44f);
         card.add(buyRow).growX().padTop(6f);
@@ -225,6 +239,9 @@ public final class ShopScreen extends AuthenticatedUiScreen {
     }
 
     private void buyEntry(int itemId) {
+        if (purchaseInFlight) {
+            return;
+        }
         int count = quantity();
         if (count <= 0) {
             return;
@@ -234,11 +251,16 @@ public final class ShopScreen extends AuthenticatedUiScreen {
     }
 
     private void purchase(int itemId, int count, String plant) {
-        ActionResult result = app.services().shop().buyItem(itemId, count, plant);
-        message = result.getMessage();
-        messageSuccess = result.isSuccessful();
-        refreshOwnedPlants();
-        buildUi();
+        purchaseInFlight = true;
+        try {
+            ActionResult result = app.services().shop().buyItem(itemId, count, plant);
+            message = result.getMessage();
+            messageSuccess = result.isSuccessful();
+            refreshOwnedPlants();
+            buildUi();
+        } finally {
+            purchaseInFlight = false;
+        }
     }
 
     private int quantity() {
@@ -264,19 +286,44 @@ public final class ShopScreen extends AuthenticatedUiScreen {
         ArrayList<String> names = new ArrayList<>(user.getCollectionBook().getOwnedPlants());
         names.sort(Comparator.naturalOrder());
         if (names.isEmpty()) {
-            names.add("Peashooter");
+            names.add("No owned plants");
         }
         plantSelect.setItems(names.toArray(new String[0]));
+        plantSelect.setDisabled(!hasOwnedPlants());
         if (selected != null && names.contains(selected)) {
             plantSelect.setSelected(selected);
         }
     }
 
-    private void addIcon(Table table, String id, float size, float rightPadding) {
-        Image image = theme.image(id);
-        if (image != null) {
-            table.add(image).size(size).padRight(rightPadding);
+    private boolean hasOwnedPlants() {
+        return !user.getCollectionBook().getOwnedPlants().isEmpty();
+    }
+
+    private boolean canBuy(ShopEntry entry) {
+        int count = requestedQuantity();
+        return switch (entry.id()) {
+            case 1 -> user.getGreenhouse().getUnlockedSlotCount() + count <= Greenhouse.MAX_SLOTS
+                && user.getWallet().getCoins() >= 2000 * count;
+            case 2 -> user.getInventory().getPlantFoodCapacityLeft() >= count
+                && user.getWallet().getGems() >= 3 * count;
+            case 3 -> hasOwnedPlants() && user.getWallet().getCoins() >= 1000 * count;
+            case 4 -> hasOwnedPlants() && user.getWallet().getGems() >= 5 * count;
+            case 5 -> user.getWallet().getGems() >= 5 * count;
+            default -> false;
+        };
+    }
+
+    private int requestedQuantity() {
+        try {
+            int value = Integer.parseInt(quantityField.getText().trim());
+            return value > 0 && value <= 20 ? value : 1;
+        } catch (NumberFormatException exception) {
+            return 1;
         }
+    }
+
+    private void addIcon(Table table, String id, float size, float rightPadding) {
+        table.add(theme.imageOrFallback(id)).size(size).padRight(rightPadding);
     }
 
     private record ShopEntry(

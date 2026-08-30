@@ -64,8 +64,13 @@ public final class PlantSelectionScreen extends AuthenticatedUiScreen {
         screen.add(buildContent()).grow().padTop(8f);
         screen.row();
         screen.add(buildFooter()).growX().padTop(7f);
-        root.add(screen).grow();
+        addScrollable(screen);
         restoreCatalogScroll();
+    }
+
+    @Override
+    protected void handleEscape() {
+        app.showLevelBriefing(chapter, level);
     }
 
     private Table buildHeader() {

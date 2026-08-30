@@ -25,6 +25,11 @@ public final class MiniGameHubScreen extends AuthenticatedUiScreen {
         buildUi();
     }
 
+    @Override
+    protected void handleEscape() {
+        app.leaveMiniGames();
+    }
+
     private void buildUi() {
         Table screen = new Table();
         screen.top().pad(24f, 54f, 16f, 54f);

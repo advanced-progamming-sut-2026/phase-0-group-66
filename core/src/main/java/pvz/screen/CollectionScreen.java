@@ -99,7 +99,12 @@ public final class CollectionScreen extends AuthenticatedUiScreen {
             .left()
             .padTop(4f);
 
-        root.add(screen).grow();
+        addScrollable(screen);
+    }
+
+    @Override
+    protected void handleEscape() {
+        app.showAdventure();
     }
 
     private Table buildTabsAndFilters() {

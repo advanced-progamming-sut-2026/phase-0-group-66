@@ -33,6 +33,7 @@ public class GreenhouseController {
         if (user == null) {
             return ActionResult.failure("Login is required.");
         }
+        User snapshot = user.copyForRollback();
         try {
             GreenhouseSlot slot = user.getGreenhouse().getSlot(x, y);
             if (!slot.isUnlocked()) {
@@ -53,10 +54,11 @@ public class GreenhouseController {
             long growth = marigold ? Greenhouse.MARIGOLD_GROWTH_MILLIS
                 : Greenhouse.PLANT_GROWTH_MILLIS;
             slot.plant(plantName, marigold, System.currentTimeMillis(), growth);
-            return save("Planted " + plantName + " at (" + x + ", " + y
+            return save(user, snapshot, "Planted " + plantName + " at (" + x + ", " + y
                 + "); one inventory pot was consumed. Remaining pots: "
                 + user.getInventory().getPots() + ".");
         } catch (IllegalArgumentException exception) {
+            user.restoreFrom(snapshot);
             return ActionResult.failure(exception.getMessage());
         }
     }
@@ -66,6 +68,7 @@ public class GreenhouseController {
         if (user == null) {
             return ActionResult.failure("Login is required.");
         }
+        User snapshot = user.copyForRollback();
         try {
             GreenhouseSlot slot = user.getGreenhouse().getSlot(x, y);
             if (slot.isEmpty()) {
@@ -84,8 +87,9 @@ public class GreenhouseController {
                     : "Boost already exists; the slot was cleared without another boost.";
             }
             slot.clear();
-            return save(result);
+            return save(user, snapshot, result);
         } catch (IllegalArgumentException exception) {
+            user.restoreFrom(snapshot);
             return ActionResult.failure(exception.getMessage());
         }
     }
@@ -95,6 +99,7 @@ public class GreenhouseController {
         if (user == null) {
             return ActionResult.failure("Login is required.");
         }
+        User snapshot = user.copyForRollback();
         try {
             GreenhouseSlot slot = user.getGreenhouse().getSlot(x, y);
             long now = System.currentTimeMillis();
@@ -109,8 +114,9 @@ public class GreenhouseController {
                 return ActionResult.failure("Not enough gems. Required: " + cost + ".");
             }
             slot.makeReady(now);
-            return save("Growth completed for " + cost + " gem(s).");
+            return save(user, snapshot, "Growth completed for " + cost + " gem(s).");
         } catch (IllegalArgumentException exception) {
+            user.restoreFrom(snapshot);
             return ActionResult.failure(exception.getMessage());
         }
     }
@@ -130,8 +136,12 @@ public class GreenhouseController {
         return authController.getCurrentUser();
     }
 
-    private ActionResult save(String message) {
+    private ActionResult save(User user, User snapshot, String message) {
         ActionResult save = authController.saveCurrentState();
-        return save.isSuccessful() ? ActionResult.success(message) : save;
+        if (!save.isSuccessful()) {
+            user.restoreFrom(snapshot);
+            return save;
+        }
+        return ActionResult.success(message);
     }
 }

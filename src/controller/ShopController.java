@@ -31,7 +31,15 @@ public class ShopController {
         if (user == null) {
             return "Login is required.";
         }
-        refreshDaily(user);
+        if (!user.getShopState().isCurrent(LocalDate.now())) {
+            User snapshot = user.copyForRollback();
+            refreshDaily(user);
+            ActionResult saved = authController.saveCurrentState();
+            if (!saved.isSuccessful()) {
+                user.restoreFrom(snapshot);
+                return "Could not save daily offer: " + saved.getMessage();
+            }
+        }
         return "6. DAILY_SEED_PACKET - 1600 coins - 10 seed packets for "
             + user.getShopState().getDailyPlant() + " - "
             + (user.getShopState().isDailyPurchased() ? "PURCHASED" : "AVAILABLE");
@@ -45,13 +53,21 @@ public class ShopController {
         if (count <= 0) {
             return ActionResult.failure("Count must be positive.");
         }
+        User snapshot = user.copyForRollback();
         try {
+            ActionResult result;
             if (itemId == 6) {
-                return buyDaily(user, count);
+                result = buyDaily(user, count);
+            } else {
+                ShopItem item = shop.findItem(itemId);
+                result = buyPermanent(user, item, count, plantType);
             }
-            ShopItem item = shop.findItem(itemId);
-            return buyPermanent(user, item, count, plantType);
+            if (!result.isSuccessful()) {
+                user.restoreFrom(snapshot);
+            }
+            return result;
         } catch (IllegalArgumentException exception) {
+            user.restoreFrom(snapshot);
             return ActionResult.failure(exception.getMessage());
         }
     }

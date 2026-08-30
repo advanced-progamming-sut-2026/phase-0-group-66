@@ -35,7 +35,6 @@ public final class MainMenuScreen extends BaseUiScreen {
 
     private void buildUi() {
         Table screen = new Table();
-        screen.setFillParent(true);
         screen.top();
         screen.pad(28f, 42f, 26f, 42f);
 
@@ -51,7 +50,7 @@ public final class MainMenuScreen extends BaseUiScreen {
         screen.row().padTop(12f);
         screen.add(buildAccountFooter()).growX();
 
-        root.add(screen).grow();
+        addScrollable(screen);
     }
 
     private void addLogo(Table screen) {
@@ -115,7 +114,7 @@ public final class MainMenuScreen extends BaseUiScreen {
 
         Table center = new Table();
         TextButton profile = theme.secondaryButton(user.getNickname());
-        UiActions.onClick(profile, app::showPlayerList);
+        UiActions.onClick(profile, app::showProfile);
         center.add(profile).width(310f).height(48f);
         center.row().padTop(8f);
         center.add(play).width(310f).height(82f);

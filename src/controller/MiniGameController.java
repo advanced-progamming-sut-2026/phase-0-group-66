@@ -73,8 +73,10 @@ public class MiniGameController {
             rewardRecorded = false;
             return ActionResult.success("Started " + type + " level " + level + ". "
                 + commandHelp(type));
-        } catch (IllegalArgumentException exception) {
-            return ActionResult.failure(exception.getMessage());
+        } catch (RuntimeException exception) {
+            String message = exception.getMessage();
+            return ActionResult.failure(message == null || message.isBlank()
+                ? "Mini-game could not be started safely." : message);
         }
     }
 
@@ -91,8 +93,10 @@ public class MiniGameController {
             currentSession.execute(command, tokens.subList(1, tokens.size()));
             finishCurrentSessionIfNeeded();
             return ActionResult.success(currentSession.status());
-        } catch (IllegalArgumentException | IllegalStateException exception) {
-            return ActionResult.failure(exception.getMessage());
+        } catch (RuntimeException exception) {
+            String message = exception.getMessage();
+            return ActionResult.failure(message == null || message.isBlank()
+                ? "Mini-game action failed safely." : message);
         }
     }
 

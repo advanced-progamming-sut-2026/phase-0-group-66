@@ -1,7 +1,10 @@
 package model;
 
 import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -76,6 +79,48 @@ public class User implements Serializable {
     public ShopState getShopState() { return shopState; }
     public QuestLog getQuestLog() { return questLog; }
     public List<News> getNews() { return Collections.unmodifiableList(news); }
+
+    public User copyForRollback() {
+        try {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+                output.writeObject(this);
+            }
+            try (ObjectInputStream input = new ObjectInputStream(
+                new ByteArrayInputStream(bytes.toByteArray()))) {
+                return (User) input.readObject();
+            }
+        } catch (IOException | ClassNotFoundException exception) {
+            throw new IllegalStateException("Could not create a user rollback snapshot.", exception);
+        }
+    }
+
+    public void restoreFrom(User snapshot) {
+        if (snapshot == null) {
+            throw new IllegalArgumentException("Rollback snapshot cannot be null.");
+        }
+        username = snapshot.username;
+        passwordHash = snapshot.passwordHash;
+        passwordSalt = snapshot.passwordSalt;
+        nickname = snapshot.nickname;
+        email = snapshot.email;
+        gender = snapshot.gender;
+        difficultyLevel = snapshot.difficultyLevel;
+        gameSpeed = snapshot.gameSpeed;
+        gridVisible = snapshot.gridVisible;
+        debugMode = snapshot.debugMode;
+        securityQuestion = snapshot.securityQuestion;
+        securityAnswerHash = snapshot.securityAnswerHash;
+        securityAnswerSalt = snapshot.securityAnswerSalt;
+        progress = snapshot.progress;
+        wallet = snapshot.wallet;
+        inventory = snapshot.inventory;
+        collectionBook = snapshot.collectionBook;
+        news = snapshot.news;
+        greenhouse = snapshot.greenhouse;
+        shopState = snapshot.shopState;
+        questLog = snapshot.questLog;
+    }
 
     public void changeUsername(String newUsername) { username = newUsername; }
     public void changeNickname(String newNickname) { nickname = newNickname; }

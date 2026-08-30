@@ -32,6 +32,11 @@ public final class MiniGamePreviewScreen extends AuthenticatedUiScreen {
         buildUi();
     }
 
+    @Override
+    protected void handleEscape() {
+        app.returnToMiniGames();
+    }
+
     private void buildUi() {
         Table screen = new Table();
         screen.top().pad(26f, 46f, 18f, 46f);
@@ -42,7 +47,7 @@ public final class MiniGamePreviewScreen extends AuthenticatedUiScreen {
         screen.row().padTop(8f);
         status.setAlignment(Align.center);
         screen.add(status).width(900f).height(30f);
-        root.add(screen).grow();
+        addScrollable(screen);
     }
 
     private Table buildPreviewCard() {
@@ -148,8 +153,4 @@ public final class MiniGamePreviewScreen extends AuthenticatedUiScreen {
         };
     }
 
-    @Override
-    protected void handleEscape() {
-        app.returnToMiniGames();
-    }
 }

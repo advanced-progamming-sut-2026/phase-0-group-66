@@ -1,5 +1,6 @@
 package pvz.screen;
 
+import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -30,7 +31,7 @@ public final class PlayerListScreen extends AuthenticatedUiScreen {
             UiActions.onClick(player, () -> select(account.getUsername()));
             TextButton delete = theme.tertiaryButton("DELETE");
             delete.getLabel().setFontScale(0.7f);
-            UiActions.onClick(delete, () -> delete(account.getUsername()));
+            UiActions.onClick(delete, () -> confirmDelete(account));
             row.add(player).width(540f).height(56f).padRight(10f);
             row.add(delete).width(120f).height(56f);
             players.add(row).growX().height(56f).padBottom(8f);
@@ -50,13 +51,29 @@ public final class PlayerListScreen extends AuthenticatedUiScreen {
         actions.add(create).width(200f).height(50f);
         panel.add(actions).height(56f);
 
-        root.add(panel).width(800f).height(540f).center();
+        addScrollable(panel);
     }
 
     private void select(String username) {
         if (app.services().auth().selectUser(username).isSuccessful()) {
             app.showMainMenu();
         }
+    }
+
+    private void confirmDelete(User account) {
+        Dialog dialog = new Dialog("DELETE PLAYER", theme.skin()) {
+            @Override
+            protected void result(Object value) {
+                super.result(value);
+                if (Boolean.TRUE.equals(value)) {
+                    delete(account.getUsername());
+                }
+            }
+        };
+        dialog.text("Delete " + account.getNickname() + " permanently?");
+        dialog.button("DELETE", Boolean.TRUE);
+        dialog.button("CANCEL", Boolean.FALSE);
+        dialog.show(stage);
     }
 
     private void delete(String username) {

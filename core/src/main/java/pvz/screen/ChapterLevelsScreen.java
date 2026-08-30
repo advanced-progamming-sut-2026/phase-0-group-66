@@ -55,7 +55,12 @@ public final class ChapterLevelsScreen extends AuthenticatedUiScreen {
         screen.add(buildLevels()).width(1160f).height(CARD_HEIGHT + 14f).center().padTop(12f);
         screen.row();
         screen.add(buildFooter()).width(1180f).height(50f).padTop(6f);
-        root.add(screen).grow();
+        addScrollable(screen);
+    }
+
+    @Override
+    protected void handleEscape() {
+        app.showAdventure();
     }
 
     private Table buildSummary() {

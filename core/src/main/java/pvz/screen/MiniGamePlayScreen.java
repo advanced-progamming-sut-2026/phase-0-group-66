@@ -30,6 +30,11 @@ public abstract class MiniGamePlayScreen extends AuthenticatedUiScreen {
     }
 
     @Override
+    protected void handleEscape() {
+        app.returnToMiniGames();
+    }
+
+    @Override
     public void render(float delta) {
         if (session instanceof NetworkIZombieSession online) {
             networkPollAccumulator += Math.min(delta, 0.25f);

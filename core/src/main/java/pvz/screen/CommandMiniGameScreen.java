@@ -26,6 +26,11 @@ public final class CommandMiniGameScreen extends MiniGamePlayScreen {
         refreshFromSession();
     }
 
+    @Override
+    protected void handleEscape() {
+        app.returnToMiniGames();
+    }
+
     private void buildUi(String miniGameName) {
         Table screen = new Table();
         screen.top().pad(24f, 42f, 16f, 42f);

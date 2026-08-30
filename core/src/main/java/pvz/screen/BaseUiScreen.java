@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Stack;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
@@ -56,6 +57,14 @@ public abstract class BaseUiScreen extends ScreenAdapter {
 
     protected Label statusLabel() {
         return theme.statusLabel();
+    }
+
+    protected void addScrollable(Table content) {
+        ScrollPane scroll = new ScrollPane(content, theme.skin());
+        scroll.setFadeScrollBars(false);
+        scroll.setOverscroll(false, false);
+        scroll.setScrollingDisabled(true, false);
+        root.add(scroll).grow();
     }
 
     protected void addField(Table table, String title, TextField field) {

@@ -44,7 +44,7 @@ public final class ProfileScreen extends AuthenticatedUiScreen {
         TextButton back = theme.secondaryButton("Back");
         UiActions.onClick(back, app::showMainMenu);
         panel.add(back).colspan(2).width(180f).height(50f).padTop(8f);
-        root.add(panel).width(1030f).height(650f).center();
+        addScrollable(panel);
     }
 
     private Table buildSummary() {
