@@ -11,7 +11,7 @@ import pvz.PvzApplication;
 
 public final class MiniGamePreviewScreen extends AuthenticatedUiScreen {
     private static final String VASE_ICON =
-        "IMAGE_EGGBREAKER_VASE_EGG_BROWN_VASE_EGG_BROWN_151X198";
+        "IMAGE_VASEBREAKER_VASE_BROWN_VASE_BROWN_115X150";
     private static final String BOWLING_ICON =
         "IMAGE_PLANT_WALLNUT_WALLNUT_169X187";
     private static final String BRAIN_ICON =
