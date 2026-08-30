@@ -116,14 +116,14 @@ public final class MiniGamePreviewScreen extends AuthenticatedUiScreen {
     private String rulesText() {
         return switch (type) {
             case VASEBREAKER ->
-                "Break a vase to reveal an empty tile, a zombie, or a temporary plant packet. "
-                    + "Use each packet before it disappears and clear the board. No falling sun.";
+                "Break a vase to reveal an empty tile, a zombie, or a plant packet. "
+                    + "Use the revealed plants to clear the board. No falling sun.";
             case WALLNUT_BOWLING ->
                 "Choose a Wall-nut from the conveyor and launch it down a row. Normal nuts turn "
-                    + "after impact, Explode-o-nuts clear a 3x3 area, and giant nuts crush zombies.";
+                    + "after impact, while Explode-o-nuts clear a 3x3 area.";
             case I_ZOMBIE ->
                 "Plants are already placed. Spend sun to deploy the available zombie cards and "
-                    + "eat all five brains. The lawn mowers are your last defense.";
+                    + "eat all five brains before the plants stop you.";
             case BEGHOULD ->
                 "Swap adjacent plants only when the swap creates a line of three or more. "
                     + "Matched plants refill the board, grant sun, and help defend against zombies.";

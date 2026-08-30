@@ -10,7 +10,7 @@ public record MiniGameDefinition(MiniGameType type, boolean bonus, String object
             case VASEBREAKER -> 12 + level * 6;
             case WALLNUT_BOWLING -> 15 + level * 10;
             case I_ZOMBIE -> 5;
-            case BEGHOULD -> 8 + level * 4;
+            case BEGHOULD -> 75;
             case ZOMBOTANY -> 20 + level * 10;
         };
     }

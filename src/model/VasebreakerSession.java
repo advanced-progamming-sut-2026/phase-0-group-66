@@ -122,7 +122,7 @@ public final class VasebreakerSession extends MiniGameSession {
     private void addPacket(Vase vase) {
         int packetId = nextPacketId++;
         packets.put(packetId, new Packet(packetId, vase.payload(), vase.row(),
-            vase.column(), getElapsedTicks() + 100));
+            vase.column(), -1));
     }
 
     private MiniGameUnit createZombie(String type, int row, int column) {
@@ -151,10 +151,6 @@ public final class VasebreakerSession extends MiniGameSession {
     }
 
     private void validatePlantTarget(GridPosition target) {
-        if (target.getColumn() > 5) {
-            throw new IllegalArgumentException(
-                "Vasebreaker plants must be placed in columns 1 to 6.");
-        }
         if (findPlant(target.getRow(), target.getColumn()) != null) {
             throw new IllegalStateException("That tile already contains a plant.");
         }
@@ -213,8 +209,8 @@ public final class VasebreakerSession extends MiniGameSession {
     }
 
     private void expirePackets() {
-        packets.entrySet().removeIf(entry -> entry.getValue().expiresAt()
-            <= getElapsedTicks());
+        packets.entrySet().removeIf(entry -> entry.getValue().expiresAt() >= 0
+            && entry.getValue().expiresAt() <= getElapsedTicks());
     }
 
     private MiniGamePlantUnit blockingPlant(MiniGameUnit zombie) {

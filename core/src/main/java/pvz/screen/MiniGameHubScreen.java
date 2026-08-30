@@ -45,13 +45,13 @@ public final class MiniGameHubScreen extends AuthenticatedUiScreen {
         cards.add(gameCard(
             MiniGameType.VASEBREAKER,
             "Vasebreaker",
-            "Break vases, collect temporary plant packets, and survive.",
+            "Break vases, use revealed plant packets, and survive.",
             VASE_ICON
         )).width(350f).height(310f);
         cards.add(gameCard(
             MiniGameType.WALLNUT_BOWLING,
             "Wall-nut Bowling",
-            "Use the conveyor and bowl three distinct wall-nut types.",
+            "Use the conveyor to bowl Wall-nuts and Explode-o-nuts.",
             BOWLING_ICON
         )).width(350f).height(310f);
         cards.add(gameCard(

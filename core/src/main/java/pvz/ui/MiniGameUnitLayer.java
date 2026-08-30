@@ -2,6 +2,7 @@ package pvz.ui;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.WidgetGroup;
 import com.badlogic.gdx.utils.Scaling;
@@ -162,6 +163,10 @@ public final class MiniGameUnitLayer extends WidgetGroup {
                 return sun;
             }
         }
+        Actor poweredZombie = createPoweredZombieActor(type);
+        if (poweredZombie != null) {
+            return poweredZombie;
+        }
         Actor actor = null;
         ZombieDefinition definition = resolveZombie(type);
         if (definition != null) {
@@ -184,6 +189,33 @@ public final class MiniGameUnitLayer extends WidgetGroup {
         }
         tintPoweredZombie(actor, type);
         return actor;
+    }
+
+    private Actor createPoweredZombieActor(String type) {
+        String plantName = switch (normalize(type)) {
+            case "peashooterzombie" -> "Peashooter";
+            case "wallnutzombie" -> "Wall-nut";
+            case "jalapenozombie" -> "Jalapeno";
+            case "squashzombie" -> "Squash";
+            default -> null;
+        };
+        if (plantName == null) {
+            return null;
+        }
+        PlantDefinition plant = app.services().gameData().getPlantFactory()
+            .findDefinition(plantName).orElse(null);
+        ZombieDefinition zombie = app.services().gameData().getZombieFactory()
+            .findDefinition("Basic Zombie").orElse(null);
+        if (plant == null || zombie == null) {
+            return null;
+        }
+        ZombieAnimationActor body = new ZombieAnimationActor(app.assets(), zombie);
+        Actor head = createPlantActor(plantName);
+        if (!body.hasAnimation() && head == null) {
+            return null;
+        }
+        tintPoweredZombie(body, type);
+        return new PoweredZombieActor(body, head);
     }
 
     private void tintPoweredZombie(Actor actor, String type) {
@@ -231,5 +263,35 @@ public final class MiniGameUnitLayer extends WidgetGroup {
     private String normalize(String value) {
         return value == null ? "" : value.toLowerCase(Locale.ROOT)
             .replaceAll("[^a-z0-9]", "");
+    }
+
+    private static final class PoweredZombieActor extends Group {
+        private final Actor body;
+        private final Actor head;
+
+        private PoweredZombieActor(Actor body, Actor head) {
+            this.body = body;
+            this.head = head;
+            addActor(body);
+            if (head != null) {
+                addActor(head);
+            }
+            setTransform(false);
+        }
+
+        @Override
+        public void setBounds(float x, float y, float width, float height) {
+            super.setBounds(x, y, width, height);
+            body.setBounds(0f, 0f, getWidth(), getHeight());
+            if (head != null) {
+                float size = Math.min(getWidth() * 0.62f, getHeight() * 0.52f);
+                head.setBounds(
+                    (getWidth() - size) * 0.5f,
+                    getHeight() * 0.46f,
+                    size,
+                    size
+                );
+            }
+        }
     }
 }

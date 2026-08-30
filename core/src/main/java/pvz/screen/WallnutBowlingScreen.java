@@ -25,7 +25,6 @@ public final class WallnutBowlingScreen extends MiniGamePlayScreen {
     private static final float BOARD_HEIGHT = 470f;
     private static final String NORMAL_ART = "IMAGE_PLANT_WALLNUT_WALLNUT_100X106";
     private static final String EXPLOSIVE_ART = "IMAGE_PLANT_EXPLODEONUT_EXPLODEONUT_98X124";
-    private static final String GIANT_ART = "IMAGE_PLANT_WALLNUT_WALLNUT_169X187";
 
     private final WallnutBowlingSession bowling;
     private final MiniGameUnitLayer units;
@@ -142,7 +141,7 @@ public final class WallnutBowlingScreen extends MiniGamePlayScreen {
 
     private void rebuildConveyor(Map<String, Integer> counts) {
         conveyor.clearChildren();
-        for (String type : List.of("NORMAL", "EXPLOSIVE", "GIANT")) {
+        for (String type : List.of("NORMAL", "EXPLOSIVE")) {
             Table card = theme.settingsBadgePanel(5f);
             Image image = theme.image(nutArt(type));
             if (image != null) {
@@ -177,7 +176,7 @@ public final class WallnutBowlingScreen extends MiniGamePlayScreen {
                 continue;
             }
             image.setScaling(Scaling.fit);
-            float size = nut.type().equals("GIANT") ? cellHeight * 0.92f : cellHeight * 0.70f;
+            float size = cellHeight * 0.70f;
             float x = (float) nut.column() * cellWidth - size * 0.45f;
             float y = (ROWS - 1f - (float) nut.row()) * cellHeight
                 + (cellHeight - size) * 0.35f;
@@ -189,7 +188,6 @@ public final class WallnutBowlingScreen extends MiniGamePlayScreen {
     private String nutArt(String type) {
         return switch (type) {
             case "EXPLOSIVE" -> EXPLOSIVE_ART;
-            case "GIANT" -> GIANT_ART;
             default -> NORMAL_ART;
         };
     }

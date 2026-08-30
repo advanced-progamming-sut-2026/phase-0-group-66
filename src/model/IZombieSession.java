@@ -33,7 +33,6 @@ public class IZombieSession extends MiniGameSession {
         if (!multiplayer) {
             createGarden();
         }
-        createSunProducers();
     }
 
     @Override
@@ -100,15 +99,6 @@ public class IZombieSession extends MiniGameSession {
                 plants.add(new MiniGamePlantUnit(type, row, column, health, damage));
                 placed++;
             }
-        }
-    }
-
-    private void createSunProducers() {
-        for (int row = 0; row < 5; row++) {
-            MiniGameUnit producer = new MiniGameUnit("Sun Producer Zombie", row, 8.7,
-                900, 20, 0.012);
-            producer.setCooldown(productionInterval(producer));
-            zombies.add(producer);
         }
     }
 
@@ -184,7 +174,6 @@ public class IZombieSession extends MiniGameSession {
                 iterator.remove();
                 continue;
             }
-            produceSunIfReady(zombie);
             MiniGamePlantUnit blocker = blockingPlant(zombie);
             if (blocker != null) {
                 attackPlant(zombie, blocker);
@@ -206,21 +195,6 @@ public class IZombieSession extends MiniGameSession {
         }
     }
 
-    private void produceSunIfReady(MiniGameUnit zombie) {
-        if (!zombie.getType().equals("Sun Producer Zombie") || !zombie.ready()) {
-            return;
-        }
-        sun += 25;
-        zombie.setCooldown(productionInterval(zombie));
-        addScore(5);
-    }
-
-    private int productionInterval(MiniGameUnit producer) {
-        int elapsedSeconds = producer.getAgeTicks() / Game.TICKS_PER_SECOND;
-        int acceleration = elapsedSeconds / 10;
-        return Math.max(15, 80 - getLevel() * 5 - acceleration * 5);
-    }
-
     private void attackPlant(MiniGameUnit zombie, MiniGamePlantUnit blocker) {
         if (!zombie.ready()) {
             return;
@@ -235,9 +209,6 @@ public class IZombieSession extends MiniGameSession {
     }
 
     private void moveTowardBrain(MiniGameUnit zombie, Iterator<MiniGameUnit> iterator) {
-        if (zombie.getType().equals("Sun Producer Zombie")) {
-            return;
-        }
         zombie.setColumn(zombie.getColumn() - zombie.getSpeed());
         if (zombie.getColumn() < -0.1) {
             if (brains[zombie.getRow()]) {
@@ -279,10 +250,6 @@ public class IZombieSession extends MiniGameSession {
                 || zombie.getColumn() < plant.getColumn()) {
                 continue;
             }
-            // Sun producers are stationary resource sources, not attack targets.
-            if (zombie.getType().equals("Sun Producer Zombie")) {
-                continue;
-            }
             if (result == null || zombie.getColumn() < result.getColumn()) {
                 result = zombie;
             }
@@ -315,12 +282,9 @@ public class IZombieSession extends MiniGameSession {
     }
 
     private void evaluateLoss() {
-        boolean activeAttacker = zombies.stream().anyMatch(zombie -> !zombie.isDead()
-            && !zombie.getType().equals("Sun Producer Zombie"));
+        boolean activeAttacker = zombies.stream().anyMatch(zombie -> !zombie.isDead());
         int cheapest = cards.values().stream().mapToInt(ZombieCard::cost).min().orElse(25);
-        boolean producerAlive = zombies.stream().anyMatch(zombie -> !zombie.isDead()
-            && zombie.getType().equals("Sun Producer Zombie"));
-        if (!activeAttacker && sun < cheapest && !producerAlive) {
+        if (!activeAttacker && sun < cheapest) {
             lose();
         }
     }
@@ -341,7 +305,7 @@ public class IZombieSession extends MiniGameSession {
                 for (MiniGameUnit zombie : zombies) {
                     if (!zombie.isDead() && zombie.getRow() == row
                         && Math.round(zombie.getColumn()) == col) {
-                        symbol = zombie.getType().equals("Sun Producer Zombie") ? 'S' : 'Z';
+                        symbol = 'Z';
                     }
                 }
                 builder.append(symbol).append(' ');

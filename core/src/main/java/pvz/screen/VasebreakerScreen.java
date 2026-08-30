@@ -7,7 +7,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Scaling;
-import model.Game;
 import model.VasebreakerSession;
 import pvz.PvzApplication;
 import pvz.ui.PlantArtResolver;
@@ -57,8 +56,8 @@ public final class VasebreakerScreen extends MiniGamePlayScreen {
         panel.add(theme.heading("PLANT PACKETS")).padBottom(6f);
         panel.row();
         Label hint = theme.bodyLabel(
-            "Break the vases on the right. Plant packets appear here temporarily. "
-                + "Select one, then click an empty tile on the left six columns."
+            "Break a vase to reveal a plant packet or zombie. "
+                + "Select a packet, then click any cleared tile to plant it."
         );
         hint.setAlignment(Align.left);
         hint.setWrap(true);
@@ -111,7 +110,7 @@ public final class VasebreakerScreen extends MiniGamePlayScreen {
             selectedPacket = -1;
         }
         if (packets.isEmpty()) {
-            Label empty = theme.bodyLabel("No temporary packets available.");
+            Label empty = theme.bodyLabel("No plant packets revealed yet.");
             empty.setFontScale(0.70f);
             packetTray.add(empty).width(248f).padTop(10f);
             return;
@@ -135,11 +134,7 @@ public final class VasebreakerScreen extends MiniGamePlayScreen {
     }
 
     private String packetLabel(VasebreakerSession.PacketView packet, boolean selected) {
-        int remainingTicks = Math.max(0, packet.expiresAt() - vaseSession.getElapsedTicks());
-        int remainingSeconds = (remainingTicks + Game.TICKS_PER_SECOND - 1)
-            / Game.TICKS_PER_SECOND;
-        return "#" + packet.id() + " " + (selected ? "SELECTED" : packet.plantType())
-            + " (" + remainingSeconds + "s)";
+        return "#" + packet.id() + " " + (selected ? "SELECTED" : packet.plantType());
     }
 
     private Image packetImage(String type) {

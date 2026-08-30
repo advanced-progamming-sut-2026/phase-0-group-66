@@ -221,10 +221,10 @@ public class MiniGameController {
 
     private void registerDefaults() {
         register(MiniGameType.VASEBREAKER, false,
-            "Break every vase, use temporary plant packets, and survive released zombies.",
+            "Break every vase, use the revealed plant packets, and survive released zombies.",
             "break");
         register(MiniGameType.WALLNUT_BOWLING, false,
-            "Use conveyor-delivered normal, explosive, and giant wall-nuts.", "bowl");
+            "Use conveyor-delivered Wall-nuts and Explode-o-nuts.", "bowl");
         register(MiniGameType.I_ZOMBIE, false,
             "Spend sun on zombies and eat all five brains.", "deploy");
         register(MiniGameType.BEGHOULD, true,
@@ -241,7 +241,7 @@ public class MiniGameController {
     private String commandHelp(MiniGameType type) {
         return switch (type) {
             case VASEBREAKER -> "Commands: break <x> <y>; plant <packetId> <x> <y>; advance <ticks>.";
-            case WALLNUT_BOWLING -> "Commands: bowl <normal|explosive|giant> <row>; advance <ticks>.";
+            case WALLNUT_BOWLING -> "Commands: bowl <normal|explosive> <row>; advance <ticks>.";
             case I_ZOMBIE -> "Commands: deploy <level-card> <row>; advance <ticks>. "
                 + "Use board to see the five cards for the selected level.";
             case BEGHOULD -> "Commands: swap <x1> <y1> <x2> <y2>; upgrade <plant>; advance <ticks>.";
