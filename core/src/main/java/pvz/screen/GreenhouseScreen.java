@@ -8,6 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Scaling;
 import controller.ActionResult;
 import model.Greenhouse;
 import model.GreenhouseSlot;
@@ -29,8 +30,8 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
         "IMAGE_UI_ALMANAC_ALMANAC_STAT_ICON_PLANTFOOD_LARGE";
     private static final String MARIGOLD_PACKET = "IMAGE_UI_PACKETS_MARIGOLD";
 
-    private static final float SLOT_WIDTH = 158f;
-    private static final float SLOT_HEIGHT = 108f;
+    private static final float SLOT_WIDTH = 190f;
+    private static final float SLOT_HEIGHT = 136f;
     private static final float GRID_WIDTH = 830f;
     private static final float DETAIL_WIDTH = 300f;
 
@@ -157,19 +158,24 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
 
     private Stack slotContent(GreenhouseSlot slot, long now) {
         Stack stack = new Stack();
-        Table artLayer = new Table();
+        Stack artLayer = new Stack();
         Table textLayer = new Table();
         textLayer.bottom();
 
+        Image pot = theme.imageOrFallback(POT_ICON);
+        pot.setScaling(Scaling.fit);
+        artLayer.add(pot);
+
         if (!slot.isUnlocked()) {
-            addImage(artLayer, LOCK_ICON, 52f);
+            Image lock = theme.imageOrFallback(LOCK_ICON);
+            lock.setScaling(Scaling.fit);
+            artLayer.add(lock);
             textLayer.add(theme.settingsLabel("LOCKED")).center().padBottom(5f);
         } else if (slot.isEmpty()) {
-            addImage(artLayer, POT_ICON, 80f);
             Label empty = greenhouseLabel("EMPTY");
             textLayer.add(empty).width(146f).center().padBottom(5f);
         } else {
-            addPlantArt(artLayer, slot.getPlantName(), 76f);
+            addPlantIdleArt(artLayer, slot.getPlantName());
             Label name = theme.settingsLabel(slot.getPlantName());
             name.setAlignment(Align.center);
             name.setWrap(true);
@@ -385,15 +391,26 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
         panel.add(preview).size(160f, 130f).center();
     }
 
-    private void addPlantArt(Table table, String plantName, float size) {
+    private void addPlantIdleArt(Stack stack, String plantName) {
         Optional<PlantDefinition> definition = app.services()
             .gameData()
             .getPlantFactory()
             .findDefinition(plantName);
-        Image image = definition
-            .map(plant -> PlantArtResolver.packetImage(theme, plant))
-            .orElse(null);
-        table.add(image == null ? theme.imageOrFallback(MARIGOLD_PACKET) : image).size(size);
+        if (definition.isPresent()) {
+            PlantAnimationActor animation = new PlantAnimationActor(app.assets(), definition.get());
+            if (animation.hasAnimation()) {
+                animation.setTouchable(com.badlogic.gdx.scenes.scene2d.Touchable.disabled);
+                stack.add(animation);
+                return;
+            }
+            Image packet = PlantArtResolver.packetImage(theme, definition.get());
+            if (packet != null) {
+                packet.setScaling(Scaling.fit);
+                stack.add(packet);
+                return;
+            }
+        }
+        stack.add(theme.imageOrFallback(MARIGOLD_PACKET));
     }
 
     private void addImage(Table table, String id, float size) {

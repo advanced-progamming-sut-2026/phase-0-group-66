@@ -1,14 +1,16 @@
 package model;
 
 import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class Greenhouse implements Serializable {
     private static final long serialVersionUID = 1L;
-    public static final int COLUMNS = 5;
-    public static final int ROWS = 4;
+    public static final int COLUMNS = 4;
+    public static final int ROWS = 3;
     public static final int MAX_SLOTS = COLUMNS * ROWS;
     public static final long MARIGOLD_GROWTH_MILLIS = 2L * 60L * 60L * 1000L;
     public static final long PLANT_GROWTH_MILLIS = 8L * 60L * 60L * 1000L;
@@ -60,7 +62,27 @@ public class Greenhouse implements Serializable {
 
     private void validate(int x, int y) {
         if (x < 1 || x > COLUMNS || y < 1 || y > ROWS) {
-            throw new IllegalArgumentException("Greenhouse position is outside the 5x4 grid.");
+            throw new IllegalArgumentException("Greenhouse position is outside the 4x3 grid.");
+        }
+    }
+
+    private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+        input.defaultReadObject();
+        if (slots.size() <= MAX_SLOTS) {
+            return;
+        }
+
+        ArrayList<GreenhouseSlot> legacySlots = new ArrayList<>(slots);
+        slots.clear();
+        for (int y = 1; y <= ROWS; y++) {
+            for (int x = 1; x <= COLUMNS; x++) {
+                for (GreenhouseSlot slot : legacySlots) {
+                    if (slot.getX() == x && slot.getY() == y) {
+                        slots.add(slot);
+                        break;
+                    }
+                }
+            }
         }
     }
 }
