@@ -113,7 +113,7 @@ public final class MainMenuScreen extends BaseUiScreen {
         UiActions.onClick(play, app::showAdventure);
 
         Table center = new Table();
-        TextButton profile = theme.secondaryButton(user.getNickname());
+        TextButton profile = theme.secondaryButton("PROFILE");
         UiActions.onClick(profile, app::showProfile);
         center.add(profile).width(310f).height(48f);
         center.row().padTop(8f);

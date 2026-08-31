@@ -60,8 +60,9 @@ public final class UiTheme implements Disposable {
     private static final String BUTTON_FONT = "skin/HOUSE OF TERROR.TTF";
     private static final int FONT_OVERSAMPLE = 2;
 
-    private static final Color ERROR_COLOR = new Color(0.82f, 0.09f, 0.05f, 1f);
-    private static final Color SUCCESS_COLOR = new Color(0.12f, 0.55f, 0.08f, 1f);
+    private static final Color ERROR_COLOR = new Color(1f, 0.68f, 0.62f, 1f);
+    private static final Color SUCCESS_COLOR = new Color(0.70f, 1f, 0.70f, 1f);
+    private static final Color MESSAGE_COLOR = new Color(0.96f, 0.96f, 0.88f, 1f);
     private static final Color DARK_BROWN = new Color(0.28f, 0.24f, 0f, 1f);
     private static final Color SETTINGS_BROWN = new Color(0.23f, 0.15f, 0.05f, 1f);
     private static final Color SETTINGS_YELLOW = new Color(1f, 0.90f, 0.34f, 1f);
@@ -472,7 +473,7 @@ public final class UiTheme implements Disposable {
 
     public Label statusLabel() {
         Label label = bodyLabel("");
-        label.setColor(DARK_BROWN);
+        label.setColor(MESSAGE_COLOR);
         return label;
     }
 

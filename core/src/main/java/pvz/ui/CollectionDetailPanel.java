@@ -21,6 +21,9 @@ import java.util.function.Consumer;
 public final class CollectionDetailPanel {
     private static final int PLANT_PURCHASE_COST = 2000;
     private static final float PANEL_CONTENT_WIDTH = 332f;
+    private static final float UPGRADE_BUTTON_WIDTH = 292f;
+    private static final float BUTTON_LABEL_MAX_WIDTH = 260f;
+    private static final float BUTTON_LABEL_BASE_SCALE = 0.58f;
     private static final float KEY_WIDTH = 108f;
     private static final float VALUE_WIDTH = 216f;
     private static final float STAT_ICON_WIDTH = 32f;
@@ -310,11 +313,20 @@ public final class CollectionDetailPanel {
         boolean max = isMaxLevel(plant);
         TextButton upgrade = theme.primaryButton(max ? "MAX LEVEL" : upgradeButtonText(plant));
         upgrade.setDisabled(max);
-        upgrade.getLabel().setWrap(false);
-        upgrade.getLabel().setFontScale(0.58f);
+        fitButtonLabel(upgrade);
         UiActions.onClick(upgrade, () -> upgradeAction.accept(plant));
-        row.add(upgrade).width(292f).height(44f).center();
+        row.add(upgrade).width(UPGRADE_BUTTON_WIDTH).height(44f).center();
         return row;
+    }
+
+    private void fitButtonLabel(TextButton button) {
+        Label label = button.getLabel();
+        label.setWrap(false);
+        label.setFontScale(BUTTON_LABEL_BASE_SCALE);
+        float preferredWidth = label.getPrefWidth();
+        if (preferredWidth > BUTTON_LABEL_MAX_WIDTH && preferredWidth > 0f) {
+            label.setFontScale(BUTTON_LABEL_BASE_SCALE * BUTTON_LABEL_MAX_WIDTH / preferredWidth);
+        }
     }
 
 

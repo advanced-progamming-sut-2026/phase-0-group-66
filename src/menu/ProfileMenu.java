@@ -21,7 +21,7 @@ public class ProfileMenu extends Menu {
     @Override
     public void showCommands() {
         System.out.println("menu profile change-username -u <username>");
-        System.out.println("menu profile change-nickname -u <nickname>");
+        System.out.println("menu profile change-nickname -n <nickname>");
         System.out.println("menu profile change-email -e <email>");
         System.out.println("menu profile change-password -p <new_password> -o <old_password>");
         System.out.println("menu profile show-info");
@@ -32,7 +32,7 @@ public class ProfileMenu extends Menu {
         Matcher changeUserMatcher = getMatcher(command,
             "menu profile change-username -u (?<username>\\S+)");
         Matcher changeNickMatcher = getMatcher(command,
-            "menu profile change-nickname -u (?<nickname>\\S+)");
+            "menu profile change-nickname -n (?<nickname>\\S+)");
         Matcher changeEmailMatcher = getMatcher(command,
             "menu profile change-email -e (?<email>\\S+)");
         Matcher changePassMatcher = getMatcher(command,
