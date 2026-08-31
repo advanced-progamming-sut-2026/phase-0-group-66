@@ -188,7 +188,7 @@ public final class BattlePamRenderer {
             case DARK_AGES -> "MOWER_DARK";
         };
         AnimationSpec spec = specFromEntry(catalog.mower(name), moving ? "attack" : "idle", false);
-        return draw(batch, spec.path(), spec.primaryClip(), time, x, y, scale, false);
+        return draw(batch, spec.path(), spec.primaryClip(), time, x, y, scale, false, !moving);
     }
 
     private boolean draw(
@@ -200,6 +200,20 @@ public final class BattlePamRenderer {
         float y,
         float scale,
         boolean flipped
+    ) {
+        return draw(batch, path, clip, time, x, y, scale, flipped, true);
+    }
+
+    private boolean draw(
+        Batch batch,
+        String path,
+        String clip,
+        float time,
+        float x,
+        float y,
+        float scale,
+        boolean flipped,
+        boolean loop
     ) {
         if (path == null || clip == null) {
             return false;
@@ -224,7 +238,7 @@ public final class BattlePamRenderer {
             }
             clipRefs.put(clipKey, clipRef);
         }
-        player.draw(batch, clipRef, time, x, y, scaleX, worldScale, true);
+        player.draw(batch, clipRef, time, x, y, scaleX, worldScale, loop);
         batch.setColor(previous);
         return true;
     }

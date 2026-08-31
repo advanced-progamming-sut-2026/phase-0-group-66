@@ -22,13 +22,16 @@ import model.TileType;
 import model.Zombie;
 import pvz.assets.PvzAssets;
 
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 
 public final class BattleBoardActor extends Actor implements Disposable {
     private static final float MODEL_STEP_SECONDS = 0.50f;
+    private static final float MOWER_TRAVEL_SECONDS = 1.2f;
     private final PvzAssets assets;
     private final GameController controller;
     private final Level level;
@@ -54,6 +57,8 @@ public final class BattleBoardActor extends Actor implements Disposable {
     private final Map<Projectile, Float> projectileMotionStarts = new IdentityHashMap<>();
     private final Map<Projectile, Float> projectileMotionOrigins = new IdentityHashMap<>();
     private final Map<LawnMower, Float> mowerActivatedAt = new IdentityHashMap<>();
+    private final Set<LawnMower> completedMowerAnimations =
+        Collections.newSetFromMap(new IdentityHashMap<>());
 
     private TextureRegion backgroundLeft;
     private TextureRegion backgroundMain;
@@ -641,21 +646,27 @@ public final class BattleBoardActor extends Actor implements Disposable {
         for (LawnMower mower : board.getLawnMowers()) {
             boolean moving = mower.isActivated();
             if (moving) {
-                mowerActivatedAt.putIfAbsent(mower, animationTime);
-                if (animationTime - mowerActivatedAt.get(mower) > 1.2f) {
+                if (completedMowerAnimations.contains(mower)) {
+                    continue;
+                }
+                float startedAt = mowerActivatedAt.computeIfAbsent(mower,
+                    ignored -> animationTime);
+                float elapsed = animationTime - startedAt;
+                if (elapsed > MOWER_TRAVEL_SECONDS) {
+                    completedMowerAnimations.add(mower);
                     mowerActivatedAt.remove(mower);
                     continue;
                 }
             } else {
                 mowerActivatedAt.remove(mower);
+                completedMowerAnimations.remove(mower);
             }
-            float progress = moving
-                ? Math.min(1f, (animationTime - mowerActivatedAt.get(mower)) / 1.2f)
-                : 0f;
+            float elapsed = moving ? animationTime - mowerActivatedAt.get(mower) : 0f;
+            float progress = moving ? Math.min(1f, elapsed / MOWER_TRAVEL_SECONDS) : 0f;
             float centerX = gridLeft() - width * 0.42f
                 + progress * (gridWidth() + width);
             float centerY = cellBottom(mower.getRow()) + cellHeight() * 0.5f;
-            if (pamRenderer.drawMower(batch, level.getSeason(), animationTime,
+            if (pamRenderer.drawMower(batch, level.getSeason(), moving ? elapsed : animationTime,
                 centerX, centerY, cellHeight() / 390f * 0.90f, moving)) {
                 continue;
             }
