@@ -61,7 +61,11 @@ public final class BattlePamRenderer {
         } else {
             clip = spec.primaryClip();
         }
+        Color previous = new Color(batch.getColor());
+        Color tint = plantTint(plant);
+        batch.setColor(tint.r, tint.g, tint.b, previous.a);
         boolean drawn = draw(batch, spec.path(), clip, time, x, y, scale, false);
+        batch.setColor(previous);
         if (drawn && plantFoodActive) {
             AnimationSpec food = effectSpec("PLANTFOOD_FX", "plantfood");
             draw(batch, food.path(), food.primaryClip(), time, x, y, scale * 0.92f, false);
@@ -97,7 +101,10 @@ public final class BattlePamRenderer {
             key,
             ignored -> resolveZombie(zombie.getDefinition(), season)
         );
-        return draw(
+        Color previous = new Color(batch.getColor());
+        Color tint = zombieTint(zombie);
+        batch.setColor(tint.r, tint.g, tint.b, previous.a);
+        boolean drawn = draw(
             batch,
             spec.path(),
             spec.primaryClip(),
@@ -107,6 +114,37 @@ public final class BattlePamRenderer {
             scale,
             zombie.isHypnotized()
         );
+        batch.setColor(previous);
+        return drawn;
+    }
+
+    private Color plantTint(Plant plant) {
+        if (plant.isTrappedInIceTile() || plant.getFrozenHealth() > 0 || plant.getIceHits() >= 3) {
+            return new Color(0.48f, 0.82f, 1f, 1f);
+        }
+        if (plant.getIceHits() == 2) {
+            return new Color(0.70f, 0.91f, 1f, 1f);
+        }
+        if (plant.getIceHits() == 1) {
+            return new Color(0.86f, 0.97f, 1f, 1f);
+        }
+        return Color.WHITE;
+    }
+
+    private Color zombieTint(Zombie zombie) {
+        if (zombie.isHypnotized()) {
+            return new Color(0.72f, 1f, 0.72f, 1f);
+        }
+        if (zombie.isTrappedInIceTile()) {
+            return new Color(0.42f, 0.82f, 1f, 1f);
+        }
+        if (zombie.getStunnedTicks() > 0) {
+            return new Color(1f, 0.84f, 0.38f, 1f);
+        }
+        if (zombie.getChilledTicks() > 0) {
+            return new Color(0.64f, 0.88f, 1f, 1f);
+        }
+        return Color.WHITE;
     }
 
     public boolean drawZombieDeath(

@@ -51,7 +51,10 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     private final Label waveLabel;
     private final Label status;
     private final Label introLabel;
+    private final Label missionLabel;
+    private final Label notificationLabel;
     private final Table seedBank;
+    private final Table missionBanner;
     private final Stack pauseLayer;
     private final BattleBoardActor boardActor;
     private final TextButton startWavesButton;
@@ -66,6 +69,8 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     private IntroPhase introPhase = IntroPhase.PAN_TO_ZOMBIES;
     private PendingPlantFood pendingPlantFood;
     private float plantFoodImpactHold;
+    private float missionElapsed;
+    private float notificationElapsed;
 
     public BattleScreen(PvzApplication app, Chapter chapter, Level level) {
         super(app);
@@ -83,7 +88,14 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         status = theme.statusLabel();
         introLabel = theme.title("");
         introLabel.setAlignment(Align.center);
+        missionLabel = theme.bodyLabel("Mission: " + level.getSpecialRuleSummary());
+        missionLabel.setAlignment(Align.center);
+        missionLabel.setWrap(true);
+        notificationLabel = theme.heading("");
+        notificationLabel.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+        notificationLabel.setEllipsis(true);
         seedBank = new Table();
+        missionBanner = new Table();
         pauseLayer = new Stack();
         boardActor = new BattleBoardActor(app.assets(), controller, level, this::handleCellClick);
         boardActor.setShowGrid(user.isGridVisible());
@@ -92,6 +104,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         buildUi();
         refreshSeedBank();
         refreshHud();
+        consumeControllerEvents();
     }
 
     private void buildUi() {
@@ -108,14 +121,38 @@ public final class BattleScreen extends AuthenticatedUiScreen {
 
         Table hud = new Table();
         hud.top();
-        hud.add(buildTopHud()).growX().height(118f);
+        hud.add(buildTopHud()).growX().height(178f);
         hud.row();
         hud.add().expand();
         hud.row();
         hud.add(buildBottomHud()).growX().height(60f).pad(0f, 16f, 6f, 16f);
         battle.add(hud);
         battle.add(buildIntroLayer());
+        battle.add(buildMissionBanner());
+        battle.add(buildNotificationLayer());
         return battle;
+    }
+
+    private Table buildMissionBanner() {
+        missionBanner.setFillParent(true);
+        missionBanner.top().padTop(122f);
+        missionBanner.setTouchable(Touchable.disabled);
+        Table panel = badgePanel(10f);
+        panel.add(missionLabel).width(760f).height(58f);
+        missionBanner.add(panel).width(790f).height(78f).center();
+        return missionBanner;
+    }
+
+    private Table buildNotificationLayer() {
+        Table layer = new Table();
+        layer.setFillParent(true);
+        layer.top().padTop(204f);
+        layer.setTouchable(Touchable.disabled);
+        Table panel = badgePanel(7f);
+        panel.add(notificationLabel).width(610f).height(42f);
+        layer.add(panel).width(640f).height(56f).center();
+        layer.setVisible(false);
+        return layer;
     }
 
     private Table buildIntroLayer() {
@@ -314,6 +351,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     private void refreshSeedBank() {
         seedBank.clearChildren();
         List<String> selectedPlants = controller.getSelectedPlants();
+        int index = 0;
         for (String plantName : selectedPlants) {
             PlantDefinition definition = app.services().gameData().getPlantFactory()
                 .findDefinition(plantName)
@@ -321,7 +359,11 @@ public final class BattleScreen extends AuthenticatedUiScreen {
             if (definition == null) {
                 continue;
             }
-            seedBank.add(seedCard(definition)).width(104f).height(110f).padRight(6f);
+            seedBank.add(seedCard(definition)).width(92f).height(82f).padRight(4f);
+            index++;
+            if (index % 4 == 0 && index < selectedPlants.size()) {
+                seedBank.row();
+            }
         }
     }
 
@@ -551,9 +593,20 @@ public final class BattleScreen extends AuthenticatedUiScreen {
 
     @Override
     public void render(float delta) {
+        missionElapsed += Math.max(0f, delta);
+        if (missionElapsed >= 4.0f) {
+            missionBanner.setVisible(false);
+        }
+        if (notificationElapsed > 0f) {
+            notificationElapsed = Math.max(0f, notificationElapsed - Math.max(0f, delta));
+            if (notificationElapsed == 0f) {
+                notificationLabel.getParent().getParent().setVisible(false);
+            }
+        }
         advanceIntro(delta);
         advancePendingPlantFood(delta);
         advanceModel(delta);
+        consumeControllerEvents();
         refreshHud();
         checkResult();
         super.render(delta);
@@ -734,7 +787,9 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         panel.add(theme.settingsLabel("Time: " + String.format("%.1fs", game.getElapsedTicks() / 10f)))
             .padBottom(14f);
         panel.row();
-        TextButton continueButton = theme.primaryButton(won ? "Continue" : "Try Again");
+        panel.add(theme.settingsLabel("Exit cost: 0 coins")).padBottom(8f);
+        panel.row();
+        TextButton continueButton = theme.primaryButton(won ? "Continue" : "RESTART");
         TextButton menuButton = theme.secondaryButton("Main Menu");
         UiActions.onClick(continueButton, () -> {
             if (won) {
@@ -749,6 +804,38 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         panel.add(menuButton).width(260f).height(52f);
         pauseLayer.add(panel);
         pauseLayer.setVisible(true);
+    }
+
+    private void consumeControllerEvents() {
+        for (String event : controller.drainUiEvents()) {
+            String notification = notificationFor(event);
+            if (notification != null) {
+                notificationLabel.setText(notification);
+                notificationLabel.getParent().getParent().setVisible(true);
+                notificationElapsed = 3.2f;
+            }
+        }
+    }
+
+    private String notificationFor(String event) {
+        if (event == null) {
+            return null;
+        }
+        String lower = event.toLowerCase();
+        if (lower.contains("game started")) {
+            return "GAME STARTED";
+        }
+        if (lower.contains("wave ") || lower.contains("final wave") || lower.contains("zombie waves started")) {
+            return event.toUpperCase();
+        }
+        if (lower.contains("necromancy") || lower.contains("tomb")) {
+            return "NECROMANCY! THE TOMBS ARE RISING";
+        }
+        if (lower.contains("cold wind") || level.getSeason() == model.SeasonType.BIG_WAVE_BEACH
+            && lower.contains("wave")) {
+            return "BIG WAVE BEACH: THE TIDE IS RISING";
+        }
+        return null;
     }
 
     private String packetArtId(PlantDefinition plant) {

@@ -95,7 +95,11 @@ public final class ForgotPasswordScreen extends BaseUiScreen {
     private void addRecoveryField(Table panel, String title, TextField field) {
         panel.add(theme.fieldLabel(title)).left().width(CONTENT_WIDTH);
         panel.row().padTop(3f);
-        panel.add(field).width(CONTENT_WIDTH).height(FIELD_HEIGHT);
+        if (title.toLowerCase().contains("password")) {
+            panel.add(theme.passwordFieldWithToggle(field)).width(CONTENT_WIDTH).height(FIELD_HEIGHT);
+        } else {
+            panel.add(field).width(CONTENT_WIDTH).height(FIELD_HEIGHT);
+        }
         panel.row().padTop(12f);
     }
 

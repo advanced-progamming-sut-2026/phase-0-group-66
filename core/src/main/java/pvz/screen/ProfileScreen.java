@@ -171,8 +171,8 @@ public final class ProfileScreen extends AuthenticatedUiScreen {
         TextField newPassword = passwordField("New password");
         editor.add(theme.fieldLabel("Password")).left().colspan(2).padTop(4f);
         editor.row();
-        editor.add(oldPassword).width(PASSWORD_FIELD_WIDTH).height(EDIT_FIELD_HEIGHT).padRight(8f);
-        editor.add(newPassword).width(PASSWORD_FIELD_WIDTH).height(EDIT_FIELD_HEIGHT);
+        editor.add(theme.passwordFieldWithToggle(oldPassword)).width(PASSWORD_FIELD_WIDTH).height(EDIT_FIELD_HEIGHT).padRight(8f);
+        editor.add(theme.passwordFieldWithToggle(newPassword)).width(PASSWORD_FIELD_WIDTH).height(EDIT_FIELD_HEIGHT);
         editor.row();
 
         TextButton passwordButton = theme.primaryButton("Change Password");

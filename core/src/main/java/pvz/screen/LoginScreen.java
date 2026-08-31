@@ -57,7 +57,11 @@ public final class LoginScreen extends BaseUiScreen {
     private void addLoginField(Table panel, String title, TextField field) {
         panel.add(theme.fieldLabel(title)).left().width(LOGIN_FIELD_WIDTH);
         panel.row().padTop(4f);
-        panel.add(field).width(LOGIN_FIELD_WIDTH).height(FIELD_HEIGHT);
+        if (field == password) {
+            panel.add(theme.passwordFieldWithToggle(field)).width(LOGIN_FIELD_WIDTH).height(FIELD_HEIGHT);
+        } else {
+            panel.add(field).width(LOGIN_FIELD_WIDTH).height(FIELD_HEIGHT);
+        }
         panel.row().padTop(13f);
     }
 

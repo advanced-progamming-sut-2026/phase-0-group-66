@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFont
 import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.List;
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
@@ -92,8 +93,10 @@ public final class UiTheme implements Disposable {
     private final Texture gearTexture;
     private final Texture gearPressedTexture;
     private final Texture mphLogoTexture;
+    private final Texture eyeTexture;
     private final Drawable gearDrawable;
     private final Drawable gearPressedDrawable;
+    private final Drawable eyeDrawable;
 
     public UiTheme(Skin skin, UiAtlasHelper atlas) {
         this.skin = skin;
@@ -137,6 +140,8 @@ public final class UiTheme implements Disposable {
         mphLogoTexture = loadMphLogo();
         gearDrawable = smallDrawable(gearTexture, 42f, 42f);
         gearPressedDrawable = smallDrawable(gearPressedTexture, 40f, 40f);
+        eyeTexture = createEyeTexture();
+        eyeDrawable = smallDrawable(eyeTexture, 32f, 32f);
     }
 
     private void enableLinearFiltering() {
@@ -235,6 +240,27 @@ public final class UiTheme implements Disposable {
         }
         Texture texture = new Texture(Gdx.files.classpath("branding/mph_logo.png"));
         texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        return texture;
+    }
+
+    private Texture createEyeTexture() {
+        int size = 64;
+        Pixmap pixmap = new Pixmap(size, size, Pixmap.Format.RGBA8888);
+        pixmap.setBlending(Pixmap.Blending.SourceOver);
+        pixmap.setColor(0f, 0f, 0f, 0f);
+        pixmap.fill();
+        pixmap.setColor(DARK_BROWN);
+        int[][] points = {{6, 32}, {14, 23}, {25, 17}, {32, 16}, {39, 17}, {50, 23}, {58, 32},
+            {50, 41}, {39, 47}, {32, 48}, {25, 47}, {14, 41}, {6, 32}};
+        for (int i = 1; i < points.length; i++) {
+            pixmap.drawLine(points[i - 1][0], points[i - 1][1], points[i][0], points[i][1]);
+        }
+        pixmap.fillCircle(32, 32, 9);
+        pixmap.setColor(Color.WHITE);
+        pixmap.fillCircle(29, 29, 3);
+        Texture texture = new Texture(pixmap);
+        texture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        pixmap.dispose();
         return texture;
     }
 
@@ -414,6 +440,26 @@ public final class UiTheme implements Disposable {
         return field;
     }
 
+    public Table passwordFieldWithToggle(TextField field) {
+        Table row = new Table();
+        row.add(field).grow();
+        ImageButton.ImageButtonStyle style = new ImageButton.ImageButtonStyle();
+        style.imageUp = eyeDrawable;
+        style.imageDown = eyeDrawable;
+        style.imageOver = eyeDrawable;
+        ImageButton toggle = new ImageButton(style);
+        toggle.setName("Show password");
+        toggle.addListener(new InputListener() {
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                field.setPasswordMode(!field.isPasswordMode());
+                return true;
+            }
+        });
+        row.add(toggle).size(48f).padLeft(6f);
+        return row;
+    }
+
     public SelectBox<String> genderSelect() {
         SelectBox<String> selectBox = new SelectBox<>(selectBoxStyle);
         selectBox.setItems("MALE", "FEMALE");
@@ -505,5 +551,6 @@ public final class UiTheme implements Disposable {
         }
         gearTexture.dispose();
         gearPressedTexture.dispose();
+        eyeTexture.dispose();
     }
 }

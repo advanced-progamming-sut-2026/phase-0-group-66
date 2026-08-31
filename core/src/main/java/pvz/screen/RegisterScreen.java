@@ -82,7 +82,11 @@ public final class RegisterScreen extends BaseUiScreen {
         Table block = new Table();
         block.add(theme.fieldLabel(title)).left().expandX();
         block.row().padTop(3f);
-        block.add(field).width(COLUMN_WIDTH).height(FIELD_HEIGHT);
+        if (title.toLowerCase().contains("password")) {
+            block.add(theme.passwordFieldWithToggle(field)).width(COLUMN_WIDTH).height(FIELD_HEIGHT);
+        } else {
+            block.add(field).width(COLUMN_WIDTH).height(FIELD_HEIGHT);
+        }
         return block;
     }
 

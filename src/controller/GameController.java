@@ -30,6 +30,7 @@ public class GameController {
     private final GameProgressHandler progressHandler;
     private Game game;
     private int unsavedGameplayTicks;
+    private final ArrayList<String> uiEvents = new ArrayList<>();
 
     public GameController(AuthController authController, GameData gameData, GameView view,
                           QuestController questController) {
@@ -163,6 +164,15 @@ public class GameController {
 
     public String specialStatus() {
         return game == null ? "No level is prepared." : game.specialStatus();
+    }
+
+    public List<String> drainUiEvents() {
+        if (uiEvents.isEmpty()) {
+            return List.of();
+        }
+        List<String> result = List.copyOf(uiEvents);
+        uiEvents.clear();
+        return result;
     }
 
     public ActionResult boostPlant(String plantType) {
@@ -550,6 +560,10 @@ public class GameController {
         }
         for (String event : game.drainEvents()) {
             view.showMessage(event);
+            uiEvents.add(event);
+            if (uiEvents.size() > 64) {
+                uiEvents.remove(0);
+            }
         }
     }
 

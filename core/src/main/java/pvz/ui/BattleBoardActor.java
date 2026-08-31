@@ -11,6 +11,7 @@ import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.utils.Disposable;
 import controller.GameController;
 import model.Board;
+import model.Armor;
 import model.LawnMower;
 import model.Level;
 import model.Plant;
@@ -343,7 +344,19 @@ public final class BattleBoardActor extends Actor implements Disposable {
             }
             float barWidth = Math.max(30f, cellWidth() * 0.52f);
             drawHealth(batch, x, cellTop(row) - 7f, plant.getHealth(), plant.getMaxHealth(), barWidth);
+            drawPlantIceStatus(batch, x, cellTop(row) - 13f, plant, barWidth);
         }
+    }
+
+    private void drawPlantIceStatus(Batch batch, float centerX, float y, Plant plant, float width) {
+        int layers = Math.max(0, Math.min(3, plant.getIceHits()));
+        if (layers == 0 && plant.getFrozenHealth() <= 0) {
+            return;
+        }
+        float ratio = plant.getFrozenHealth() > 0 ? 1f : layers / 3f;
+        batch.setColor(0.35f, 0.82f, 1f, 1f);
+        batch.draw(pixel, centerX - width / 2f, y, width * ratio, 3f);
+        batch.setColor(Color.WHITE);
     }
 
     private void drawPlantFoodVolley(Batch batch, Plant plant, int row, float x, float y) {
@@ -454,6 +467,8 @@ public final class BattleBoardActor extends Actor implements Disposable {
                 Math.max(1, zombie.getMaximumHealth()),
                 barWidth
             );
+            drawArmorStatus(batch, x, cellTop(row) - 9f, zombie, barWidth);
+            drawZombieStatus(batch, x, cellTop(row) - 15f, zombie, barWidth);
         }
         drawRecentZombieDeaths(batch, board, season, scale);
         drawPlantFoodDeathGhosts(batch, season, scale);
@@ -716,6 +731,59 @@ public final class BattleBoardActor extends Actor implements Disposable {
             batch.setColor(red, green, 0.12f, 1f);
             batch.draw(pixel, centerX - width / 2f + 1f, y + 1f, (width - 2f) * ratio, 3f);
         }
+        batch.setColor(Color.WHITE);
+    }
+
+    private void drawArmorStatus(Batch batch, float centerX, float y, Zombie zombie, float width) {
+        List<Armor> armors = zombie.getArmors();
+        if (armors.isEmpty() && zombie.getBonusArmorHealth() <= 0) {
+            return;
+        }
+        float segment = (width - Math.max(0, armors.size() - 1) * 2f)
+            / Math.max(1, armors.size() + (zombie.getBonusArmorHealth() > 0 ? 1 : 0));
+        float x = centerX - width / 2f;
+        for (Armor armor : armors) {
+            float ratio = Math.max(0f, Math.min(1f,
+                armor.getHealth() / (float) Math.max(1, armor.getDefinition().getBaseHealth())));
+            batch.setColor(armorColor(armor.getDefinition().getArmorType()));
+            batch.draw(pixel, x, y, segment * ratio, 4f);
+            x += segment + 2f;
+        }
+        if (zombie.getBonusArmorHealth() > 0) {
+            batch.setColor(0.82f, 0.82f, 0.90f, 1f);
+            batch.draw(pixel, x, y, segment, 4f);
+        }
+        batch.setColor(Color.WHITE);
+    }
+
+    private Color armorColor(String armorType) {
+        String type = armorType == null ? "" : armorType.toLowerCase();
+        if (type.contains("cone")) {
+            return new Color(0.95f, 0.55f, 0.12f, 1f);
+        }
+        if (type.contains("bucket") || type.contains("metal")) {
+            return new Color(0.72f, 0.78f, 0.86f, 1f);
+        }
+        if (type.contains("brick")) {
+            return new Color(0.70f, 0.25f, 0.15f, 1f);
+        }
+        return new Color(0.82f, 0.64f, 0.22f, 1f);
+    }
+
+    private void drawZombieStatus(Batch batch, float centerX, float y, Zombie zombie, float width) {
+        Color color = null;
+        if (zombie.isTrappedInIceTile()) {
+            color = new Color(0.25f, 0.78f, 1f, 1f);
+        } else if (zombie.getStunnedTicks() > 0) {
+            color = new Color(1f, 0.85f, 0.15f, 1f);
+        } else if (zombie.getChilledTicks() > 0) {
+            color = new Color(0.48f, 0.86f, 1f, 1f);
+        }
+        if (color == null) {
+            return;
+        }
+        batch.setColor(color);
+        batch.draw(pixel, centerX - width * 0.22f, y, width * 0.44f, 3f);
         batch.setColor(Color.WHITE);
     }
 

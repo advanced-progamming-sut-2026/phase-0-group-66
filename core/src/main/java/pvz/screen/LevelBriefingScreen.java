@@ -59,6 +59,13 @@ public final class LevelBriefingScreen extends AuthenticatedUiScreen {
         panel.add(objective).width(620f).left().padTop(8f);
         panel.row();
 
+        panel.add(theme.fieldLabel("NPC Dialogue")).top().left().padTop(8f);
+        Label npc = theme.bodyLabel(npcDialogue());
+        npc.setAlignment(Align.left);
+        npc.setWrap(true);
+        panel.add(npc).width(620f).left().padTop(8f);
+        panel.row();
+
         status.setWrap(false);
         panel.add(status).colspan(2).height(34f).padTop(4f);
         return panel;
@@ -99,6 +106,15 @@ public final class LevelBriefingScreen extends AuthenticatedUiScreen {
             return "Choose Plants";
         }
         return "Prepare Level";
+    }
+
+    private String npcDialogue() {
+        return switch (level.getSeason()) {
+            case ANCIENT_EGYPT -> "Crazy Dave: Keep your eyes on the tombs, dude!";
+            case FROSTBITE_CAVES -> "Penny: The ice is spreading. Bring fire or prepare to thaw your plants.";
+            case BIG_WAVE_BEACH -> "Crazy Dave: The tide is coming in! Protect the lawn before it is totally submerged.";
+            case DARK_AGES -> "Penny: Necromancy is active here. Destroy the tombs before the dead rise again.";
+        };
     }
 
     private void prepareLevel() {
