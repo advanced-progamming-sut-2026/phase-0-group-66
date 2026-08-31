@@ -147,6 +147,7 @@ public final class PvzServer implements AutoCloseable {
                 case GET_ALL_USERS -> NetworkResponse.failure("Listing all user accounts is not available.");
                 case ADD_USER -> addUser((User) request.argument(0));
                 case RENAME_USER -> renameUser(
+                    request.getAuthToken(),
                     (String) request.argument(0),
                     (String) request.argument(1),
                     (User) request.argument(2)
@@ -262,8 +263,13 @@ public final class PvzServer implements AutoCloseable {
         return NetworkResponse.success("User registered on server.");
     }
 
-    private NetworkResponse renameUser(String oldUsername, String newUsername, User user) throws IOException {
+    private NetworkResponse renameUser(
+        String authToken, String oldUsername, String newUsername, User user
+    ) throws IOException {
         userRepository.rename(oldUsername, newUsername, user);
+        if (authToken != null && !authToken.isBlank()) {
+            sessions.put(authToken, newUsername);
+        }
         return NetworkResponse.success("Username updated on server.");
     }
 
