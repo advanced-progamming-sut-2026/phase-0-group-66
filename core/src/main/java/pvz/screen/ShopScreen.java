@@ -1,5 +1,6 @@
 package pvz.screen;
 
+import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
@@ -15,6 +16,9 @@ import pvz.PvzApplication;
 import pvz.ui.PlantArtResolver;
 import pvz.ui.UiTheme;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -29,15 +33,19 @@ public final class ShopScreen extends AuthenticatedUiScreen {
 
     private final TextField quantityField;
     private final SelectBox<String> plantSelect;
+    private final Label dailyTimerLabel;
     private String message = "Choose an item to purchase.";
     private boolean messageSuccess = true;
     private boolean purchaseInFlight;
+    private boolean confirmationOpen;
+    private LocalDate renderedOfferDate;
 
     public ShopScreen(PvzApplication app) {
         super(app);
         quantityField = theme.textField("1");
         quantityField.setText("1");
         plantSelect = new SelectBox<>(theme.skin());
+        dailyTimerLabel = theme.settingsLabel("");
         refreshOwnedPlants();
         DrawableSetter.apply(root, theme.drawable(STORE_BACKGROUND));
         buildUi();
@@ -55,6 +63,8 @@ public final class ShopScreen extends AuthenticatedUiScreen {
             message = dailyStatus;
             messageSuccess = false;
         }
+        renderedOfferDate = LocalDate.now();
+        refreshDailyTimer();
 
         Table screen = new Table();
         screen.top();
@@ -133,6 +143,8 @@ public final class ShopScreen extends AuthenticatedUiScreen {
         text.add(theme.settingsLabel(
             state.isDailyPurchased() ? "Purchased today" : "Available once today"
         )).left().padTop(3f);
+        text.row();
+        text.add(dailyTimerLabel).left().padTop(3f);
         card.add(text).expandX().left();
 
         TextButton buy = theme.tertiaryButton(
@@ -141,7 +153,7 @@ public final class ShopScreen extends AuthenticatedUiScreen {
         buy.setDisabled(state.isDailyPurchased()
             || user.getWallet().getCoins() < 1600);
         if (!state.isDailyPurchased()) {
-            UiActions.onClick(buy, () -> purchase(6, 1, null));
+            UiActions.onClick(buy, () -> showPurchaseConfirmation(6, 1, null));
         }
         card.add(buy).width(180f).height(54f).right();
         return card;
@@ -239,7 +251,7 @@ public final class ShopScreen extends AuthenticatedUiScreen {
     }
 
     private void buyEntry(int itemId) {
-        if (purchaseInFlight) {
+        if (purchaseInFlight || confirmationOpen) {
             return;
         }
         int count = quantity();
@@ -247,7 +259,49 @@ public final class ShopScreen extends AuthenticatedUiScreen {
             return;
         }
         String plant = itemId == 4 ? plantSelect.getSelected() : null;
-        purchase(itemId, count, plant);
+        showPurchaseConfirmation(itemId, count, plant);
+    }
+
+    private void showPurchaseConfirmation(int itemId, int count, String plant) {
+        if (purchaseInFlight || confirmationOpen) {
+            return;
+        }
+        confirmationOpen = true;
+        Dialog dialog = new Dialog("CONFIRM PURCHASE", theme.skin()) {
+            @Override
+            protected void result(Object value) {
+                super.result(value);
+                confirmationOpen = false;
+                if (Boolean.TRUE.equals(value)) {
+                    purchase(itemId, count, plant);
+                }
+            }
+        };
+        dialog.text(purchaseSummary(itemId, count, plant));
+        dialog.button("CONFIRM", Boolean.TRUE);
+        dialog.button("CANCEL", Boolean.FALSE);
+        dialog.show(stage);
+    }
+
+    private String purchaseSummary(int itemId, int count, String plant) {
+        String item = switch (itemId) {
+            case 1 -> "Greenhouse Pot";
+            case 2 -> "Plant Food";
+            case 3 -> "Random Seed Packets";
+            case 4 -> "Selected Seed Packets for " + plant;
+            case 5 -> "Currency Exchange";
+            case 6 -> "Daily Seed Packets for " + user.getShopState().getDailyPlant();
+            default -> "this item";
+        };
+        String price = switch (itemId) {
+            case 1 -> "2000 Coins";
+            case 2 -> "3 Gems";
+            case 3 -> "1000 Coins";
+            case 4, 5 -> "5 Gems";
+            case 6 -> "1600 Coins";
+            default -> "the listed price";
+        };
+        return "Buy " + item + " x" + count + " for " + price + "?";
     }
 
     private void purchase(int itemId, int count, String plant) {
@@ -279,6 +333,30 @@ public final class ShopScreen extends AuthenticatedUiScreen {
             buildUi();
             return -1;
         }
+    }
+
+    private void refreshDailyTimer() {
+        LocalDateTime now = LocalDateTime.now();
+        long seconds = Math.max(0L, Duration.between(
+            now,
+            now.toLocalDate().plusDays(1).atStartOfDay()
+        ).getSeconds());
+        long hours = seconds / 3600L;
+        long minutes = (seconds % 3600L) / 60L;
+        long remainingSeconds = seconds % 60L;
+        dailyTimerLabel.setText(String.format(
+            "Time remaining: %02d:%02d:%02d", hours, minutes, remainingSeconds
+        ));
+    }
+
+    @Override
+    public void render(float delta) {
+        LocalDate today = LocalDate.now();
+        if (!today.equals(renderedOfferDate)) {
+            buildUi();
+        }
+        refreshDailyTimer();
+        super.render(delta);
     }
 
     private void refreshOwnedPlants() {

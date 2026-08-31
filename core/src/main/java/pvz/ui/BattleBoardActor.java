@@ -290,7 +290,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
         float height = gridHeight();
         float cellWidth = width / Board.DEFAULT_COLUMNS;
         float cellHeight = height / Board.DEFAULT_ROWS;
-        batch.setColor(1f, 1f, 1f, 0.24f * parentAlpha);
+        batch.setColor(1f, 0f, 0f, 0.65f * parentAlpha);
         for (int col = 0; col <= Board.DEFAULT_COLUMNS; col++) {
             float x = left + col * cellWidth;
             batch.draw(pixel, x - 1f, bottom, 2f, height);

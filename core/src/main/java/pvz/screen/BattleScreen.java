@@ -142,6 +142,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         seedBank.left();
         bar.add(seedBank).expandX().left();
 
+        Table controls = new Table();
         Table tools = new Table();
         tools.add(toolButton("IMAGE_UI_HUD_INGAME_PLANTFOOD_BUTTON", this::selectPlantFood))
             .size(54f).padRight(6f);
@@ -149,8 +150,48 @@ public final class BattleScreen extends AuthenticatedUiScreen {
             .size(54f).padRight(6f);
         tools.add(toolButton("IMAGE_UI_HUD_INGAME_PAUSE_BUTTON", this::togglePause))
             .size(54f);
-        bar.add(tools).right();
+        controls.add(tools).right();
+        if (user.isDebugMode()) {
+            controls.row();
+            controls.add(buildDebugControls()).right().padTop(5f);
+        }
+        bar.add(controls).right();
         return bar;
+    }
+
+    private Table buildDebugControls() {
+        Table controls = new Table();
+        controls.add(theme.settingsLabel("DEBUG")).padRight(4f);
+        controls.add(debugButton("C +1000", () -> addDebugCurrency("coin", 1000)))
+            .width(72f).height(32f).padRight(3f);
+        controls.add(debugButton("G +50", () -> addDebugCurrency("gem", 50)))
+            .width(64f).height(32f).padRight(3f);
+        controls.add(debugButton("S +250", () -> addDebugSuns(250)))
+            .width(68f).height(32f).padRight(3f);
+        controls.add(debugButton("F +1", this::addDebugPlantFood))
+            .width(58f).height(32f);
+        return controls;
+    }
+
+    private TextButton debugButton(String text, Runnable action) {
+        TextButton button = theme.secondaryButton(text);
+        button.getLabel().setFontScale(0.52f);
+        UiActions.onClick(button, action);
+        return button;
+    }
+
+    private void addDebugCurrency(String type, int amount) {
+        showResult(app.services().game().addWalletCurrency(amount, type));
+    }
+
+    private void addDebugSuns(int amount) {
+        showResult(app.services().game().addSuns(amount));
+        refreshHud();
+    }
+
+    private void addDebugPlantFood() {
+        showResult(app.services().game().addPlantFoodCheat());
+        refreshHud();
     }
 
     private Table buildBottomHud() {
