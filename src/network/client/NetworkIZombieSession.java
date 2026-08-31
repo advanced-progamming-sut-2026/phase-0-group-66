@@ -118,7 +118,7 @@ public final class NetworkIZombieSession extends IZombieSession {
     public List<ZombieCardView> getCardViews() {
         return state.cards().stream()
             .map(card -> new ZombieCardView(card.key(), card.type(), card.cost(), card.health(),
-                card.damage(), card.speed())).toList();
+                card.damage(), card.speed(), card.remainingCooldownTicks())).toList();
     }
 
     @Override

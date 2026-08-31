@@ -37,7 +37,8 @@ public record NetworkIZombieState(
     }
 
     public record Card(String key, String type, int cost, int health,
-                       int damage, double speed) implements Serializable { }
+                       int damage, double speed,
+                       int remainingCooldownTicks) implements Serializable { }
 
     public record Plant(String type, int row, int column, int health,
                         int damage) implements Serializable { }

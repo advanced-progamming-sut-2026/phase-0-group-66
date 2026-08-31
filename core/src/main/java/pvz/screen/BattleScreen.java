@@ -97,7 +97,8 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         seedBank = new Table();
         missionBanner = new Table();
         pauseLayer = new Stack();
-        boardActor = new BattleBoardActor(app.assets(), controller, level, this::handleCellClick);
+        boardActor = new BattleBoardActor(app.assets(), controller, level,
+            this::handleCellClick, this::handleCellHover);
         boardActor.setShowGrid(user.isGridVisible());
         startWavesButton = theme.tertiaryButton("START WAVES");
         audioSettings = app.audioSettings();
@@ -138,8 +139,8 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         missionBanner.top().padTop(122f);
         missionBanner.setTouchable(Touchable.disabled);
         Table panel = badgePanel(10f);
-        panel.add(missionLabel).width(760f).height(58f);
-        missionBanner.add(panel).width(790f).height(78f).center();
+        panel.add(missionLabel).width(860f).height(78f);
+        missionBanner.add(panel).width(890f).height(98f).center();
         return missionBanner;
     }
 
@@ -174,6 +175,10 @@ public final class BattleScreen extends AuthenticatedUiScreen {
             sunBadge.add(sun).size(42f).padRight(4f);
         }
         sunBadge.add(sunLabel).minWidth(72f).left();
+        if (user.isDebugMode()) {
+            sunBadge.add(debugButton("+250", () -> addDebugSuns(250))).width(62f).height(32f)
+                .padLeft(4f);
+        }
         bar.add(sunBadge).height(58f).padRight(8f);
 
         seedBank.left();
@@ -203,10 +208,6 @@ public final class BattleScreen extends AuthenticatedUiScreen {
             .width(72f).height(32f).padRight(3f);
         controls.add(debugButton("G +50", () -> addDebugCurrency("gem", 50)))
             .width(64f).height(32f).padRight(3f);
-        controls.add(debugButton("S +250", () -> addDebugSuns(250)))
-            .width(68f).height(32f).padRight(3f);
-        controls.add(debugButton("F +1", this::addDebugPlantFood))
-            .width(58f).height(32f);
         return controls;
     }
 
@@ -243,6 +244,10 @@ public final class BattleScreen extends AuthenticatedUiScreen {
             bar.add(food).size(34f).padRight(3f);
         }
         bar.add(plantFoodLabel).width(100f).left();
+        if (user.isDebugMode()) {
+            bar.add(debugButton("+1", this::addDebugPlantFood)).width(48f).height(32f)
+                .padLeft(3f);
+        }
 
         startWavesButton.setVisible(false);
         UiActions.onClick(startWavesButton, this::startZombieWaves);
@@ -351,6 +356,8 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     private void refreshSeedBank() {
         seedBank.clearChildren();
         List<String> selectedPlants = controller.getSelectedPlants();
+        float cardWidth = selectedPlants.size() > 6 ? 78f : 92f;
+        float cardHeight = selectedPlants.size() > 6 ? 68f : 82f;
         int index = 0;
         for (String plantName : selectedPlants) {
             PlantDefinition definition = app.services().gameData().getPlantFactory()
@@ -359,7 +366,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
             if (definition == null) {
                 continue;
             }
-            seedBank.add(seedCard(definition)).width(92f).height(82f).padRight(4f);
+            seedBank.add(seedCard(definition)).width(cardWidth).height(cardHeight).padRight(4f);
             index++;
             if (index % 4 == 0 && index < selectedPlants.size()) {
                 seedBank.row();
@@ -414,6 +421,8 @@ public final class BattleScreen extends AuthenticatedUiScreen {
                 }
                 selectedPlant = definition.getName();
                 toolMode = ToolMode.PLANT;
+                boardActor.setPreviewPlant(app.services().gameData().getPlantFactory()
+                    .createPlant(definition.getName()));
                 theme.showSuccess(status, "Selected " + definition.getName() + ".");
                 refreshSeedBank();
             }
@@ -445,6 +454,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
             result = controller.plantPlant(selectedPlant, col, row);
             if (result.isSuccessful()) {
                 selectedPlant = null;
+                boardActor.clearPreviewPlant();
             }
         } else {
             theme.showError(status, "Choose a seed packet, shovel, plant food, or a sun first.");
@@ -456,6 +466,16 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         }
         refreshSeedBank();
         refreshHud();
+    }
+
+    private void handleCellHover(int col, int row) {
+        if (paused || isIntroRunning() || pendingPlantFood != null
+            || game.getGameState() != GameState.RUNNING) {
+            return;
+        }
+        if (collectSunIfPresent(col, row)) {
+            refreshHud();
+        }
     }
 
     private boolean beginPlantFood(int col, int row) {
@@ -533,6 +553,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         }
         toolMode = ToolMode.SHOVEL;
         selectedPlant = null;
+        boardActor.clearPreviewPlant();
         theme.showSuccess(status, "Shovel selected. Click a planted tile.");
         refreshSeedBank();
     }
@@ -543,6 +564,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         }
         toolMode = ToolMode.PLANT_FOOD;
         selectedPlant = null;
+        boardActor.clearPreviewPlant();
         theme.showSuccess(status, "Plant food selected. Click a plant.");
         refreshSeedBank();
     }
@@ -593,14 +615,17 @@ public final class BattleScreen extends AuthenticatedUiScreen {
 
     @Override
     public void render(float delta) {
-        missionElapsed += Math.max(0f, delta);
-        if (missionElapsed >= 4.0f) {
-            missionBanner.setVisible(false);
-        }
-        if (notificationElapsed > 0f) {
-            notificationElapsed = Math.max(0f, notificationElapsed - Math.max(0f, delta));
-            if (notificationElapsed == 0f) {
-                notificationLabel.getParent().getParent().setVisible(false);
+        if (!paused) {
+            missionElapsed += Math.max(0f, delta);
+            if (missionElapsed >= 4.0f && level.getSpecialType() == model.SpecialLevelType.NORMAL) {
+                missionBanner.setVisible(false);
+            }
+            if (notificationElapsed > 0f) {
+                notificationElapsed = Math.max(0f,
+                    notificationElapsed - Math.max(0f, delta));
+                if (notificationElapsed == 0f) {
+                    notificationLabel.getParent().getParent().setVisible(false);
+                }
             }
         }
         advanceIntro(delta);
@@ -652,6 +677,12 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     private void refreshHud() {
         sunLabel.setText(Integer.toString(game.getSunAmount()));
         plantFoodLabel.setText("x" + game.getPlantFoodCount());
+        String missionText = "Mission: " + level.getSpecialRuleSummary();
+        if (level.getSpecialType() != model.SpecialLevelType.NORMAL) {
+            missionText += "\n" + game.specialStatus();
+            missionBanner.setVisible(true);
+        }
+        missionLabel.setText(missionText);
         Wave wave = game.getCurrentWave();
         int current = wave == null ? 0 : wave.getWaveNumber();
         if (game.areZombieWavesStarted() && wave == null
@@ -825,11 +856,27 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         if (lower.contains("game started")) {
             return "GAME STARTED";
         }
+        if (lower.contains("tornado")) {
+            return "TORNADO ENTRY: ZOMBIE DROPPED AHEAD";
+        }
         if (lower.contains("wave ") || lower.contains("final wave") || lower.contains("zombie waves started")) {
             return event.toUpperCase();
         }
         if (lower.contains("necromancy") || lower.contains("tomb")) {
             return "NECROMANCY! THE TOMBS ARE RISING";
+        }
+        if (lower.contains("dropped a plant food") || lower.contains("released a plant food")
+            || lower.contains("plant foods now")) {
+            return "PLANT FOOD COLLECTED";
+        }
+        if (lower.contains("coin")) {
+            return "COINS COLLECTED";
+        }
+        if (lower.contains("diamond") || lower.contains("gem")) {
+            return "DIAMONDS COLLECTED";
+        }
+        if (lower.contains(" dropped a pot") || lower.contains(" pots now")) {
+            return "POT COLLECTED";
         }
         if (lower.contains("cold wind") || level.getSeason() == model.SeasonType.BIG_WAVE_BEACH
             && lower.contains("wave")) {

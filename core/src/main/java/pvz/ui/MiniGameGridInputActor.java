@@ -12,14 +12,21 @@ public final class MiniGameGridInputActor extends WidgetGroup {
     private final int rows;
     private final int columns;
     private final Consumer<Cell> cellClick;
+    private final Consumer<Cell> cellHover;
 
     public MiniGameGridInputActor(int rows, int columns, Consumer<Cell> cellClick) {
+        this(rows, columns, cellClick, null);
+    }
+
+    public MiniGameGridInputActor(int rows, int columns, Consumer<Cell> cellClick,
+                                  Consumer<Cell> cellHover) {
         if (rows <= 0 || columns <= 0) {
             throw new IllegalArgumentException("Grid dimensions must be positive.");
         }
         this.rows = rows;
         this.columns = columns;
         this.cellClick = cellClick;
+        this.cellHover = cellHover;
         setTouchable(Touchable.enabled);
         addListener(new InputListener() {
             @Override
@@ -37,6 +44,24 @@ public final class MiniGameGridInputActor extends WidgetGroup {
                 }
                 return true;
             }
+
+            @Override
+            public boolean mouseMoved(InputEvent event, float x, float y) {
+                if (cellHover != null && x >= 0f && y >= 0f
+                    && x < getWidth() && y < getHeight()) {
+                    cellHover.accept(cellAt(x, y));
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public void exit(InputEvent event, float x, float y, int pointer,
+                             com.badlogic.gdx.scenes.scene2d.Actor toActor) {
+                if (cellHover != null) {
+                    cellHover.accept(null);
+                }
+            }
         });
     }
 
@@ -51,6 +76,12 @@ public final class MiniGameGridInputActor extends WidgetGroup {
 
     private float cellHeight() {
         return getHeight() / rows;
+    }
+
+    private Cell cellAt(float x, float y) {
+        int column = Math.min(columns - 1, (int) (x / cellWidth()));
+        int visualRow = Math.min(rows - 1, (int) (y / cellHeight()));
+        return new Cell(rows - 1 - visualRow, column);
     }
 
     public record Cell(int row, int column) { }

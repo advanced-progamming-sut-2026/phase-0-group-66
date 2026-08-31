@@ -46,6 +46,7 @@ public abstract class Zombie {
     private boolean prospectorDynamiteLaunched;
     private boolean companionsInitialized;
     private int jugglingTicks;
+    private int eatingTicks;
     private double flightDistanceRemaining;
     private int specialAbilityUses;
     private boolean trappedInIceTile;
@@ -131,6 +132,9 @@ public abstract class Zombie {
         if (jugglingTicks > 0) {
             jugglingTicks--;
         }
+        if (eatingTicks > 0) {
+            eatingTicks--;
+        }
         if (poisonTicks > 0) {
             poisonTicks--;
             if (ageTicks % Game.TICKS_PER_SECOND == 0) {
@@ -170,6 +174,7 @@ public abstract class Zombie {
         }
         int actualDamage = enraged ? damage * 3 : damage;
         target.takeDamage(actualDamage);
+        eatingTicks = Math.max(eatingTicks, Game.TICKS_PER_SECOND);
     }
 
     public void takeDamage(int amount) {
@@ -388,6 +393,7 @@ public abstract class Zombie {
     public boolean isProspectorDynamiteLaunched() { return prospectorDynamiteLaunched; }
     public boolean areCompanionsInitialized() { return companionsInitialized; }
     public boolean isJuggling() { return jugglingTicks > 0; }
+    public boolean isEating() { return eatingTicks > 0; }
     public int getJugglingTicks() { return jugglingTicks; }
     public boolean isFlying() { return flightDistanceRemaining > 0; }
     public boolean isTrappedInIceTile() { return trappedInIceTile; }

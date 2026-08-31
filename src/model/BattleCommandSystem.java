@@ -35,9 +35,16 @@ final class BattleCommandSystem {
         engine.plantedPlantNames.clear();
         engine.plantedPlantFamilies.clear();
         engine.tombs.clear();
+        engine.tornadoEntryZombies.clear();
+        engine.coldWindRows.clear();
+        engine.coldWindUntilTick = 0;
         engine.warmedIcePositions.clear();
         engine.totalSunCollected = 0;
         engine.zombieKillCount = 0;
+        engine.timedWarKillSamples.clear();
+        engine.timedWarSunSamples.clear();
+        engine.timedWarLastKillCount = 0;
+        engine.timedWarLastSunCollected = 0;
         engine.explosivePlantsUsed = 0;
         engine.lawnMowerKills = 0;
         engine.killsWithinThirtySeconds = 0;

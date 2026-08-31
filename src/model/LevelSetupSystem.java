@@ -143,11 +143,13 @@ final class LevelSetupSystem {
         Collections.shuffle(rows, engine.random);
         int affectedRowCount = 1 + engine.random.nextInt(Math.min(3, rows.size()));
         ArrayList<Integer> affectedRows = new ArrayList<>();
+        engine.beginColdWind(2 * Game.TICKS_PER_SECOND);
         int layeredPlants = 0;
         int firePlantsIgnored = 0;
         for (int index = 0; index < affectedRowCount; index++) {
             int row = rows.get(index);
             affectedRows.add(row + 1);
+            engine.markColdWindRow(row);
             for (Plant plant : engine.board.getPlantsInRow(row)) {
                 if (plant.getDefinition().hasTag("Fire")) {
                     firePlantsIgnored++;
@@ -176,6 +178,9 @@ final class LevelSetupSystem {
                 double shifted = Math.max(4.0,
                     zombie.getPosition().getColumn() - 1 - engine.random.nextInt(4));
                 zombie.setPosition(new BoardPosition(zombie.getPosition().getRow(), shifted));
+                engine.markTornadoEntry(zombie);
+                engine.addEvent("A tornado carried a zombie to column "
+                    + String.format("%.1f", shifted) + ".");
             }
         }
         if (engine.currentLevel.getSeason() == SeasonType.BIG_WAVE_BEACH) {

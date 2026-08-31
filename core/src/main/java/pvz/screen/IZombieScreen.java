@@ -5,6 +5,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -20,7 +21,9 @@ import model.ZombieDefinition;
 import pvz.PvzApplication;
 import pvz.ui.MiniGameGridInputActor;
 import pvz.ui.MiniGameUnitLayer;
+import pvz.ui.UiTheme;
 import pvz.ui.ZombieArtResolver;
+import pvz.ui.ZombieAnimationActor;
 
 import java.util.List;
 
@@ -34,12 +37,18 @@ public final class IZombieScreen extends MiniGamePlayScreen {
     private final IZombieSession iZombie;
     private final MiniGameUnitLayer units;
     private final Group brainLayer;
+    private final Group boardFeedback;
+    private final Group producerLayer;
+    private final Image rowHighlight;
     private final Table cardTray;
     private final Label sunLabel;
     private final Label plantSunLabel;
     private final Label progress;
     private final Label reactionLabel;
     private String selectedCard;
+    private Actor zombiePreview;
+    private int hoveredRow = -1;
+    private int hoveredColumn = -1;
     private String selectedPlant = "Sunflower";
     private String lastReactionKey;
 
@@ -48,6 +57,14 @@ public final class IZombieScreen extends MiniGamePlayScreen {
         iZombie = (IZombieSession) session;
         units = new MiniGameUnitLayer(app);
         brainLayer = new Group();
+        boardFeedback = new Group();
+        producerLayer = new Group();
+        rowHighlight = theme.image(UiTheme.DIVIDER);
+        if (rowHighlight != null) {
+            rowHighlight.setColor(1f, 1f, 1f, 0.16f);
+            rowHighlight.setVisible(false);
+            boardFeedback.addActor(rowHighlight);
+        }
         cardTray = new Table();
         sunLabel = theme.heading("");
         plantSunLabel = theme.heading("");
@@ -250,12 +267,86 @@ public final class IZombieScreen extends MiniGamePlayScreen {
             board.add(background);
         }
         board.add(units);
+        buildProducerMarkers();
+        board.add(producerLayer);
         board.add(brainLayer);
+        board.add(boardFeedback);
         if (iZombie.isMultiplayer()) {
             board.add(new MiniGameGridInputActor(ROWS, COLS,
-                cell -> placePlant(cell.row() + 1, cell.column() + 1)));
+                cell -> placePlant(cell.row() + 1, cell.column() + 1),
+                this::updateBoardHover));
+        } else {
+            board.add(new MiniGameGridInputActor(ROWS, COLS,
+                cell -> deploy(cell.row() + 1), this::updateBoardHover));
         }
         return board;
+    }
+
+    private void buildProducerMarkers() {
+        producerLayer.clearChildren();
+        float cellHeight = BOARD_HEIGHT / ROWS;
+        for (int row = 0; row < ROWS; row++) {
+            Image sun = theme.image("IMAGE_UI_HUD_INGAME_SUN");
+            if (sun == null) {
+                continue;
+            }
+            sun.setScaling(Scaling.fit);
+            sun.setColor(1f, 0.86f, 0.18f, 0.92f);
+            float size = cellHeight * 0.34f;
+            sun.setBounds(BOARD_WIDTH - size - 5f,
+                (ROWS - 1 - row) * cellHeight + (cellHeight - size) * 0.5f,
+                size, size);
+            producerLayer.addActor(sun);
+        }
+    }
+
+    private void updateBoardHover(MiniGameGridInputActor.Cell cell) {
+        if (cell == null || selectedCard == null) {
+            hoveredRow = -1;
+            hoveredColumn = -1;
+            if (rowHighlight != null) {
+                rowHighlight.setVisible(false);
+            }
+            if (zombiePreview != null) {
+                zombiePreview.setVisible(false);
+            }
+            return;
+        }
+        hoveredRow = cell.row();
+        hoveredColumn = cell.column();
+        float cellWidth = BOARD_WIDTH / COLS;
+        float cellHeight = BOARD_HEIGHT / ROWS;
+        if (rowHighlight != null) {
+            rowHighlight.setVisible(true);
+            rowHighlight.setBounds(0f, (ROWS - 1 - hoveredRow) * cellHeight,
+                BOARD_WIDTH, cellHeight);
+        }
+        ensureZombiePreview();
+        if (zombiePreview != null) {
+            zombiePreview.setVisible(true);
+            float width = cellWidth * 1.15f;
+            float height = cellHeight * 1.35f;
+            zombiePreview.setBounds(hoveredColumn * cellWidth + (cellWidth - width) * 0.5f,
+                (ROWS - 1 - hoveredRow) * cellHeight - cellHeight * 0.12f,
+                width, height);
+        }
+    }
+
+    private void ensureZombiePreview() {
+        if (zombiePreview != null || selectedCard == null) {
+            return;
+        }
+        ZombieDefinition definition = resolveZombie(selectedCard);
+        if (definition == null) {
+            return;
+        }
+        ZombieAnimationActor animation = new ZombieAnimationActor(app.assets(), definition);
+        zombiePreview = animation.hasAnimation() ? animation : cardImage(selectedCard);
+        if (zombiePreview != null) {
+            zombiePreview.setColor(1f, 1f, 1f, 0.62f);
+            zombiePreview.setVisible(false);
+            boardFeedback.addActor(zombiePreview);
+        }
     }
 
     private void placePlant(int row, int column) {
@@ -339,13 +430,16 @@ public final class IZombieScreen extends MiniGamePlayScreen {
                 art.setScaling(Scaling.fit);
                 item.add(art).size(48f).padRight(4f);
             }
-            String text = card.type() + "  " + card.cost() + " sun";
+            String cooldown = card.remainingCooldownTicks() > 0
+                ? String.format("%.1fs", card.remainingCooldownTicks() / 10d) : "READY";
+            String text = card.type() + "  " + card.cost() + " sun\n" + cooldown;
             TextButton select = card.key().equals(selectedCard)
                 ? theme.tertiaryButton(text)
                 : theme.primaryButton(text);
             select.getLabel().setFontScale(0.48f);
             select.getLabel().setWrap(true);
             select.getLabel().setAlignment(Align.center);
+            select.setDisabled(card.remainingCooldownTicks() > 0);
             UiActions.onClick(select, () -> selectCard(card.key()));
             item.add(select).width(214f).height(42f);
             cardTray.add(item).width(280f).height(53f).padBottom(3f);
@@ -380,6 +474,11 @@ public final class IZombieScreen extends MiniGamePlayScreen {
 
     private void selectCard(String key) {
         selectedCard = key;
+        if (zombiePreview != null) {
+            zombiePreview.remove();
+            zombiePreview = null;
+        }
+        ensureZombiePreview();
         rebuildCards(iZombie.getCardViews());
         theme.showSuccess(message, key + " selected. Choose a row.");
     }

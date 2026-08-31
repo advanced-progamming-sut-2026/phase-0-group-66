@@ -49,10 +49,6 @@ public class Sun {
         remainingFallTicks--;
         if (remainingFallTicks <= 0) {
             falling = false;
-            if (type == SunType.RADIOACTIVE) {
-                type = SunType.NORMAL;
-                amount = SunType.NORMAL.getDefaultAmount();
-            }
             return true;
         }
         return false;

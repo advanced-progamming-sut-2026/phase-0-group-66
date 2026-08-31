@@ -62,6 +62,7 @@ final class BattleTickSystem {
         ZombieObjectSystem.tickProspectorDynamites(engine);
         engine.moveZombiesAndResolveCombat();
         engine.cleanupDestroyedEntities();
+        engine.recordTimedWarSample();
         engine.startNextWaveIfReady();
         engine.board.refreshZombieTiles();
         engine.evaluateGameState();
@@ -449,9 +450,6 @@ final class BattleTickSystem {
         return engine.currentLevel.getRuleStrategy().hasSpecialLoss(engine);
     }
     static int timedWarProgress(Game engine) {
-        if (engine.currentLevel.getTimedWarObjective() == TimedWarObjective.SUN) {
-            return engine.totalSunCollected;
-        }
-        return engine.zombieKillCount;
+        return engine.timedWarWindowProgress();
     }
 }

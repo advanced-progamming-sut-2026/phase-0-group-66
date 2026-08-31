@@ -141,11 +141,14 @@ public final class WallnutBowlingScreen extends MiniGamePlayScreen {
 
     private void rebuildConveyor(Map<String, Integer> counts) {
         conveyor.clearChildren();
-        for (String type : List.of("NORMAL", "EXPLOSIVE")) {
+        for (String type : List.of("NORMAL", "GIANT", "EXPLOSIVE")) {
             Table card = theme.settingsBadgePanel(5f);
             Image image = theme.image(nutArt(type));
             if (image != null) {
                 image.setScaling(Scaling.fit);
+                if ("GIANT".equals(type)) {
+                    image.setColor(new Color(0.92f, 0.72f, 0.32f, 1f));
+                }
                 card.add(image).size(60f).padRight(5f);
             }
             int count = counts.getOrDefault(type, 0);
@@ -176,11 +179,14 @@ public final class WallnutBowlingScreen extends MiniGamePlayScreen {
                 continue;
             }
             image.setScaling(Scaling.fit);
-            float size = cellHeight * 0.70f;
+            float size = cellHeight * ("GIANT".equals(nut.type()) ? 0.92f : 0.70f);
             float x = (float) nut.column() * cellWidth - size * 0.45f;
             float y = (ROWS - 1f - (float) nut.row()) * cellHeight
                 + (cellHeight - size) * 0.35f;
             image.setBounds(x, y, size, size);
+            if ("GIANT".equals(nut.type())) {
+                image.setColor(new Color(0.92f, 0.72f, 0.32f, 1f));
+            }
             nutLayer.addActor(image);
         }
     }

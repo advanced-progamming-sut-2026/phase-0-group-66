@@ -8,11 +8,13 @@ import java.util.Map;
 import java.util.Random;
 
 public class IZombieSession extends MiniGameSession {
-    private record ZombieCard(String type, int cost, int health, int damage, double speed) { }
+    private record ZombieCard(String type, int cost, int health, int damage, double speed,
+                              int rechargeTicks) { }
 
     private final ArrayList<MiniGamePlantUnit> plants = new ArrayList<>();
     private final ArrayList<MiniGameUnit> zombies = new ArrayList<>();
     private final LinkedHashMap<String, ZombieCard> cards = new LinkedHashMap<>();
+    private final LinkedHashMap<String, Integer> cardCooldownUntil = new LinkedHashMap<>();
     private final boolean[] brains = {true, true, true, true, true};
     private final Random random;
     private final boolean multiplayer;
@@ -56,29 +58,30 @@ public class IZombieSession extends MiniGameSession {
 
     private void registerCards() {
         if (getLevel() == 1) {
-            addCard("basic", "Basic", 50, 260, 35, 0.045);
-            addCard("cone", "Conehead", 75, 520, 40, 0.040);
-            addCard("bucket", "Buckethead", 125, 1000, 45, 0.032);
-            addCard("imp", "Imp", 25, 140, 25, 0.070);
-            addCard("allstar", "All-Star", 150, 700, 1000, 0.090);
+            addCard("basic", "Basic", 50, 260, 35, 0.045, 45);
+            addCard("cone", "Conehead", 75, 520, 40, 0.040, 55);
+            addCard("bucket", "Buckethead", 125, 1000, 45, 0.032, 70);
+            addCard("imp", "Imp", 25, 140, 25, 0.070, 35);
+            addCard("allstar", "All-Star", 150, 700, 1000, 0.090, 90);
         } else if (getLevel() == 2) {
-            addCard("newspaper", "Newspaper", 65, 430, 55, 0.045);
-            addCard("prospector", "Prospector", 90, 500, 45, 0.055);
-            addCard("parasol", "Parasol", 100, 650, 45, 0.040);
-            addCard("ra", "Ra", 80, 480, 40, 0.042);
-            addCard("explorer", "Explorer", 120, 720, 120, 0.042);
+            addCard("newspaper", "Newspaper", 65, 430, 55, 0.045, 50);
+            addCard("prospector", "Prospector", 90, 500, 45, 0.055, 55);
+            addCard("parasol", "Parasol", 100, 650, 45, 0.040, 60);
+            addCard("ra", "Ra", 80, 480, 40, 0.042, 55);
+            addCard("explorer", "Explorer", 120, 720, 120, 0.042, 70);
         } else {
-            addCard("knight", "Knight", 175, 1800, 55, 0.030);
-            addCard("blockhead", "Blockhead", 200, 2300, 55, 0.027);
-            addCard("gargantuar", "Gargantuar", 250, 3000, 1000, 0.018);
-            addCard("dodo", "Dodo Rider", 110, 620, 45, 0.070);
-            addCard("wizard", "Wizard", 150, 850, 50, 0.032);
+            addCard("knight", "Knight", 175, 1800, 55, 0.030, 75);
+            addCard("blockhead", "Blockhead", 200, 2300, 55, 0.027, 80);
+            addCard("gargantuar", "Gargantuar", 250, 3000, 1000, 0.018, 110);
+            addCard("dodo", "Dodo Rider", 110, 620, 45, 0.070, 60);
+            addCard("wizard", "Wizard", 150, 850, 50, 0.032, 75);
         }
     }
 
     private void addCard(String key, String type, int cost, int health,
-                         int damage, double speed) {
-        cards.put(key, new ZombieCard(type, cost, health, damage, speed));
+                         int damage, double speed, int rechargeTicks) {
+        cards.put(key, new ZombieCard(type, cost, health, damage, speed, rechargeTicks));
+        cardCooldownUntil.put(key, 0);
     }
 
     private void createGarden() {
@@ -114,7 +117,13 @@ public class IZombieSession extends MiniGameSession {
         if (sun < card.cost()) {
             throw new IllegalStateException("Not enough sun. Required: " + card.cost() + ".");
         }
+        int remaining = remainingCardCooldown(cardName);
+        if (remaining > 0) {
+            throw new IllegalStateException("Zombie card is recharging for "
+                + String.format("%.1f", remaining / 10d) + " seconds.");
+        }
         sun -= card.cost();
+        cardCooldownUntil.put(normalize(cardName), getElapsedTicks() + card.rechargeTicks());
         zombies.add(new MiniGameUnit(card.type(), row, 8.8, card.health(),
             card.damage(), card.speed()));
         addScore(10);
@@ -329,7 +338,8 @@ public class IZombieSession extends MiniGameSession {
         int cost,
         int health,
         int damage,
-        double speed
+        double speed,
+        int remainingCooldownTicks
     ) { }
 
     public List<ZombieCardView> getCardViews() {
@@ -338,7 +348,7 @@ public class IZombieSession extends MiniGameSession {
             ZombieCard card = entry.getValue();
             result.add(new ZombieCardView(
                 entry.getKey(), card.type(), card.cost(), card.health(),
-                card.damage(), card.speed()
+                card.damage(), card.speed(), remainingCardCooldown(entry.getKey())
             ));
         }
         return List.copyOf(result);
@@ -358,6 +368,11 @@ public class IZombieSession extends MiniGameSession {
 
     public int getSun() {
         return sun;
+    }
+
+    private int remainingCardCooldown(String cardName) {
+        return Math.max(0, cardCooldownUntil.getOrDefault(normalize(cardName), 0)
+            - getElapsedTicks());
     }
 
     public int getPlantSun() {

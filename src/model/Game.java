@@ -1,13 +1,16 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 public class Game {
     public static final int TICKS_PER_SECOND = 10;
@@ -35,7 +38,14 @@ public class Game {
     final  LinkedHashSet<String> encounteredZombieNames;
     final  LinkedHashMap<GridPosition, Tomb> tombs;
     final  LinkedHashSet<GridPosition> warmedIcePositions;
+    final Set<Zombie> tornadoEntryZombies;
+    final LinkedHashSet<Integer> coldWindRows = new LinkedHashSet<>();
+    int coldWindUntilTick;
     final  ArrayList<String> events;
+    final ArrayDeque<Integer> timedWarKillSamples = new ArrayDeque<>();
+    final ArrayDeque<Integer> timedWarSunSamples = new ArrayDeque<>();
+    int timedWarLastKillCount;
+    int timedWarLastSunCollected;
 
     GameState gameState;
     Chapter currentChapter;
@@ -107,6 +117,7 @@ public class Game {
         this.encounteredZombieNames = new LinkedHashSet<>();
         this.tombs = new LinkedHashMap<>();
         this.warmedIcePositions = new LinkedHashSet<>();
+        this.tornadoEntryZombies = Collections.newSetFromMap(new IdentityHashMap<>());
         this.events = new ArrayList<>();
         this.gameState = GameState.PLANT_SELECTION;
     }
@@ -166,6 +177,9 @@ public class Game {
     public Chapter getCurrentChapter() { return BattleQuerySystem.getCurrentChapter(this); }
     public Level getCurrentLevel() { return BattleQuerySystem.getCurrentLevel(this); }
     public Board getBoard() { return BattleQuerySystem.getBoard(this); }
+    public Tomb getTombAt(int row, int column) {
+        return tombs.get(new GridPosition(row, column));
+    }
     public Wave getCurrentWave() { return BattleQuerySystem.getCurrentWave(this); }
     public int getSunAmount() { return BattleQuerySystem.getSunAmount(this); }
     public int getElapsedTicks() { return BattleQuerySystem.getElapsedTicks(this); }
@@ -266,6 +280,39 @@ public class Game {
     boolean specialWinConditionReached() { return BattleTickSystem.specialWinConditionReached(this); }
     boolean specialLoseConditionReached() { return BattleTickSystem.specialLoseConditionReached(this); }
     int timedWarProgress() { return BattleTickSystem.timedWarProgress(this); }
+    int timedWarWindowProgress() {
+        ArrayDeque<Integer> samples = currentLevel.getTimedWarObjective() == TimedWarObjective.SUN
+            ? timedWarSunSamples : timedWarKillSamples;
+        int total = 0;
+        for (int sample : samples) {
+            total += sample;
+        }
+        return total;
+    }
+    void recordTimedWarSample() {
+        int killDelta = Math.max(0, zombieKillCount - timedWarLastKillCount);
+        int sunDelta = Math.max(0, totalSunCollected - timedWarLastSunCollected);
+        timedWarLastKillCount = zombieKillCount;
+        timedWarLastSunCollected = totalSunCollected;
+        timedWarKillSamples.addLast(killDelta);
+        timedWarSunSamples.addLast(sunDelta);
+        int maxSamples = 5 * TICKS_PER_SECOND;
+        while (timedWarKillSamples.size() > maxSamples) timedWarKillSamples.removeFirst();
+        while (timedWarSunSamples.size() > maxSamples) timedWarSunSamples.removeFirst();
+    }
+    void markTornadoEntry(Zombie zombie) {
+        if (zombie != null) tornadoEntryZombies.add(zombie);
+    }
+    public boolean enteredViaTornado(Zombie zombie) {
+        return tornadoEntryZombies.contains(zombie);
+    }
+    void beginColdWind(int durationTicks) {
+        coldWindRows.clear();
+        coldWindUntilTick = elapsedTicks + Math.max(1, durationTicks);
+    }
+    void markColdWindRow(int row) { coldWindRows.add(row); }
+    public Set<Integer> getColdWindRows() { return Collections.unmodifiableSet(coldWindRows); }
+    public boolean isColdWindActive() { return elapsedTicks <= coldWindUntilTick; }
     public String specialStatus() { return PlantFoodSystem.specialStatus(this); }
     int protectedPlantsRemaining() { return PlantFoodSystem.protectedPlantsRemaining(this); }
     void handleImmediatePlant(Plant plant) { PlantFoodSystem.handleImmediatePlant(this, plant); }

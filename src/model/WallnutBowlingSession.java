@@ -11,7 +11,7 @@ import java.util.Random;
 import java.util.Set;
 
 public final class WallnutBowlingSession extends MiniGameSession {
-    private enum NutType { NORMAL, EXPLOSIVE }
+    private enum NutType { NORMAL, GIANT, EXPLOSIVE }
 
     private static final class RollingNut {
         private final NutType type;
@@ -65,7 +65,7 @@ public final class WallnutBowlingSession extends MiniGameSession {
                 intArg(arguments, 1) - 1);
             case "advance" -> advanceTime(intArg(arguments, 0));
             default -> throw new IllegalArgumentException(
-                "Wall-nut Bowling commands: bowl <normal|explosive> <row>, "
+                "Wall-nut Bowling commands: bowl <normal|giant|explosive> <row>, "
                     + "advance <ticks>.");
         }
     }
@@ -159,14 +159,14 @@ public final class WallnutBowlingSession extends MiniGameSession {
             }
             nut.hitZombies.add(zombie);
             switch (nut.type) {
-                case NORMAL -> hitWithNormalNut(nut, zombie);
+                case NORMAL, GIANT -> hitWithNormalNut(nut, zombie);
                 case EXPLOSIVE -> explodeNut(nut, zombie);
             }
         }
     }
 
     private void hitWithNormalNut(RollingNut nut, MiniGameUnit zombie) {
-        zombie.damage(normalImpactDamage);
+        zombie.damage(nut.type == NutType.GIANT ? normalImpactDamage * 2 : normalImpactDamage);
         nut.hitCount++;
         if (nut.hitCount == 1) {
             nut.verticalDirection = chooseFirstBounceDirection(nut.row);
@@ -226,8 +226,9 @@ public final class WallnutBowlingSession extends MiniGameSession {
     }
 
     private void addCard() {
-        NutType type = random.nextInt(100) < 65
-            ? NutType.NORMAL : NutType.EXPLOSIVE;
+        int roll = random.nextInt(100);
+        NutType type = roll < 55 ? NutType.NORMAL
+            : roll < 78 ? NutType.GIANT : NutType.EXPLOSIVE;
         conveyor.put(type, conveyor.get(type) + 1);
     }
 
@@ -241,7 +242,7 @@ public final class WallnutBowlingSession extends MiniGameSession {
     @Override
     public String boardView() {
         StringBuilder builder = new StringBuilder(
-            "Wall-nut Bowling (Z=zombie, N=normal, E=explode-o-nut; red line after column 3)\n");
+            "Wall-nut Bowling (Z=zombie, N=normal, G=giant, E=explode-o-nut; red line after column 3)\n");
         for (int row = 0; row < 5; row++) {
             builder.append(row + 1).append(" | ");
             for (int col = 0; col < 9; col++) {
@@ -262,6 +263,7 @@ public final class WallnutBowlingSession extends MiniGameSession {
             if (nut.active && Math.round(nut.row) == row && Math.round(nut.column) == col) {
                 return switch (nut.type) {
                     case NORMAL -> 'N';
+                    case GIANT -> 'G';
                     case EXPLOSIVE -> 'E';
                 };
             }
@@ -306,7 +308,7 @@ public final class WallnutBowlingSession extends MiniGameSession {
         try {
             return NutType.valueOf(text.trim().toUpperCase());
         } catch (RuntimeException exception) {
-            throw new IllegalArgumentException("Nut type must be normal or explosive.");
+            throw new IllegalArgumentException("Nut type must be normal, giant, or explosive.");
         }
     }
 

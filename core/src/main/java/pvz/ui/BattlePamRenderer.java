@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import model.Plant;
 import model.PlantDefinition;
+import model.Game;
 import model.Projectile;
 import model.ProjectileType;
 import model.SeasonType;
@@ -17,6 +18,7 @@ import pvz.libpvz.pam.PamPlayer;
 import pvz.libpvz.pam.ClipRef;
 
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -29,6 +31,9 @@ public final class BattlePamRenderer {
     private final Map<String, AnimationSpec> plantSpecs = new HashMap<>();
     private final Map<String, AnimationSpec> zombieSpecs = new HashMap<>();
     private final Map<String, ClipRef> clipRefs = new HashMap<>();
+    private final Map<Zombie, Float> zombieActionStartedAt = new IdentityHashMap<>();
+    private final Map<Zombie, Float> zombieActionUntil = new IdentityHashMap<>();
+    private final Map<Zombie, Boolean> zombieRawActionStates = new IdentityHashMap<>();
 
     public BattlePamRenderer(PvzAssets assets) {
         this.assets = assets;
@@ -54,17 +59,25 @@ public final class BattlePamRenderer {
             ignored -> resolvePlant(plant.getDefinition())
         );
         String clip;
+        boolean intro = plant.getAgeTicks() <= Game.TICKS_PER_SECOND
+            && spec.introClip() != null;
         if (plantFoodActive && spec.plantFoodClip() != null) {
             clip = spec.plantFoodClip();
         } else if (attacking && spec.actionClip() != null) {
             clip = spec.actionClip();
+        } else if (intro) {
+            clip = spec.introClip();
         } else {
             clip = spec.primaryClip();
+        }
+        if (intro && !plantFoodActive && !attacking) {
+            time = plant.getAgeTicks() / (float) Game.TICKS_PER_SECOND;
         }
         Color previous = new Color(batch.getColor());
         Color tint = plantTint(plant);
         batch.setColor(tint.r, tint.g, tint.b, previous.a);
-        boolean drawn = draw(batch, spec.path(), clip, time, x, y, scale, false);
+        boolean drawn = draw(batch, spec.path(), clip, time, x, y, scale, false,
+            !(plantFoodActive || attacking || intro));
         batch.setColor(previous);
         if (drawn && plantFoodActive) {
             AnimationSpec food = effectSpec("PLANTFOOD_FX", "plantfood");
@@ -101,18 +114,38 @@ public final class BattlePamRenderer {
             key,
             ignored -> resolveZombie(zombie.getDefinition(), season)
         );
+        boolean rawAction = zombie.getAbilityCooldownTicks() > 0
+            || zombie.isImpThrown() || zombie.isJuggling()
+            || zombie.isProspectorDynamiteLaunched() || zombie.isEating()
+            || zombie.isChargeUsed();
+        boolean wasRawAction = zombieRawActionStates.getOrDefault(zombie, false);
+        zombieRawActionStates.put(zombie, rawAction);
+        if (rawAction && !wasRawAction) {
+            zombieActionStartedAt.put(zombie, time);
+            zombieActionUntil.put(zombie, time + 1.5f);
+        } else if (!rawAction) {
+            zombieActionStartedAt.remove(zombie);
+            zombieActionUntil.remove(zombie);
+        }
+        boolean specialAction = rawAction
+            && time <= zombieActionUntil.getOrDefault(zombie, time);
+        String clip = specialAction && spec.actionClip() != null
+            ? spec.actionClip() : spec.primaryClip();
+        float clipTime = specialAction
+            ? time - zombieActionStartedAt.getOrDefault(zombie, time) : time;
         Color previous = new Color(batch.getColor());
         Color tint = zombieTint(zombie);
         batch.setColor(tint.r, tint.g, tint.b, previous.a);
         boolean drawn = draw(
             batch,
             spec.path(),
-            spec.primaryClip(),
-            time,
+            clip,
+            clipTime,
             x,
             y,
             scale,
-            zombie.isHypnotized()
+            zombie.isHypnotized(),
+            !specialAction
         );
         batch.setColor(previous);
         return drawn;
@@ -128,6 +161,14 @@ public final class BattlePamRenderer {
         if (plant.getIceHits() == 1) {
             return new Color(0.86f, 0.97f, 1f, 1f);
         }
+        float healthRatio = plant.getMaxHealth() <= 0 ? 1f
+            : plant.getHealth() / (float) plant.getMaxHealth();
+        if (healthRatio <= 0.34f) {
+            return new Color(0.74f, 0.52f, 0.48f, 1f);
+        }
+        if (healthRatio <= 0.67f) {
+            return new Color(0.92f, 0.78f, 0.54f, 1f);
+        }
         return Color.WHITE;
     }
 
@@ -138,11 +179,17 @@ public final class BattlePamRenderer {
         if (zombie.isTrappedInIceTile()) {
             return new Color(0.42f, 0.82f, 1f, 1f);
         }
+        if (zombie.isSubmerged()) {
+            return new Color(0.30f, 0.62f, 0.92f, 1f);
+        }
         if (zombie.getStunnedTicks() > 0) {
             return new Color(1f, 0.84f, 0.38f, 1f);
         }
         if (zombie.getChilledTicks() > 0) {
             return new Color(0.64f, 0.88f, 1f, 1f);
+        }
+        if (zombie.isGlowing()) {
+            return new Color(1f, 0.86f, 0.24f, 1f);
         }
         return Color.WHITE;
     }
@@ -165,7 +212,7 @@ public final class BattlePamRenderer {
             ignored -> resolveZombie(zombie.getDefinition(), season)
         );
         return draw(batch, spec.path(), spec.deathClip(), time, x, y, scale,
-            zombie.isHypnotized());
+            zombie.isHypnotized(), false);
     }
 
     public boolean drawProjectile(
@@ -310,7 +357,7 @@ public final class BattlePamRenderer {
     private AnimationSpec resolveZombie(ZombieDefinition definition, SeasonType season) {
         String special = zombieSpecialAlias(definition.getKey());
         if (special != null) {
-            AnimationSpec spec = findZombiePam(special, "walk");
+            AnimationSpec spec = findZombiePam(special, "walk", true);
             if (spec.valid()) {
                 return spec;
             }
@@ -331,7 +378,7 @@ public final class BattlePamRenderer {
             default -> new String[] {seasonPrefix + "_BASIC"};
         };
         for (String name : names) {
-            AnimationSpec spec = specFromEntry(catalog.zombie(name), "walk", false);
+            AnimationSpec spec = specFromEntry(catalog.zombie(name), "walk", true);
             if (spec.valid()) {
                 return spec;
             }
@@ -343,17 +390,22 @@ public final class BattlePamRenderer {
             case BIG_WAVE_BEACH -> "ZOMBIE_BEACH_BASIC";
             case DARK_AGES -> "ZOMBIE_DARK_BASIC";
         };
-        return findZombiePam(basic, "walk");
+        return findZombiePam(basic, "walk", true);
     }
 
     private AnimationSpec findZombiePam(String name, String preferredClip) {
+        return findZombiePam(name, preferredClip, false);
+    }
+
+    private AnimationSpec findZombiePam(String name, String preferredClip,
+                                        boolean includeActionClip) {
         String[] roots = {
             "768/INITIAL/ZOMBIE/",
             "768/FULL/ZOMBIE/"
         };
         for (String root : roots) {
             String path = root + name + "/" + name + ".PAM";
-            AnimationSpec spec = specIfPresent(path, preferredClip, false);
+            AnimationSpec spec = specIfPresent(path, preferredClip, includeActionClip);
             if (spec.valid()) {
                 return spec;
             }
@@ -379,9 +431,10 @@ public final class BattlePamRenderer {
             String primary = chooseClip(clips, preferredClip);
             String action = includeActionClip ? chooseActionClip(clips) : null;
             String plantFood = includeActionClip ? choosePlantFoodClip(clips, action) : null;
+            String intro = includeActionClip ? chooseIntroClip(clips) : null;
             String death = chooseDeathClip(clips);
             float actionDuration = action == null ? 0f : player.clipDurationSeconds(path, action);
-            return new AnimationSpec(path, primary, action, plantFood, death, actionDuration);
+            return new AnimationSpec(path, primary, action, plantFood, intro, death, actionDuration);
         } catch (RuntimeException exception) {
             return AnimationSpec.missing();
         }
@@ -444,8 +497,19 @@ public final class BattlePamRenderer {
         return actionFallback;
     }
 
+    private String chooseIntroClip(List<String> clips) {
+        for (String clip : clips) {
+            String lower = clip.toLowerCase(Locale.ROOT);
+            if (lower.contains("intro") || lower.contains("appear") || lower.contains("spawn")) {
+                return clip;
+            }
+        }
+        return null;
+    }
+
     private String chooseActionClip(List<String> clips) {
-        String[] preferred = {"attack", "shoot", "fire", "use_action"};
+        String[] preferred = {"attack", "shoot", "fire", "punch", "smash", "slam",
+            "charge", "dig", "throw", "eat", "bite", "use_action"};
         for (String name : preferred) {
             for (String clip : clips) {
                 if (clip.equalsIgnoreCase(name)) {
@@ -550,11 +614,12 @@ public final class BattlePamRenderer {
         String primaryClip,
         String actionClip,
         String plantFoodClip,
+        String introClip,
         String deathClip,
         float actionDuration
     ) {
         static AnimationSpec missing() {
-            return new AnimationSpec(null, null, null, null, null, 0f);
+            return new AnimationSpec(null, null, null, null, null, null, 0f);
         }
 
         boolean valid() {

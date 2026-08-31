@@ -15,6 +15,11 @@ public class Projectile {
     private int damageMultiplier;
     private boolean active;
     private int remainingHits;
+    private double lobProgress;
+    private final double lobOriginColumn;
+
+    /** Height of the current air-projectile arc, normalized to [0, 1]. */
+    public static final double LOB_ARC_DISTANCE = 3.0;
 
     public Projectile() {
         this(20, 5.0, new BoardPosition(0, 0), ProjectileType.NORMAL,
@@ -62,11 +67,17 @@ public class Projectile {
         this.damageMultiplier = 1;
         this.remainingHits = maxHits;
         this.active = true;
+        this.lobProgress = 0d;
+        this.lobOriginColumn = position.getColumn();
     }
 
     public double moveOneTick() {
         double previousColumn = position.getColumn();
-        position = position.moveHorizontal(speed / Game.TICKS_PER_SECOND);
+        double distance = speed / Game.TICKS_PER_SECOND;
+        position = position.moveHorizontal(distance);
+        if (lobbed) {
+            lobProgress = (lobProgress + distance / LOB_ARC_DISTANCE) % 1d;
+        }
         return previousColumn;
     }
 
@@ -113,6 +124,21 @@ public class Projectile {
     public int getDamageMultiplier() { return damageMultiplier; }
     public boolean isPiercing() { return piercing; }
     public boolean isLobbed() { return lobbed; }
+    public double getLobArcHeight() {
+        if (!lobbed) {
+            return 0d;
+        }
+        // A smooth parabola: zero at launch/landing, one at the apex.
+        return 4d * lobProgress * (1d - lobProgress);
+    }
+    public double getLobArcHeight(double renderedColumn) {
+        if (!lobbed) {
+            return 0d;
+        }
+        double progress = (renderedColumn - lobOriginColumn) / LOB_ARC_DISTANCE;
+        progress -= Math.floor(progress);
+        return 4d * progress * (1d - progress);
+    }
     public String getSourcePlant() { return sourcePlant; }
     public int getRemainingHits() { return remainingHits; }
     public BoardPosition getPosition() { return position; }

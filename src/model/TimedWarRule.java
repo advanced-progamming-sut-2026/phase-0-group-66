@@ -23,8 +23,10 @@ public final class TimedWarRule implements SpecialLevelRule {
 
     @Override
     public String status(Game game) {
-        return "progress=" + game.timedWarProgress() + "/"
-            + game.currentLevel.getTimedWarTarget() + ", time="
+        int progress = game.timedWarProgress();
+        int target = game.currentLevel.getTimedWarTarget();
+        return "progress=" + progress + "/" + target
+            + ", remaining=" + Math.max(0, target - progress) + ", time="
             + game.formatSeconds(Math.max(0, game.currentLevel.getTimeLimitSeconds()
             * Game.TICKS_PER_SECOND - game.elapsedTicks)) + "s";
     }

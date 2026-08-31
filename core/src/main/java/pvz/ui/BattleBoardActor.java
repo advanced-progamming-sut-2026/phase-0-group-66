@@ -38,6 +38,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
     private final Level level;
     private final BattlePamRenderer pamRenderer;
     private final BiConsumer<Integer, Integer> cellClick;
+    private final BiConsumer<Integer, Integer> cellHover;
     private final Texture pixel;
     private final Texture orbFallback;
     private final BoardGeometry geometry;
@@ -73,6 +74,9 @@ public final class BattleBoardActor extends Actor implements Disposable {
     private boolean animationPaused;
     private float cameraPan;
     private boolean showGrid;
+    private int hoveredCol = -1;
+    private int hoveredRow = -1;
+    private Plant previewPlant;
 
     public BattleBoardActor(
         PvzAssets assets,
@@ -80,10 +84,21 @@ public final class BattleBoardActor extends Actor implements Disposable {
         Level level,
         BiConsumer<Integer, Integer> cellClick
     ) {
+        this(assets, controller, level, cellClick, null);
+    }
+
+    public BattleBoardActor(
+        PvzAssets assets,
+        GameController controller,
+        Level level,
+        BiConsumer<Integer, Integer> cellClick,
+        BiConsumer<Integer, Integer> cellHover
+    ) {
         this.assets = assets;
         this.controller = controller;
         this.level = level;
         this.cellClick = cellClick;
+        this.cellHover = cellHover;
         this.pamRenderer = new BattlePamRenderer(assets);
         this.pixel = createPixel();
         this.orbFallback = createOrbFallback();
@@ -105,7 +120,36 @@ public final class BattleBoardActor extends Actor implements Disposable {
                 cellClick.accept(col + 1, row + 1);
                 return true;
             }
+
+            @Override
+            public boolean mouseMoved(InputEvent event, float x, float y) {
+                if (cellHover == null) {
+                    return false;
+                }
+                int col = columnAt(x);
+                int row = rowAt(y);
+                if (row >= 0 && col >= 0) {
+                    hoveredCol = col;
+                    hoveredRow = row;
+                    cellHover.accept(col + 1, row + 1);
+                }
+                return false;
+            }
+
+            @Override
+            public void exit(InputEvent event, float x, float y, int pointer, Actor toActor) {
+                hoveredCol = -1;
+                hoveredRow = -1;
+            }
         });
+    }
+
+    public void setPreviewPlant(Plant previewPlant) {
+        this.previewPlant = previewPlant;
+    }
+
+    public void clearPreviewPlant() {
+        this.previewPlant = null;
     }
 
     public void setShowGrid(boolean showGrid) {
@@ -162,13 +206,15 @@ public final class BattleBoardActor extends Actor implements Disposable {
         batch.setColor(1f, 1f, 1f, parentAlpha);
         drawBackground(batch);
         drawEnvironment(batch, game.getBoard(), parentAlpha);
+        drawSpecialOverlays(batch, parentAlpha);
         if (showGrid) {
             drawGrid(batch, parentAlpha);
         }
+        drawHoverCell(batch, parentAlpha);
         drawMowers(batch);
         drawPlants(batch, game.getBoard());
         drawProjectiles(batch, game.getBoard());
-        drawZombies(batch, game.getBoard());
+        drawZombies(batch, game.getBoard(), parentAlpha);
         drawSuns(batch, game.getBoard());
         batch.setColor(previous);
     }
@@ -198,6 +244,86 @@ public final class BattleBoardActor extends Actor implements Disposable {
         batch.setColor(0.22f, 0.48f, 0.20f, 1f);
         batch.draw(pixel, getX(), getY(), getWidth(), getHeight());
         batch.setColor(Color.WHITE);
+    }
+
+    private void drawSpecialOverlays(Batch batch, float parentAlpha) {
+        model.Game game = controller.getGame();
+        if (level.getSpecialType() == model.SpecialLevelType.SAVE_OUR_SEEDS) {
+            for (model.GridPosition position : level.getProtectedPlantPositions()) {
+                drawProtectedCell(batch, position.getRow(), position.getColumn(), parentAlpha);
+            }
+        }
+        if (level.getSpecialType() == model.SpecialLevelType.DEAD_LINE) {
+            float x = gridLeft() + (level.getDeadLineColumn() + 0.5f) * cellWidth();
+            drawTileTint(batch, x - 2f, gridBottom(), 4f, gridHeight(),
+                0.92f, 0.08f, 0.05f, parentAlpha * 0.86f);
+        }
+        if (level.getSeason() == SeasonType.FROSTBITE_CAVES
+            && game.isColdWindActive()) {
+            for (int row : game.getColdWindRows()) {
+                drawColdWindMarker(batch, row, parentAlpha);
+            }
+        }
+        if (level.getSeason() == SeasonType.BIG_WAVE_BEACH) {
+            drawBeachWaterOverlay(batch, game.getBoard(), parentAlpha);
+        }
+    }
+
+    private void drawBeachWaterOverlay(Batch batch, Board board, float parentAlpha) {
+        int waterStart = Board.DEFAULT_COLUMNS;
+        for (int row = 0; row < board.getRows(); row++) {
+            for (int col = 0; col < board.getCols(); col++) {
+                TileType type = board.getTile(row, col).getType();
+                if (type == TileType.WATER || type == TileType.LOW_TIDE) {
+                    waterStart = Math.min(waterStart, col);
+                }
+            }
+        }
+        if (waterStart >= Board.DEFAULT_COLUMNS) {
+            return;
+        }
+        drawTileTint(batch, gridLeft() + waterStart * cellWidth(), gridBottom(),
+            gridLeft() + gridWidth() - (gridLeft() + waterStart * cellWidth()), gridHeight(),
+            0.05f, 0.35f, 0.82f, parentAlpha * 0.14f);
+        int maximumWaterStart = Math.min(Board.DEFAULT_COLUMNS - 1, 6);
+        float boundaryX = gridLeft() + maximumWaterStart * cellWidth();
+        drawTileTint(batch, boundaryX - 2f, gridBottom(), 4f, gridHeight(),
+            0.12f, 0.86f, 1f, parentAlpha * 0.82f);
+    }
+
+    private void drawColdWindMarker(Batch batch, int row, float parentAlpha) {
+        if (!gameInside(row, 0)) {
+            return;
+        }
+        float y = cellBottom(row) + cellHeight() * 0.72f;
+        float width = cellWidth() * 0.42f;
+        batch.setColor(0.78f, 0.94f, 1f, parentAlpha * 0.58f);
+        for (int col = 0; col < Board.DEFAULT_COLUMNS; col += 2) {
+            float x = gridLeft() + col * cellWidth() + cellWidth() * 0.18f;
+            batch.draw(pixel, x, y, width, 2f);
+        }
+        batch.setColor(Color.WHITE);
+    }
+
+    private void drawProtectedCell(Batch batch, int row, int col, float parentAlpha) {
+        if (!gameInside(row, col)) {
+            return;
+        }
+        float x = gridLeft() + col * cellWidth();
+        float y = cellBottom(row);
+        float thickness = Math.max(2f, Math.min(cellWidth(), cellHeight()) * 0.035f);
+        drawTileTint(batch, x, y, cellWidth(), thickness,
+            0.25f, 1f, 0.30f, parentAlpha * 0.88f);
+        drawTileTint(batch, x, y + cellHeight() - thickness, cellWidth(), thickness,
+            0.25f, 1f, 0.30f, parentAlpha * 0.88f);
+        drawTileTint(batch, x, y, thickness, cellHeight(),
+            0.25f, 1f, 0.30f, parentAlpha * 0.88f);
+        drawTileTint(batch, x + cellWidth() - thickness, y, thickness, cellHeight(),
+            0.25f, 1f, 0.30f, parentAlpha * 0.88f);
+    }
+
+    private boolean gameInside(int row, int col) {
+        return row >= 0 && row < Board.DEFAULT_ROWS && col >= 0 && col < Board.DEFAULT_COLUMNS;
     }
 
     private void drawEnvironment(Batch batch, Board board, float parentAlpha) {
@@ -230,6 +356,11 @@ public final class BattleBoardActor extends Actor implements Disposable {
                         0.55f, 0.86f, 0.98f, parentAlpha * 0.62f);
                     drawTileTint(batch, left + 2f, bottom + 2f, width - 4f,
                         height - 4f, 0.86f, 0.97f, 1f, parentAlpha * 0.20f);
+                    if (tile.hasTrappedEntity()) {
+                        drawTileTint(batch, left + width * 0.10f, bottom + height * 0.12f,
+                            width * 0.80f, height * 0.76f,
+                            0.32f, 0.70f, 0.92f, parentAlpha * 0.28f);
+                    }
                 } else if (type == TileType.SLIPPERY_UP || type == TileType.SLIPPERY_DOWN) {
                     drawTileTint(batch, left, bottom, width, height,
                         0.48f, 0.75f, 0.92f, parentAlpha * 0.40f);
@@ -264,6 +395,22 @@ public final class BattleBoardActor extends Actor implements Disposable {
                         }
                         batch.draw(tombIcon, centerX - tombWidth / 2f,
                             bottom + height * 0.10f, tombWidth, tombHeight);
+                    }
+                    model.Tomb tomb = controller.getGame().getTombAt(row, col);
+                    if (tomb != null) {
+                        if (tomb.containsSun()) {
+                            drawTileTint(batch, centerX - width * 0.12f,
+                                bottom + height * 0.06f, width * 0.24f, 4f,
+                                1f, 0.82f, 0.12f, parentAlpha * 0.95f);
+                        } else if (tomb.containsPlantFood()) {
+                            drawTileTint(batch, centerX - width * 0.12f,
+                                bottom + height * 0.06f, width * 0.24f, 4f,
+                                0.30f, 1f, 0.36f, parentAlpha * 0.95f);
+                        } else {
+                            drawTileTint(batch, centerX - width * 0.12f,
+                                bottom + height * 0.06f, width * 0.24f, 4f,
+                                0.74f, 0.68f, 0.52f, parentAlpha * 0.85f);
+                        }
                     }
                 }
             }
@@ -346,6 +493,33 @@ public final class BattleBoardActor extends Actor implements Disposable {
             drawHealth(batch, x, cellTop(row) - 7f, plant.getHealth(), plant.getMaxHealth(), barWidth);
             drawPlantIceStatus(batch, x, cellTop(row) - 13f, plant, barWidth);
         }
+        drawPlantPreview(batch, board);
+    }
+
+    private void drawHoverCell(Batch batch, float parentAlpha) {
+        if (hoveredCol < 0 || hoveredRow < 0) {
+            return;
+        }
+        drawTileTint(batch, gridLeft() + hoveredCol * cellWidth(),
+            cellBottom(hoveredRow), cellWidth(), cellHeight(),
+            1f, 1f, 1f, parentAlpha * 0.20f);
+    }
+
+    private void drawPlantPreview(Batch batch, Board board) {
+        if (previewPlant == null || hoveredCol < 0 || hoveredRow < 0
+            || !board.isInside(hoveredRow, hoveredCol)
+            || board.getTile(hoveredRow, hoveredCol).getPlant() != null) {
+            return;
+        }
+        float x = cellCenterX(hoveredCol);
+        float y = cellBottom(hoveredRow) + cellHeight() * 0.38f;
+        Color original = new Color(batch.getColor());
+        batch.setColor(1f, 1f, 1f, original.a * 0.58f);
+        if (!pamRenderer.drawPlant(batch, previewPlant, animationTime, x, y,
+            cellHeight() / 235f * 0.96f, false, false)) {
+            drawFallbackPlant(batch, x, y, previewPlant);
+        }
+        batch.setColor(original);
     }
 
     private void drawPlantIceStatus(Batch batch, float centerX, float y, Plant plant, float width) {
@@ -403,7 +577,8 @@ public final class BattleBoardActor extends Actor implements Disposable {
     private boolean updateAttackState(Plant plant, Board board) {
         int currentSequence = plant.getActionSequence();
         Integer previousSequence = lastActionSequences.put(plant, currentSequence);
-        if (!plant.isShooter()) {
+        boolean actionPlant = plant.isShooter() || plant.isMelee() || plant.isSunProducer();
+        if (!actionPlant) {
             attackStartedAt.remove(plant);
             attackUntil.remove(plant);
             return false;
@@ -416,7 +591,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
             plant.getPosition().getRow(),
             plant.getPosition().getColumn()
         ) != null;
-        if (actionFired && hasTarget) {
+        if (actionFired && (hasTarget || plant.isSunProducer())) {
             attackStartedAt.put(plant, animationTime);
             attackUntil.put(plant, animationTime + Math.max(
                 0.52f, pamRenderer.plantActionDuration(plant)));
@@ -430,7 +605,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
         return false;
     }
 
-    private void drawZombies(Batch batch, Board board) {
+    private void drawZombies(Batch batch, Board board, float parentAlpha) {
         float scale = cellHeight() / 250f * 0.82f;
         SeasonType season = level.getSeason();
         List<Zombie> zombies = zombiesToDraw(board);
@@ -439,7 +614,8 @@ public final class BattleBoardActor extends Actor implements Disposable {
         zombieMotionOrigins.keySet().removeIf(zombie -> !zombies.contains(zombie));
         int[] previewLaneCount = new int[Board.DEFAULT_ROWS];
         for (Zombie zombie : zombies) {
-            if (zombie == null || zombie.isDead() || zombie.getPosition() == null) {
+            if (zombie == null || zombie.isDead() || zombie.getPosition() == null
+                || zombie.isTrappedInIceTile()) {
                 continue;
             }
             int row = zombie.getPosition().getRow();
@@ -452,12 +628,21 @@ public final class BattleBoardActor extends Actor implements Disposable {
             }
             float x = gridLeft() + (float) ((column + 0.5d) * cellWidth());
             float y = cellBottom(row) + cellHeight() * 0.34f;
+            if (season == SeasonType.ANCIENT_EGYPT
+                && controller.getGame().enteredViaTornado(zombie)) {
+                drawTornadoMarker(batch, x, y, parentAlpha);
+            }
+            Color original = new Color(batch.getColor());
+            if (zombie.isGlowing()) {
+                batch.setColor(0.95f, 0.90f, 0.20f, original.a);
+            }
             boolean animated = pamRenderer.drawZombie(
                 batch, zombie, season, animationTime, x, y, scale
             );
             if (!animated) {
                 drawFallbackZombie(batch, x, y);
             }
+            batch.setColor(original);
             float barWidth = Math.max(34f, cellWidth() * 0.52f);
             drawHealth(
                 batch,
@@ -472,6 +657,20 @@ public final class BattleBoardActor extends Actor implements Disposable {
         }
         drawRecentZombieDeaths(batch, board, season, scale);
         drawPlantFoodDeathGhosts(batch, season, scale);
+    }
+
+    private void drawTornadoMarker(Batch batch, float centerX, float centerY,
+                                   float parentAlpha) {
+        float width = cellWidth() * 0.62f;
+        float height = cellHeight() * 0.82f;
+        batch.setColor(0.78f, 0.86f, 0.92f, parentAlpha * 0.62f);
+        batch.draw(pixel, centerX - width * 0.22f, centerY + height * 0.34f,
+            width * 0.44f, 3f);
+        batch.draw(pixel, centerX - width * 0.34f, centerY + height * 0.18f,
+            width * 0.68f, 3f);
+        batch.draw(pixel, centerX - width * 0.46f, centerY + height * 0.02f,
+            width * 0.92f, 3f);
+        batch.setColor(Color.WHITE);
     }
 
     private void drawRecentZombieDeaths(Batch batch, Board board, SeasonType season, float scale) {
@@ -571,25 +770,30 @@ public final class BattleBoardActor extends Actor implements Disposable {
                 projectile.getPosition().getColumn());
             float x = gridLeft() + (float) ((column + 0.5d) * cellWidth());
             int row = projectile.getPosition().getRow();
-            float y = cellBottom(row) + cellHeight() * 0.55f;
+            float y = cellBottom(row) + cellHeight() * 0.55f
+                + (float) projectile.getLobArcHeight(column) * cellHeight() * 0.72f;
             float size = Math.max(12f, Math.min(cellWidth(), cellHeight()) * 0.20f);
+            if (projectile.isLobbed()) {
+                size *= 1.12f;
+            }
+            Color original = new Color(batch.getColor());
+            Color projectileColor = switch (projectile.getImpactType() == null
+                ? projectile.getType() : projectile.getImpactType()) {
+                case FIRE -> new Color(1f, 0.28f, 0.08f, original.a);
+                case ICE -> new Color(0.22f, 0.78f, 1f, original.a);
+                case POISON -> new Color(0.68f, 0.28f, 0.92f, original.a);
+                case NORMAL -> new Color(0.32f, 0.92f, 0.18f, original.a);
+            };
+            batch.setColor(projectileColor);
             boolean animated = pamRenderer.drawProjectile(
                 batch, projectile, animationTime, x, y, size / 220f
             );
             if (!animated && projectileIcon != null) {
                 batch.draw(projectileIcon, x - size / 2f, y - size / 2f, size, size);
             } else if (!animated) {
-                Color projectileColor = switch (projectile.getImpactType() == null
-                    ? projectile.getType() : projectile.getImpactType()) {
-                    case FIRE -> new Color(1f, 0.28f, 0.08f, 1f);
-                    case ICE -> new Color(0.22f, 0.78f, 1f, 1f);
-                    case POISON -> new Color(0.68f, 0.28f, 0.92f, 1f);
-                    case NORMAL -> new Color(0.32f, 0.92f, 0.18f, 1f);
-                };
-                batch.setColor(projectileColor);
                 batch.draw(orbFallback, x - size / 2f, y - size / 2f, size, size);
-                batch.setColor(Color.WHITE);
             }
+            batch.setColor(original);
         }
     }
 
@@ -629,7 +833,12 @@ public final class BattleBoardActor extends Actor implements Disposable {
                 ? 1f - sun.getRemainingFallTicks() / (float) Sun.SKY_FALL_TICKS : 1f;
             float y = landingY + cellHeight() * (1f - Math.max(0f,
                 Math.min(1f, fallProgress))) * 0.70f;
-            float size = Math.min(cellWidth(), cellHeight()) * 0.82f;
+            float size = Math.min(cellWidth(), cellHeight())
+                * (sun.getType() == model.SunType.SPECIAL ? 0.94f : 0.82f);
+            Color original = new Color(batch.getColor());
+            if (sun.getType() == model.SunType.RADIOACTIVE) {
+                batch.setColor(0.72f, 0.24f, 0.92f, original.a);
+            }
             boolean animated = pamRenderer.drawSun(batch, sun, animationTime, x, y,
                 size / 135f);
             if (!animated && sunIcon != null) {
@@ -639,6 +848,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
                 batch.draw(orbFallback, x - size / 2f, y - size / 2f, size, size);
                 batch.setColor(Color.WHITE);
             }
+            batch.setColor(original);
         }
     }
 
@@ -772,7 +982,9 @@ public final class BattleBoardActor extends Actor implements Disposable {
 
     private void drawZombieStatus(Batch batch, float centerX, float y, Zombie zombie, float width) {
         Color color = null;
-        if (zombie.isTrappedInIceTile()) {
+        if (zombie.isSubmerged()) {
+            color = new Color(0.10f, 0.52f, 0.95f, 1f);
+        } else if (zombie.isTrappedInIceTile()) {
             color = new Color(0.25f, 0.78f, 1f, 1f);
         } else if (zombie.getStunnedTicks() > 0) {
             color = new Color(1f, 0.85f, 0.15f, 1f);

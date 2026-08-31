@@ -591,7 +591,7 @@ public final class PvzServer implements AutoCloseable {
     private NetworkIZombieState stateFor(OnlineMatch match, String username) {
         List<NetworkIZombieState.Card> cards = match.session.getCardViews().stream()
             .map(card -> new NetworkIZombieState.Card(card.key(), card.type(), card.cost(), card.health(),
-                card.damage(), card.speed())).toList();
+                card.damage(), card.speed(), card.remainingCooldownTicks())).toList();
         List<NetworkIZombieState.Plant> plants = match.session.getPlantViews().stream()
             .map(plant -> new NetworkIZombieState.Plant(plant.type(), plant.row(), plant.column(),
                 plant.health(), plant.damage())).toList();
