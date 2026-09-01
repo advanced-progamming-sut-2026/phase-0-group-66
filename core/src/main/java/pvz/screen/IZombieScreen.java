@@ -70,6 +70,10 @@ public final class IZombieScreen extends MiniGamePlayScreen {
         plantSunLabel = theme.heading("");
         progress = theme.settingsLabel("");
         reactionLabel = theme.settingsLabel("");
+        reactionLabel.setAlignment(Align.center);
+        reactionLabel.setWrap(true);
+        reactionLabel.setColor(1f, 0.95f, 0.45f, 0.96f);
+        reactionLabel.setVisible(false);
         List<IZombieSession.ZombieCardView> cards = iZombie.getCardViews();
         selectedCard = cards.isEmpty() ? null : cards.get(0).key();
         buildUi();
@@ -252,7 +256,7 @@ public final class IZombieScreen extends MiniGamePlayScreen {
             UiActions.onClick(button, () -> sendReaction("sticker", value));
             reactions.add(button).width(92f).height(32f).padRight(4f);
         }
-        reactions.add(reactionLabel).width(260f).height(28f);
+        reactions.add(theme.settingsLabel("Opponent reactions appear on the board.")).growX().height(28f);
         return reactions;
     }
 
@@ -271,6 +275,8 @@ public final class IZombieScreen extends MiniGamePlayScreen {
         board.add(producerLayer);
         board.add(brainLayer);
         board.add(boardFeedback);
+        reactionLabel.setBounds(BOARD_WIDTH - 275f, BOARD_HEIGHT - 62f, 265f, 52f);
+        boardFeedback.addActor(reactionLabel);
         if (iZombie.isMultiplayer()) {
             board.add(new MiniGameGridInputActor(ROWS, COLS,
                 cell -> placePlant(cell.row() + 1, cell.column() + 1),
@@ -376,16 +382,24 @@ public final class IZombieScreen extends MiniGamePlayScreen {
             "Brains " + iZombie.getBrainsEaten() + " / 5   |   Score " + session.getScore()
         );
         NetworkIZombieSession online = onlineSession();
-        if (online != null && !online.getReactions().isEmpty()) {
-            MatchReaction latest = online.getReactions().get(online.getReactions().size() - 1);
-            reactionLabel.setText(latest.sender() + ": " + latest.value());
-            String reactionKey = latest.sender() + ":" + latest.category() + ":" + latest.value();
-            if (!reactionKey.equals(lastReactionKey)) {
-                lastReactionKey = reactionKey;
-                reactionLabel.clearActions();
-                reactionLabel.addAction(Actions.sequence(
-                    Actions.scaleTo(1.2f, 1.2f, 0.12f),
-                    Actions.scaleTo(1f, 1f, 0.28f)));
+        if (online != null) {
+            MatchReaction latest = online.getReactions().stream()
+                .filter(reaction -> online.getOpponent().equals(reaction.sender()))
+                .reduce((first, second) -> second).orElse(null);
+            if (latest != null) {
+                reactionLabel.setText(latest.value());
+                reactionLabel.setVisible(true);
+                String reactionKey = latest.sender() + ":" + latest.category() + ":" + latest.value();
+                if (!reactionKey.equals(lastReactionKey)) {
+                    lastReactionKey = reactionKey;
+                    reactionLabel.clearActions();
+                    reactionLabel.getColor().a = 0.96f;
+                    reactionLabel.addAction(Actions.sequence(
+                        Actions.scaleTo(1.2f, 1.2f, 0.12f),
+                        Actions.scaleTo(1f, 1f, 0.28f),
+                        Actions.delay(4f),
+                        Actions.fadeOut(0.25f)));
+                }
             }
         }
         if (session.isFinished()) {

@@ -154,7 +154,12 @@ final class BattleCommandSystem {
         if (engine.currentLevel.getRuleStrategy().usesConveyor()) {
             engine.autoSelectStarterPlantsForConveyor();
         } else if (engine.selectedPlants.isEmpty()) {
-            engine.autoSelectStarterPlants();
+            if (engine.currentLevel.getSpecialType() == SpecialLevelType.PLANT_WHAT_YOU_GET) {
+                engine.selectPlant("Peashooter");
+                engine.selectPlant("Wall-nut");
+            } else {
+                engine.autoSelectStarterPlants();
+            }
         }
         engine.startGame();
     }
@@ -230,8 +235,11 @@ final class BattleCommandSystem {
         Wave wave = waves.get(engine.nextWaveIndex);
         int targetCost = engine.adjustedWaveCost(wave.getDifficultyCost());
         targetCost = levelOneSpawnCost(engine, wave, targetCost);
-        wave.populate(engine.zombieFactory, waveZombieDefinitions(engine), targetCost,
-            engine.board.getRows(), engine.board.getCols() - 0.05, engine.random);
+        boolean finalWave = wave.getWaveNumber() == waves.size();
+        boolean preferStronger = finalWave || wave.getWaveNumber() >= 3;
+        wave.populate(engine.zombieFactory, waveZombieDefinitions(engine, wave), targetCost,
+            engine.board.getRows(), engine.board.getCols() - 0.05, engine.random,
+            preferStronger);
         engine.applyWaveStartSeasonEffects(wave);
         engine.configureWaveForSeason(wave);
         engine.configureZombieDifficultyAndDrops(wave);
@@ -261,11 +269,13 @@ final class BattleCommandSystem {
         return finalWave ? 1000 : 500;
     }
 
-    private static List<ZombieDefinition> waveZombieDefinitions(Game engine) {
+    private static List<ZombieDefinition> waveZombieDefinitions(Game engine, Wave wave) {
         List<ZombieDefinition> seasonal = engine.zombieFactory
             .getDefinitionsForSeason(engine.currentLevel.getSeason());
-        if (engine.currentLevel.getLevelNumber() != 1) {
-            return seasonal;
+        boolean finalWave = wave.getWaveNumber() == engine.currentLevel.getWaves().size();
+        if (engine.currentLevel.getLevelNumber() != 1 || finalWave) {
+            return progressiveWaveDefinitions(seasonal, wave.getWaveNumber(),
+                engine.currentLevel.getWaves().size());
         }
         ZombieDefinition basic = engine.zombieFactory.findDefinition("Basic Zombie")
             .filter(definition -> definition.isAvailableIn(engine.currentLevel.getSeason()))
@@ -280,6 +290,35 @@ final class BattleCommandSystem {
             .orElseThrow(() -> new IllegalStateException("No zombie is available for level 1."));
         return seasonal.stream()
             .filter(definition -> definition.getWavePointCost() == minimumCost)
+            .toList();
+    }
+
+    private static List<ZombieDefinition> progressiveWaveDefinitions(
+        List<ZombieDefinition> seasonal, int waveNumber, int waveCount) {
+        if (seasonal.isEmpty() || waveNumber >= waveCount || waveNumber <= 2) {
+            if (waveNumber >= waveCount) {
+                return seasonal;
+            }
+            int easiestCost = seasonal.stream()
+                .mapToInt(ZombieDefinition::getWavePointCost)
+                .min()
+                .orElse(0);
+            return seasonal.stream()
+                .filter(definition -> definition.getWavePointCost() == easiestCost)
+                .toList();
+        }
+        List<Integer> costTiers = seasonal.stream()
+            .mapToInt(ZombieDefinition::getWavePointCost)
+            .distinct()
+            .sorted()
+            .boxed()
+            .toList();
+        double progress = (waveNumber - 2.0) / Math.max(1, waveCount - 2);
+        int tierIndex = Math.min(costTiers.size() - 1,
+            (int) Math.ceil((costTiers.size() - 1) * progress));
+        int maximumCost = costTiers.get(tierIndex);
+        return seasonal.stream()
+            .filter(definition -> definition.getWavePointCost() <= maximumCost)
             .toList();
     }
 

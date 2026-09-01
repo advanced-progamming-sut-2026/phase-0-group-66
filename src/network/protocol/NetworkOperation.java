@@ -6,6 +6,7 @@ import java.io.Serializable;
 public enum NetworkOperation implements Serializable {
     PING,
     AUTHENTICATE,
+    LOGOUT,
     FIND_USER,
     GET_SECURITY_PROFILE,
     VERIFY_SECURITY_ANSWER,

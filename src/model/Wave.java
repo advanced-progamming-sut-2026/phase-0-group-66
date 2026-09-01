@@ -35,11 +35,17 @@ public class Wave {
 
     public void populate(ZombieFactory zombieFactory, int rows, double spawnColumn, Random random) {
         populate(zombieFactory, zombieFactory.getAllDefinitions(), difficultyCost,
-            rows, spawnColumn, random);
+            rows, spawnColumn, random, false);
     }
 
     public void populate(ZombieFactory zombieFactory, List<ZombieDefinition> allowedDefinitions,
                          int targetCost, int rows, double spawnColumn, Random random) {
+        populate(zombieFactory, allowedDefinitions, targetCost, rows, spawnColumn, random, false);
+    }
+
+    public void populate(ZombieFactory zombieFactory, List<ZombieDefinition> allowedDefinitions,
+                         int targetCost, int rows, double spawnColumn, Random random,
+                         boolean preferStronger) {
         if (started || !zombies.isEmpty()) {
             throw new IllegalStateException("Wave is already populated.");
         }
@@ -53,7 +59,8 @@ public class Wave {
         if (definitions.isEmpty()) {
             throw new IllegalStateException("No zombie can be used for this wave.");
         }
-        List<ZombieDefinition> selected = chooseBestCost(definitions, targetCost, random);
+        List<ZombieDefinition> selected = chooseBestCost(
+            definitions, targetCost, random, preferStronger);
         actualSpawnCost = selected.stream().mapToInt(ZombieDefinition::getWavePointCost).sum();
         for (ZombieDefinition definition : selected) {
             Zombie zombie = zombieFactory.createZombie(definition.getAlias());
@@ -105,11 +112,34 @@ public class Wave {
     }
 
     private List<ZombieDefinition> chooseBestCost(List<ZombieDefinition> definitions,
-                                                   int target, Random random) {
+                                                   int target, Random random,
+                                                   boolean preferStronger) {
         boolean[] reachable = new boolean[target + 1];
         int[] previousCost = new int[target + 1];
         int[] previousDefinition = new int[target + 1];
         reachable[0] = true;
+        if (preferStronger) {
+            int strongestCost = definitions.stream()
+                .mapToInt(ZombieDefinition::getWavePointCost)
+                .max()
+                .orElse(0);
+            List<ZombieDefinition> strongest = definitions.stream()
+                .filter(definition -> definition.getWavePointCost() == strongestCost)
+                .toList();
+            ZombieDefinition anchor = strongest.get(random.nextInt(strongest.size()));
+            ArrayList<ZombieDefinition> remainderDefinitions = new ArrayList<>(definitions);
+            remainderDefinitions.remove(anchor);
+            ArrayList<ZombieDefinition> result = new ArrayList<>();
+            result.add(anchor);
+            int remainingTarget = target - strongestCost;
+            boolean canFillRemainder = remainingTarget > 0 && remainderDefinitions.stream()
+                .anyMatch(definition -> definition.getWavePointCost() <= remainingTarget);
+            if (canFillRemainder) {
+                result.addAll(chooseBestCost(remainderDefinitions, remainingTarget, random, false));
+            }
+            Collections.shuffle(result, random);
+            return result;
+        }
         List<ZombieDefinition> shuffled = new ArrayList<>(definitions);
         Collections.shuffle(shuffled, random);
         for (int cost = 0; cost <= target; cost++) {

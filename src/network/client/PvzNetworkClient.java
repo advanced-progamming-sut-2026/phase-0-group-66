@@ -72,6 +72,18 @@ public final class PvzNetworkClient {
         authToken = null;
     }
 
+    public void logout() {
+        try {
+            if (isAuthenticated()) {
+                request(NetworkOperation.LOGOUT);
+            }
+        } catch (IOException ignored) {
+            // Local logout must still complete when the server is unavailable.
+        } finally {
+            clearAuthentication();
+        }
+    }
+
     public boolean isAuthenticated() {
         return authToken != null && !authToken.isBlank();
     }

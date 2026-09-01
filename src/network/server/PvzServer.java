@@ -47,11 +47,14 @@ public final class PvzServer implements AutoCloseable {
     private final ScheduledExecutorService matchTicker;
     // ponytail: one lock keeps the assignment-sized match registry correct; split locks if throughput matters.
     private final Object matchLock = new Object();
+    private final Object accountLock = new Object();
     private final Map<String, Ticket> tickets = new LinkedHashMap<>();
     private final Map<String, OnlineMatch> matches = new LinkedHashMap<>();
     private final Deque<String> randomQueue = new ArrayDeque<>();
     private final Map<String, String> sessions = new ConcurrentHashMap<>();
+    private final Map<String, Long> sessionLastSeen = new ConcurrentHashMap<>();
     private final Map<String, String> passwordResetTokens = new ConcurrentHashMap<>();
+    private static final long SESSION_TIMEOUT_MS = 30 * 1000L;
     private volatile boolean running;
     private ServerSocket serverSocket;
 
@@ -116,10 +119,13 @@ public final class PvzServer implements AutoCloseable {
     private NetworkResponse process(NetworkRequest request) {
         try {
             NetworkOperation operation = request.getOperation();
+            if (operation == null) {
+                return NetworkResponse.failure("Network operation is required.");
+            }
             cleanupExpiredState();
             if (requiresSession(operation)) {
                 String authToken = request.getAuthToken();
-                String sessionUser = authToken == null ? null : sessions.get(authToken);
+                String sessionUser = activeSessionUser(authToken);
                 if (sessionUser == null) {
                     return NetworkResponse.failure("Login is required for this operation.");
                 }
@@ -134,6 +140,7 @@ public final class PvzServer implements AutoCloseable {
                     (String) request.argument(0),
                     (String) request.argument(1)
                 );
+                case LOGOUT -> logout(request.getAuthToken());
                 case FIND_USER -> findUser(request, (String) request.argument(0));
                 case GET_SECURITY_PROFILE -> getSecurityProfile((String) request.argument(0));
                 case VERIFY_SECURITY_ANSWER -> verifySecurityAnswer(
@@ -188,22 +195,25 @@ public final class PvzServer implements AutoCloseable {
     }
 
     private NetworkResponse authenticate(String username, String password) {
-        return userRepository.findByUsername(username)
-            .<NetworkResponse>map(user -> {
-                if (!user.checkPassword(password)) {
-                    return NetworkResponse.failure("Password is incorrect.");
-                }
-                String token = UUID.randomUUID().toString();
-                sessions.put(token, user.getUsername());
-                return NetworkResponse.success("Logged in successfully.",
-                    new AuthenticatedSession(token, user));
-            })
-            .orElseGet(() -> NetworkResponse.failure("Username does not exist."));
+        synchronized (accountLock) {
+            return userRepository.findByUsername(username)
+                .<NetworkResponse>map(user -> {
+                    if (!user.checkPassword(password)) {
+                        return NetworkResponse.failure("Password is incorrect.");
+                    }
+                    String token = UUID.randomUUID().toString();
+                    sessions.put(token, user.getUsername());
+                    sessionLastSeen.put(token, System.currentTimeMillis());
+                    return NetworkResponse.success("Logged in successfully.",
+                        new AuthenticatedSession(token, user.copyForRollback()));
+                })
+                .orElseGet(() -> NetworkResponse.failure("Username does not exist."));
+        }
     }
 
     private NetworkResponse findUser(NetworkRequest request, String username) {
         String authToken = request.getAuthToken();
-        String sessionUser = authToken == null ? null : sessions.get(authToken);
+        String sessionUser = activeSessionUser(authToken);
         if (sessionUser == null || !sessionUser.equals(username)) {
             return getSecurityProfile(username);
         }
@@ -238,6 +248,14 @@ public final class PvzServer implements AutoCloseable {
         return NetworkResponse.success("Password reset successfully.");
     }
 
+    private NetworkResponse logout(String authToken) {
+        if (authToken != null) {
+            sessions.remove(authToken);
+            sessionLastSeen.remove(authToken);
+        }
+        return NetworkResponse.success("Logged out from server.");
+    }
+
     private boolean requiresSession(NetworkOperation operation) {
         return switch (operation) {
             case PING, AUTHENTICATE, FIND_USER, GET_SECURITY_PROFILE, VERIFY_SECURITY_ANSWER,
@@ -259,6 +277,11 @@ public final class PvzServer implements AutoCloseable {
     }
 
     private NetworkResponse addUser(User user) throws IOException {
+        if (user == null || user.getUsername() == null || user.getUsername().isBlank()
+            || user.getNickname() == null || user.getEmail() == null || user.getGender() == null
+            || user.getSecurityQuestion() == null) {
+            return NetworkResponse.failure("Invalid registration data.");
+        }
         userRepository.add(user);
         return NetworkResponse.success("User registered on server.");
     }
@@ -266,7 +289,24 @@ public final class PvzServer implements AutoCloseable {
     private NetworkResponse renameUser(
         String authToken, String oldUsername, String newUsername, User user
     ) throws IOException {
-        userRepository.rename(oldUsername, newUsername, user);
+        if (oldUsername == null || newUsername == null || user == null
+            || !newUsername.equals(user.getUsername())) {
+            return NetworkResponse.failure("Invalid username change data.");
+        }
+        synchronized (matchLock) {
+            if (hasActiveMatch(oldUsername)) {
+                return NetworkResponse.failure("Finish the active match before changing username.");
+            }
+            if (hasWaitingTicket(oldUsername)) {
+                return NetworkResponse.failure("Cancel the pending match request before changing username.");
+            }
+        }
+        synchronized (accountLock) {
+            if (!userRepository.usernameExists(oldUsername)) {
+                return NetworkResponse.failure("Username does not exist.");
+            }
+            userRepository.rename(oldUsername, newUsername, user);
+        }
         if (authToken != null && !authToken.isBlank()) {
             sessions.put(authToken, newUsername);
         }
@@ -274,10 +314,20 @@ public final class PvzServer implements AutoCloseable {
     }
 
     private NetworkResponse deleteUser(String username) throws IOException {
-        boolean deleted = userRepository.delete(username);
+        synchronized (matchLock) {
+            if (hasActiveMatch(username) || hasWaitingTicket(username)) {
+                return NetworkResponse.failure("Finish or cancel the active match before deleting the account.");
+            }
+        }
+        boolean deleted;
+        synchronized (accountLock) {
+            deleted = userRepository.delete(username);
+        }
         if (!deleted) {
             return NetworkResponse.failure("Username does not exist.");
         }
+        sessions.entrySet().removeIf(entry -> username.equals(entry.getValue()));
+        sessionLastSeen.entrySet().removeIf(entry -> !sessions.containsKey(entry.getKey()));
         return NetworkResponse.success("Account deleted from server.", true);
     }
 
@@ -285,10 +335,12 @@ public final class PvzServer implements AutoCloseable {
         if (user == null || user.getUsername() == null || user.getUsername().isBlank()) {
             return NetworkResponse.failure("Invalid user data.");
         }
-        if (!userRepository.usernameExists(user.getUsername())) {
-            return NetworkResponse.failure("User no longer exists on server.");
+        synchronized (accountLock) {
+            if (!userRepository.usernameExists(user.getUsername())) {
+                return NetworkResponse.failure("User no longer exists on server.");
+            }
+            userRepository.replace(user);
         }
-        userRepository.replace(user);
         return NetworkResponse.success("User data saved on server.");
     }
 
@@ -297,6 +349,9 @@ public final class PvzServer implements AutoCloseable {
             NetworkResponse validation = validatePlayer(username, level);
             if (validation != null) {
                 return validation;
+            }
+            if (hasActiveMatch(username)) {
+                return NetworkResponse.failure("You are already in an active match.");
             }
             Ticket existing = waitingRandomTicket(username);
             if (existing != null) {
@@ -324,11 +379,20 @@ public final class PvzServer implements AutoCloseable {
             if (validation != null) {
                 return validation;
             }
+            if (hasActiveMatch(username)) {
+                return NetworkResponse.failure("You are already in an active match.");
+            }
             if (opponent == null || opponent.isBlank() || username.equals(opponent)) {
                 return NetworkResponse.failure("Choose a different opponent username.");
             }
             if (!userRepository.usernameExists(opponent)) {
                 return NetworkResponse.failure("Opponent username does not exist.");
+            }
+            if (!isOnline(opponent)) {
+                return NetworkResponse.failure("Opponent is not online.");
+            }
+            if (hasActiveMatch(opponent)) {
+                return NetworkResponse.failure("Opponent is already in an active match.");
             }
             Ticket existing = waitingTicket(username, opponent);
             if (existing != null) {
@@ -364,6 +428,10 @@ public final class PvzServer implements AutoCloseable {
             if (!accepted) {
                 ticket.status = "REJECTED";
                 return NetworkResponse.success("Match request rejected.", ticket.view(username));
+            }
+            if (!isOnline(ticket.requester) || hasActiveMatch(ticket.requester)) {
+                ticket.status = "EXPIRED";
+                return NetworkResponse.failure("The requesting player is no longer available.");
             }
             startMatch(ticket, ticket, ticket.requester, username);
             return NetworkResponse.success("Match request accepted.", ticket.view(username));
@@ -459,14 +527,16 @@ public final class PvzServer implements AutoCloseable {
             || score < 0 || !userRepository.usernameExists(username)) {
             return NetworkResponse.failure("Invalid mini-game score submission.");
         }
-        User user = userRepository.findByUsername(username).orElseThrow();
-        GameProgress progress = user.getProgress();
-        int previous = progress.getBestMiniGameScore();
-        if (score > previous) {
-            progress.updateBestScore(score);
-            userRepository.replace(user);
+        synchronized (accountLock) {
+            User user = userRepository.findByUsername(username).orElseThrow();
+            GameProgress progress = user.getProgress();
+            int previous = progress.getBestMiniGameScore();
+            if (score > previous) {
+                progress.updateBestScore(score);
+                userRepository.replace(user);
+            }
+            return NetworkResponse.success("Score saved on server.", Math.max(previous, score));
         }
-        return NetworkResponse.success("Score saved on server.", Math.max(previous, score));
     }
 
     private NetworkResponse submitScoredScore(String username, int score) throws IOException {
@@ -474,29 +544,33 @@ public final class PvzServer implements AutoCloseable {
             || !userRepository.usernameExists(username)) {
             return NetworkResponse.failure("Invalid scored-game score submission.");
         }
-        User user = userRepository.findByUsername(username).orElseThrow();
-        GameProgress progress = user.getProgress();
-        int previous = progress.getBestMeowPoints();
-        if (score > previous) {
-            progress.updateBestMeowPoints(score);
-            userRepository.replace(user);
+        synchronized (accountLock) {
+            User user = userRepository.findByUsername(username).orElseThrow();
+            GameProgress progress = user.getProgress();
+            int previous = progress.getBestMeowPoints();
+            if (score > previous) {
+                progress.updateBestMeowPoints(score);
+                userRepository.replace(user);
+            }
+            return NetworkResponse.success("Scored-game result saved on server.",
+                Math.max(previous, score));
         }
-        return NetworkResponse.success("Scored-game result saved on server.",
-            Math.max(previous, score));
     }
 
     private NetworkResponse getLeaderboard() {
-        ArrayList<LeaderboardEntry> entries = new ArrayList<>();
-        for (User user : userRepository.getAllUsers()) {
-            GameProgress progress = user.getProgress();
-            entries.add(new LeaderboardEntry(user.getUsername(),
-                progress.getLastChapterNumber(), progress.getLastLevelNumber(),
-                progress.getCompletedMiniGames(), progress.getCompletedDailyQuests(),
-                progress.getCompletedOtherQuests(), progress.getBestMeowPoints()));
+        synchronized (accountLock) {
+            ArrayList<LeaderboardEntry> entries = new ArrayList<>();
+            for (User user : userRepository.getAllUsers()) {
+                GameProgress progress = user.getProgress();
+                entries.add(new LeaderboardEntry(user.getUsername(),
+                    progress.getLastChapterNumber(), progress.getLastLevelNumber(),
+                    progress.getCompletedMiniGames(), progress.getCompletedDailyQuests(),
+                    progress.getCompletedOtherQuests(), progress.getBestMeowPoints()));
+            }
+            entries.sort(java.util.Comparator.comparingInt(LeaderboardEntry::bestScore).reversed()
+                .thenComparing(LeaderboardEntry::username));
+            return NetworkResponse.success("Leaderboard loaded from server.", List.copyOf(entries));
         }
-        entries.sort(java.util.Comparator.comparingInt(LeaderboardEntry::bestScore).reversed()
-            .thenComparing(LeaderboardEntry::username));
-        return NetworkResponse.success("Leaderboard loaded from server.", List.copyOf(entries));
     }
 
     private NetworkResponse validatePlayer(String username, int level) {
@@ -536,6 +610,13 @@ public final class PvzServer implements AutoCloseable {
     private void cleanupExpiredState() {
         synchronized (matchLock) {
             long now = System.currentTimeMillis();
+            sessionLastSeen.entrySet().removeIf(entry -> {
+                boolean expired = now - entry.getValue() > SESSION_TIMEOUT_MS;
+                if (expired) {
+                    sessions.remove(entry.getKey());
+                }
+                return expired;
+            });
             tickets.entrySet().removeIf(entry -> entry.getValue().expired(now));
             randomQueue.removeIf(ticketId -> !tickets.containsKey(ticketId));
             matches.entrySet().removeIf(entry -> now - entry.getValue().createdAt > 30 * 60 * 1000L);
@@ -554,6 +635,38 @@ public final class PvzServer implements AutoCloseable {
                 }
             }
         }
+    }
+
+    private String activeSessionUser(String authToken) {
+        if (authToken == null || authToken.isBlank()) {
+            return null;
+        }
+        String username = sessions.get(authToken);
+        Long lastSeen = sessionLastSeen.get(authToken);
+        if (username == null || lastSeen == null
+            || System.currentTimeMillis() - lastSeen > SESSION_TIMEOUT_MS) {
+            sessions.remove(authToken);
+            sessionLastSeen.remove(authToken);
+            return null;
+        }
+        sessionLastSeen.put(authToken, System.currentTimeMillis());
+        return username;
+    }
+
+    private boolean isOnline(String username) {
+        long now = System.currentTimeMillis();
+        return sessions.entrySet().stream().anyMatch(entry -> username.equals(entry.getValue())
+            && now - sessionLastSeen.getOrDefault(entry.getKey(), 0L) <= SESSION_TIMEOUT_MS);
+    }
+
+    private boolean hasActiveMatch(String username) {
+        return matches.values().stream().anyMatch(match -> !match.session.isFinished()
+            && match.members.containsKey(username));
+    }
+
+    private boolean hasWaitingTicket(String username) {
+        return tickets.values().stream().anyMatch(ticket -> ticket.status.equals("WAITING")
+            && (username.equals(ticket.requester) || username.equals(ticket.target)));
     }
 
     private void startMatch(Ticket first, Ticket second, String zombies, String plants) {
@@ -680,6 +793,7 @@ public final class PvzServer implements AutoCloseable {
         clientExecutor.shutdownNow();
         matchTicker.shutdownNow();
         sessions.clear();
+        sessionLastSeen.clear();
         passwordResetTokens.clear();
     }
 }

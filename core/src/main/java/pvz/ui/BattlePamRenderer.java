@@ -244,7 +244,7 @@ public final class BattlePamRenderer {
             typeEffect,
             "T_PEA_PROJECTILE"
         );
-        return draw(batch, spec.path(), spec.primaryClip(), time, x, y, scale * 0.82f, false);
+        return draw(batch, spec.path(), spec.primaryClip(), time, x, y, scale * 0.95f, false);
     }
 
     public boolean drawSun(Batch batch, Sun sun, float time, float x, float y, float scale) {

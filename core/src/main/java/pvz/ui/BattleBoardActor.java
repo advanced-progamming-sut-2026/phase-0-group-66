@@ -388,18 +388,21 @@ public final class BattleBoardActor extends Actor implements Disposable {
                     drawTileTint(batch, left, bottom, width, height,
                         0.16f, 0.12f, 0.08f, parentAlpha * 0.18f);
                     if (tombIcon != null) {
-                        float tombHeight = height * 0.80f;
+                        Color previous = new Color(batch.getColor());
+                        batch.setColor(1f, 1f, 1f, parentAlpha);
+                        float tombHeight = height * 0.90f;
                         float tombWidth = tombHeight
                             * tombIcon.getRegionWidth()
                             / Math.max(1f, tombIcon.getRegionHeight());
-                        float maxWidth = width * 0.72f;
+                        float maxWidth = width * 0.82f;
                         if (tombWidth > maxWidth) {
                             tombWidth = maxWidth;
                             tombHeight = tombWidth * tombIcon.getRegionHeight()
                                 / Math.max(1f, tombIcon.getRegionWidth());
                         }
                         batch.draw(tombIcon, centerX - tombWidth / 2f,
-                            bottom + height * 0.10f, tombWidth, tombHeight);
+                            bottom + height * 0.05f, tombWidth, tombHeight);
+                        batch.setColor(previous);
                     }
                     model.Tomb tomb = controller.getGame().getTombAt(row, col);
                     if (tomb != null) {
@@ -505,9 +508,24 @@ public final class BattleBoardActor extends Actor implements Disposable {
         if (hoveredCol < 0 || hoveredRow < 0) {
             return;
         }
-        drawTileTint(batch, gridLeft() + hoveredCol * cellWidth(),
-            cellBottom(hoveredRow), cellWidth(), cellHeight(),
-            1f, 1f, 1f, parentAlpha * 0.20f);
+        Color previous = new Color(batch.getColor());
+        float x = gridLeft() + hoveredCol * cellWidth();
+        float y = cellBottom(hoveredRow);
+        float width = cellWidth();
+        float height = cellHeight();
+        float thickness = Math.max(2f, Math.min(width, height) * 0.035f);
+        drawTileTint(batch, x + thickness, y + thickness,
+            width - thickness * 2f, height - thickness * 2f,
+            1f, 1f, 1f, parentAlpha * 0.06f);
+        drawTileTint(batch, x, y, width, thickness,
+            1f, 1f, 1f, parentAlpha * 0.72f);
+        drawTileTint(batch, x, y + height - thickness, width, thickness,
+            1f, 1f, 1f, parentAlpha * 0.72f);
+        drawTileTint(batch, x, y, thickness, height,
+            1f, 1f, 1f, parentAlpha * 0.72f);
+        drawTileTint(batch, x + width - thickness, y, thickness, height,
+            1f, 1f, 1f, parentAlpha * 0.72f);
+        batch.setColor(previous);
     }
 
     private void drawPlantPreview(Batch batch, Board board) {
@@ -545,7 +563,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
         float start = plantFoodStartedAt.getOrDefault(plant, animationTime);
         float elapsed = Math.max(0f, animationTime - start);
         float travelWidth = Math.max(cellWidth() * 2f, gridLeft() + gridWidth() - x);
-        float peaSize = Math.max(14f, Math.min(cellWidth(), cellHeight()) * 0.26f);
+        float peaSize = Math.max(16f, Math.min(cellWidth(), cellHeight()) * 0.30f);
         for (int index = 0; index < 10; index++) {
             float shotTime = index * 0.085f;
             float flight = (elapsed - shotTime) / 0.70f;
@@ -777,7 +795,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
             int row = projectile.getPosition().getRow();
             float y = cellBottom(row) + cellHeight() * 0.55f
                 + (float) projectile.getLobArcHeight(column) * cellHeight() * 0.72f;
-            float size = Math.max(12f, Math.min(cellWidth(), cellHeight()) * 0.20f);
+            float size = Math.max(16f, Math.min(cellWidth(), cellHeight()) * 0.30f);
             if (projectile.isLobbed()) {
                 size *= 1.12f;
             }

@@ -185,7 +185,7 @@ public final class RemoteUserRepository extends UserRepository {
     }
 
     public void clearAuthentication() {
-        client.clearAuthentication();
+        client.logout();
         recoveryToken = null;
     }
 
