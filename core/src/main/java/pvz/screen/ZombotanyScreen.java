@@ -74,20 +74,22 @@ public final class ZombotanyScreen extends MiniGamePlayScreen {
         currency.add(sunLabel).right().width(210f);
         panel.add(currency).width(280f).height(52f).padBottom(6f);
         panel.row();
-        panel.add(theme.heading("PLANT SELECTION")).padBottom(3f);
+        Label heading = theme.heading("PLANT SELECTION");
+        heading.setAlignment(Align.center);
+        panel.add(heading).width(280f).height(34f).padBottom(2f);
         panel.row();
         Label hint = theme.bodyLabel("Choose plants before START. During battle, select a plant and click a tile to grow it.");
         hint.setAlignment(Align.left);
         hint.setWrap(true);
-        hint.setFontScale(0.68f);
-        panel.add(hint).width(280f).height(70f).left();
-        panel.row();
-        panel.add(plantTray).width(280f).height(270f).top();
+        hint.setFontScale(0.58f);
+        panel.add(hint).width(280f).height(60f).left();
+        panel.row().padTop(3f);
+        panel.add(plantTray).width(280f).height(160f).top();
         panel.row().padTop(4f);
         startButton = theme.tertiaryButton("START BATTLE");
         startButton.setVisible(!zombotany.isBattleStarted());
         UiActions.onClick(startButton, () -> execute("start"));
-        panel.add(startButton).width(280f).height(46f).padBottom(4f);
+        panel.add(startButton).width(280f).height(44f).padBottom(3f);
         panel.row();
         TextButton feed = theme.primaryButton("FEED PLANT");
         feed.getLabel().setFontScale(0.72f);
@@ -95,10 +97,10 @@ public final class ZombotanyScreen extends MiniGamePlayScreen {
             feedMode = !feedMode;
             theme.showSuccess(message, feedMode ? "Click a plant to feed it." : shortStatus());
         });
-        panel.add(feed).width(280f).height(42f).padBottom(4f);
+        panel.add(feed).width(280f).height(40f).padBottom(3f);
         panel.row();
         progress.setAlignment(Align.center);
-        panel.add(progress).width(280f).height(44f).padBottom(4f);
+        panel.add(progress).width(280f).height(34f).padBottom(3f);
         panel.row();
         TextButton back = theme.secondaryButton("Back to Mini Games");
         UiActions.onClick(back, app::returnToMiniGames);
@@ -139,10 +141,13 @@ public final class ZombotanyScreen extends MiniGamePlayScreen {
     private void rebuildPlantTray() {
         plantTray.clearChildren();
         List<String> selected = zombotany.getSelectedPlantViews();
-        for (String plant : PLANTS) {
+        for (int index = 0; index < PLANTS.length; index++) {
+            String plant = PLANTS[index];
             boolean active = selected.contains(plant);
             TextButton button = theme.primaryButton((active ? "REMOVE " : "ADD ") + plant);
-            button.getLabel().setFontScale(0.52f);
+            button.getLabel().setFontScale(0.42f);
+            button.getLabel().setWrap(true);
+            button.getLabel().setAlignment(Align.center);
             button.setDisabled(zombotany.isBattleStarted());
             UiActions.onClick(button, () -> {
                 if (active) {
@@ -155,8 +160,10 @@ public final class ZombotanyScreen extends MiniGamePlayScreen {
                     selectedPlant = plant;
                 }
             });
-            plantTray.add(button).width(280f).height(29f).padBottom(2f);
-            plantTray.row();
+            plantTray.add(button).width(136f).height(36f).pad(2f);
+            if (index % 2 == 1) {
+                plantTray.row();
+            }
         }
     }
 

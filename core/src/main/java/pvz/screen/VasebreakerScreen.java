@@ -53,7 +53,9 @@ public final class VasebreakerScreen extends MiniGamePlayScreen {
     private Table buildSidePanel() {
         Table panel = theme.settingsCardPanel(12f);
         panel.top();
-        panel.add(theme.heading("PLANT PACKETS")).padBottom(6f);
+        Label heading = theme.heading("PLANT PACKETS");
+        heading.setAlignment(Align.center);
+        panel.add(heading).width(258f).height(38f).padBottom(4f);
         panel.row();
         Label hint = theme.bodyLabel(
             "Break a vase to reveal a plant packet or zombie. "
@@ -61,14 +63,14 @@ public final class VasebreakerScreen extends MiniGamePlayScreen {
         );
         hint.setAlignment(Align.left);
         hint.setWrap(true);
-        hint.setFontScale(0.70f);
-        panel.add(hint).width(258f).height(82f).left();
-        panel.row().padTop(7f);
-        panel.add(packetScroll).width(262f).height(342f).top();
+        hint.setFontScale(0.58f);
+        panel.add(hint).width(258f).height(72f).left();
+        panel.row().padTop(5f);
+        panel.add(packetScroll).width(262f).height(300f).top();
         panel.row().padTop(6f);
         progress.setAlignment(Align.center);
         progress.setWrap(true);
-        panel.add(progress).width(262f).height(48f);
+        panel.add(progress).width(262f).height(40f);
         panel.row().padTop(6f);
         TextButton back = theme.secondaryButton("BACK TO MINI GAMES");
         UiActions.onClick(back, app::returnToMiniGames);

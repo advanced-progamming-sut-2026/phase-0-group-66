@@ -75,7 +75,9 @@ public final class IZombieScreen extends MiniGamePlayScreen {
         reactionLabel.setColor(1f, 0.95f, 0.45f, 0.96f);
         reactionLabel.setVisible(false);
         List<IZombieSession.ZombieCardView> cards = iZombie.getCardViews();
-        selectedCard = cards.isEmpty() ? null : cards.get(0).key();
+        selectedCard = cards.isEmpty() || (onlineSession() != null
+            && onlineSession().getRole() == network.game.MatchRole.PLANTS)
+            ? null : cards.get(0).key();
         buildUi();
         refreshFromSession();
     }
@@ -196,29 +198,38 @@ public final class IZombieScreen extends MiniGamePlayScreen {
 
     private Table buildPlantControls() {
         Table controls = new Table();
-        controls.add(theme.heading("PLANT CARDS")).colspan(3).padBottom(4f);
+        Label cardsHeading = theme.heading("PLANT CARDS");
+        cardsHeading.setAlignment(Align.center);
+        controls.add(cardsHeading).width(276f).height(30f).padBottom(3f);
         controls.row();
         String[] plants = {"Sunflower", "Peashooter", "Wall-nut", "Snow Pea", "Repeater", "Cabbage-pult"};
+        Table cards = new Table();
         for (int index = 0; index < plants.length; index++) {
             String plant = plants[index];
             TextButton button = theme.primaryButton(plant);
-            button.getLabel().setFontScale(0.42f);
+            button.getLabel().setFontScale(0.34f);
             button.getLabel().setWrap(true);
             button.getLabel().setAlignment(Align.center);
             UiActions.onClick(button, () -> {
                 selectedPlant = plant;
                 theme.showSuccess(message, plant + " selected. Choose a tile.");
             });
-            controls.add(button).width(92f).height(36f).pad(2f);
+            cards.add(button).width(88f).height(38f).pad(2f);
             if (index % 3 == 2) {
-                controls.row();
+                cards.row();
             }
         }
-        controls.row().padTop(5f);
-        controls.add(theme.heading("PLACE ON TILE")).colspan(9).padBottom(2f);
+        controls.add(cards).width(276f).height(84f);
+        controls.row().padTop(4f);
+        Label placementHeading = theme.heading("PLACE ON TILE");
+        placementHeading.setAlignment(Align.center);
+        placementHeading.setFontScale(0.72f);
+        controls.add(placementHeading).width(276f).height(28f).padBottom(2f);
         controls.row();
+        Table grid = new Table();
         for (int row = 1; row <= 5; row++) {
             int selectedRow = row;
+            Table gridRow = new Table();
             for (int column = 1; column <= 9; column++) {
                 int selectedColumn = column;
                 TextButton tile = theme.secondaryButton(row + ":" + column);
@@ -226,10 +237,12 @@ public final class IZombieScreen extends MiniGamePlayScreen {
                 UiActions.onClick(tile, () -> execute(
                     "plant " + selectedPlant + " " + selectedRow + " " + selectedColumn
                 ));
-                controls.add(tile).width(30f).height(28f).pad(1f);
+                gridRow.add(tile).width(28f).height(27f).pad(1f);
             }
-            controls.row();
+            grid.add(gridRow).width(276f).height(29f);
+            grid.row();
         }
+        controls.add(grid).width(276f).height(145f);
         return controls;
     }
 
@@ -307,7 +320,7 @@ public final class IZombieScreen extends MiniGamePlayScreen {
     }
 
     private void updateBoardHover(MiniGameGridInputActor.Cell cell) {
-        if (cell == null || selectedCard == null) {
+        if (cell == null) {
             hoveredRow = -1;
             hoveredColumn = -1;
             if (rowHighlight != null) {
@@ -326,6 +339,12 @@ public final class IZombieScreen extends MiniGamePlayScreen {
             rowHighlight.setVisible(true);
             rowHighlight.setBounds(0f, (ROWS - 1 - hoveredRow) * cellHeight,
                 BOARD_WIDTH, cellHeight);
+        }
+        if (selectedCard == null) {
+            if (zombiePreview != null) {
+                zombiePreview.setVisible(false);
+            }
+            return;
         }
         ensureZombiePreview();
         if (zombiePreview != null) {

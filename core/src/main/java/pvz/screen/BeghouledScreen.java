@@ -64,13 +64,15 @@ public final class BeghouledScreen extends MiniGamePlayScreen {
         currency.add(sunLabel).right().width(210f);
         panel.add(currency).width(280f).height(52f).padBottom(8f);
         panel.row();
-        panel.add(theme.heading("MAKE MATCHES")).padBottom(4f);
+        Label heading = theme.heading("MAKE MATCHES");
+        heading.setAlignment(Align.center);
+        panel.add(heading).width(280f).height(34f).padBottom(3f);
         panel.row();
         Label hint = theme.bodyLabel("Click two adjacent plants to swap them. Every match of three or more earns sun.");
         hint.setAlignment(Align.left);
         hint.setWrap(true);
-        hint.setFontScale(0.72f);
-        panel.add(hint).width(280f).height(82f).left();
+        hint.setFontScale(0.62f);
+        panel.add(hint).width(280f).height(72f).left();
         panel.row().padTop(8f);
         panel.add(progress).width(280f).height(42f);
         panel.row().padTop(8f);
@@ -91,7 +93,7 @@ public final class BeghouledScreen extends MiniGamePlayScreen {
 
     private TextButton upgradeButton(String text, String plant) {
         TextButton button = theme.primaryButton(text);
-        button.getLabel().setFontScale(0.58f);
+        button.getLabel().setFontScale(0.43f);
         button.getLabel().setWrap(true);
         button.getLabel().setAlignment(Align.center);
         UiActions.onClick(button, () -> execute("upgrade " + plant));
