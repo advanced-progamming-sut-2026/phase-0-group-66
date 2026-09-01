@@ -203,6 +203,8 @@ public final class BattleBoardActor extends Actor implements Disposable {
             return;
         }
         Color previous = new Color(batch.getColor());
+        boolean blendingEnabled = batch.isBlendingEnabled();
+        batch.enableBlending();
         batch.setColor(1f, 1f, 1f, parentAlpha);
         drawBackground(batch);
         drawEnvironment(batch, game.getBoard(), parentAlpha);
@@ -217,6 +219,9 @@ public final class BattleBoardActor extends Actor implements Disposable {
         drawZombies(batch, game.getBoard(), parentAlpha);
         drawSuns(batch, game.getBoard());
         batch.setColor(previous);
+        if (!blendingEnabled) {
+            batch.disableBlending();
+        }
     }
 
     private void drawBackground(Batch batch) {
@@ -540,7 +545,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
         float start = plantFoodStartedAt.getOrDefault(plant, animationTime);
         float elapsed = Math.max(0f, animationTime - start);
         float travelWidth = Math.max(cellWidth() * 2f, gridLeft() + gridWidth() - x);
-        float peaSize = Math.max(11f, Math.min(cellWidth(), cellHeight()) * 0.18f);
+        float peaSize = Math.max(14f, Math.min(cellWidth(), cellHeight()) * 0.26f);
         for (int index = 0; index < 10; index++) {
             float shotTime = index * 0.085f;
             float flight = (elapsed - shotTime) / 0.70f;

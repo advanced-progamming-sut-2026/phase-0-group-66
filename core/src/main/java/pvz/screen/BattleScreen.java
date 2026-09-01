@@ -139,8 +139,8 @@ public final class BattleScreen extends AuthenticatedUiScreen {
         missionBanner.top().padTop(122f);
         missionBanner.setTouchable(Touchable.disabled);
         Table panel = badgePanel(10f);
-        panel.add(missionLabel).width(860f).height(78f);
-        missionBanner.add(panel).width(890f).height(98f).center();
+        panel.add(missionLabel).width(860f).height(58f);
+        missionBanner.add(panel).width(890f).height(78f).center();
         return missionBanner;
     }
 
@@ -617,7 +617,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     public void render(float delta) {
         if (!paused) {
             missionElapsed += Math.max(0f, delta);
-            if (missionElapsed >= 4.0f && level.getSpecialType() == model.SpecialLevelType.NORMAL) {
+            if (missionElapsed >= 4.0f) {
                 missionBanner.setVisible(false);
             }
             if (notificationElapsed > 0f) {
@@ -677,12 +677,7 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     private void refreshHud() {
         sunLabel.setText(Integer.toString(game.getSunAmount()));
         plantFoodLabel.setText("x" + game.getPlantFoodCount());
-        String missionText = "Mission: " + level.getSpecialRuleSummary();
-        if (level.getSpecialType() != model.SpecialLevelType.NORMAL) {
-            missionText += "\n" + game.specialStatus();
-            missionBanner.setVisible(true);
-        }
-        missionLabel.setText(missionText);
+        missionLabel.setText("Mission: " + level.getSpecialRuleSummary());
         Wave wave = game.getCurrentWave();
         int current = wave == null ? 0 : wave.getWaveNumber();
         if (game.areZombieWavesStarted() && wave == null
