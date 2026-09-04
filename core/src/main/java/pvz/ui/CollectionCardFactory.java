@@ -14,6 +14,9 @@ import pvz.assets.PvzAssets;
 import pvz.ui.PlantPacketCard.State;
 
 public final class CollectionCardFactory {
+    private static final float ZOMBIE_NAME_SCALE = 0.48f;
+    private static final float ZOMBIE_NAME_HEIGHT = 24f;
+
     private final PvzAssets assets;
     private final UiTheme theme;
     private final User user;
@@ -67,9 +70,10 @@ public final class CollectionCardFactory {
         labelLayer.bottom();
         Label name = theme.settingsLabel(seen ? zombie.getDisplayName() : "???");
         name.setAlignment(Align.center);
+        name.setWrap(false);
         name.setEllipsis(true);
-        name.setFontScale(0.66f);
-        labelLayer.add(name).growX().height(28f).pad(3f);
+        name.setFontScale(ZOMBIE_NAME_SCALE);
+        labelLayer.add(name).growX().minWidth(0f).height(ZOMBIE_NAME_HEIGHT).pad(3f);
         stack.add(labelLayer);
 
         if (!seen) {

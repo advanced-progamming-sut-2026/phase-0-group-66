@@ -110,6 +110,13 @@ public final class NetworkIZombieSession extends IZombieSession {
         return state.reactions();
     }
 
+    public MatchReaction getLatestOpponentReaction() {
+        return state.reactions().stream()
+            .filter(reaction -> !username.equals(reaction.sender()))
+            .reduce((first, second) -> second)
+            .orElse(null);
+    }
+
     public MatchRole getWinnerRole() {
         return state.winnerRole();
     }

@@ -4,6 +4,7 @@ import model.UserRepository;
 import network.protocol.Phase3Protocol;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,6 +26,10 @@ public final class PvzServerMain {
             System.out.println("PvZ Phase 3 server listening on port " + port);
             System.out.println("Server user data: " + dataDirectory.toAbsolutePath().normalize());
             server.start();
+        } catch (BindException exception) {
+            System.err.println("Could not start PvZ server on port " + port
+                + ": the port is already in use. Stop the existing server or pass another port.");
+            System.exit(1);
         } catch (IOException | IllegalArgumentException exception) {
             System.err.println("Could not start PvZ server: " + exception.getMessage());
             System.exit(1);

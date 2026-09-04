@@ -402,9 +402,7 @@ public final class IZombieScreen extends MiniGamePlayScreen {
         );
         NetworkIZombieSession online = onlineSession();
         if (online != null) {
-            MatchReaction latest = online.getReactions().stream()
-                .filter(reaction -> online.getOpponent().equals(reaction.sender()))
-                .reduce((first, second) -> second).orElse(null);
+            MatchReaction latest = online.getLatestOpponentReaction();
             if (latest != null) {
                 reactionLabel.setText(latest.value());
                 reactionLabel.setVisible(true);

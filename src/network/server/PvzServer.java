@@ -54,7 +54,10 @@ public final class PvzServer implements AutoCloseable {
     private final Map<String, String> sessions = new ConcurrentHashMap<>();
     private final Map<String, Long> sessionLastSeen = new ConcurrentHashMap<>();
     private final Map<String, String> passwordResetTokens = new ConcurrentHashMap<>();
-    private static final long SESSION_TIMEOUT_MS = 30 * 1000L;
+    // A player can spend hours waiting for a greenhouse plant to grow. Expiring the
+    // session after 30 seconds made the next purchase/harvest fail with "Login is
+    // required" even though the game was still open.
+    private static final long SESSION_TIMEOUT_MS = TimeUnit.HOURS.toMillis(12);
     private volatile boolean running;
     private ServerSocket serverSocket;
 

@@ -57,7 +57,7 @@ public class GreenhouseController {
             return save(user, snapshot, "Planted " + plantName + " at (" + x + ", " + y
                 + "); one inventory pot was consumed. Remaining pots: "
                 + user.getInventory().getPots() + ".");
-        } catch (IllegalArgumentException exception) {
+        } catch (IllegalArgumentException | IllegalStateException exception) {
             user.restoreFrom(snapshot);
             return ActionResult.failure(exception.getMessage());
         }
@@ -88,7 +88,7 @@ public class GreenhouseController {
             }
             slot.clear();
             return save(user, snapshot, result);
-        } catch (IllegalArgumentException exception) {
+        } catch (IllegalArgumentException | IllegalStateException exception) {
             user.restoreFrom(snapshot);
             return ActionResult.failure(exception.getMessage());
         }
@@ -115,7 +115,7 @@ public class GreenhouseController {
             }
             slot.makeReady(now);
             return save(user, snapshot, "Growth completed for " + cost + " gem(s).");
-        } catch (IllegalArgumentException exception) {
+        } catch (IllegalArgumentException | IllegalStateException exception) {
             user.restoreFrom(snapshot);
             return ActionResult.failure(exception.getMessage());
         }

@@ -1,5 +1,6 @@
 package pvz.screen;
 
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -15,6 +16,8 @@ public final class ProfileScreen extends AuthenticatedUiScreen {
     private static final float EDIT_FIELD_WIDTH = 300f;
     private static final float EDIT_FIELD_HEIGHT = 48f;
     private static final float PASSWORD_FIELD_WIDTH = 215f;
+    private static final float SUMMARY_LABEL_WIDTH = 120f;
+    private static final float SUMMARY_VALUE_WIDTH = 210f;
 
     private final ProfileController controller;
     private final Label usernameValue;
@@ -146,9 +149,13 @@ public final class ProfileScreen extends AuthenticatedUiScreen {
     }
 
     private void addSummaryRow(Table table, String title, Label value) {
-        value.setWrap(false);
-        table.add(theme.fieldLabel(title)).left().pad(5f, 4f, 5f, 8f);
-        table.add(value).expandX().right().pad(5f, 8f, 5f, 6f);
+        value.setWrap(true);
+        value.setAlignment(Align.right);
+        Table row = new Table();
+        row.add(theme.fieldLabel(title)).width(SUMMARY_LABEL_WIDTH).left();
+        row.add(value).width(SUMMARY_VALUE_WIDTH).right();
+        table.add(row).width(SUMMARY_LABEL_WIDTH + SUMMARY_VALUE_WIDTH)
+            .left().pad(5f, 4f, 5f, 6f);
         table.row();
     }
 

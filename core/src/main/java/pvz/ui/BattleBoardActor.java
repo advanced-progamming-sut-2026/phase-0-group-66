@@ -287,13 +287,10 @@ public final class BattleBoardActor extends Actor implements Disposable {
         if (waterStart >= Board.DEFAULT_COLUMNS) {
             return;
         }
-        drawTileTint(batch, gridLeft() + waterStart * cellWidth(), gridBottom(),
-            gridLeft() + gridWidth() - (gridLeft() + waterStart * cellWidth()), gridHeight(),
-            0.05f, 0.35f, 0.82f, parentAlpha * 0.14f);
-        int maximumWaterStart = Math.min(Board.DEFAULT_COLUMNS - 1, 6);
-        float boundaryX = gridLeft() + maximumWaterStart * cellWidth();
-        drawTileTint(batch, boundaryX - 2f, gridBottom(), 4f, gridHeight(),
-            0.12f, 0.86f, 1f, parentAlpha * 0.82f);
+        float boundaryX = gridLeft() + waterStart * cellWidth();
+        drawTileTint(batch, boundaryX - Math.max(2f, cellWidth() * 0.018f), gridBottom(),
+            Math.max(2f, cellWidth() * 0.018f), gridHeight(),
+            0.08f, 0.38f, 0.48f, parentAlpha * 0.16f);
     }
 
     private void drawColdWindMarker(Batch batch, int row, float parentAlpha) {
@@ -343,19 +340,11 @@ public final class BattleBoardActor extends Actor implements Disposable {
                 float centerX = left + width * 0.5f;
                 float centerY = bottom + height * 0.5f;
                 if (type == TileType.WATER) {
-                    boolean animated = pamRenderer.drawWaterTile(
-                        batch, animationTime, centerX, centerY,
-                        width / (390f * 1.5625f)
-                    );
-                    if (!animated) {
-                        drawTileTint(batch, left, bottom, width, height,
-                            0.13f, 0.42f, 0.78f, parentAlpha * 0.70f);
-                    }
+                    drawWaterTile(batch, left, bottom, width, height, row, col,
+                        parentAlpha, true);
                 } else if (type == TileType.LOW_TIDE) {
-                    drawTileTint(batch, left, bottom, width, height,
-                        0.16f, 0.47f, 0.70f, parentAlpha * 0.58f);
-                    drawTileTint(batch, left, bottom + height * 0.08f, width,
-                        height * 0.16f, 0.72f, 0.62f, 0.35f, parentAlpha * 0.55f);
+                    drawWaterTile(batch, left, bottom, width, height, row, col,
+                        parentAlpha, false);
                 } else if (type == TileType.ICE) {
                     drawTileTint(batch, left, bottom, width, height,
                         0.55f, 0.86f, 0.98f, parentAlpha * 0.62f);
@@ -424,6 +413,31 @@ public final class BattleBoardActor extends Actor implements Disposable {
             }
         }
         batch.setColor(Color.WHITE);
+    }
+
+    private void drawWaterTile(Batch batch, float x, float y, float width, float height,
+                               int row, int col, float parentAlpha, boolean submerged) {
+        float inset = Math.max(2f, Math.min(width, height) * 0.035f);
+        float alpha = parentAlpha * (submerged ? 0.34f : 0.22f);
+        drawTileTint(batch, x, y, width, height,
+            submerged ? 0.08f : 0.16f, submerged ? 0.40f : 0.49f,
+            submerged ? 0.58f : 0.57f, alpha);
+        drawTileTint(batch, x + inset, y + inset, width - inset * 2f, height - inset * 2f,
+            0.22f, 0.63f, 0.70f, parentAlpha * (submerged ? 0.10f : 0.07f));
+
+        float phase = animationTime * 0.85f + row * 0.73f + col * 0.47f;
+        for (int wave = 0; wave < 3; wave++) {
+            float waveY = y + height * (0.24f + wave * 0.24f)
+                + (float) Math.sin(phase + wave * 1.7f) * height * 0.025f;
+            float segmentWidth = width * 0.22f;
+            float start = x + width * (0.12f + wave * 0.23f)
+                + (float) Math.sin(phase * 0.7f + wave) * width * 0.05f;
+            drawTileTint(batch, start, waveY, segmentWidth, Math.max(2f, height * 0.018f),
+                0.68f, 0.92f, 0.88f, parentAlpha * (submerged ? 0.28f : 0.20f));
+            drawTileTint(batch, start + segmentWidth * 1.15f, waveY,
+                segmentWidth * 0.56f, Math.max(2f, height * 0.018f),
+                0.42f, 0.79f, 0.82f, parentAlpha * (submerged ? 0.18f : 0.13f));
+        }
     }
 
     private void drawTileTint(Batch batch, float x, float y, float width, float height,

@@ -40,6 +40,7 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
     private String message = "Select a greenhouse slot.";
     private boolean messageSuccess = true;
     private Boolean selectedReadyState;
+    private String renderedSlotState;
     private Label liveStateLabel;
     private Label liveCostLabel;
     private boolean actionInFlight;
@@ -97,6 +98,7 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
 
         screen.add(buildFooter()).width(1180f).height(54f);
         addScrollable(screen);
+        renderedSlotState = slotSnapshot(System.currentTimeMillis());
     }
 
     private Table buildInventoryBar() {
@@ -461,8 +463,22 @@ public final class GreenhouseScreen extends AuthenticatedUiScreen {
 
     @Override
     public void render(float delta) {
+        String currentSlotState = slotSnapshot(System.currentTimeMillis());
+        if (!currentSlotState.equals(renderedSlotState)) {
+            buildUi();
+            return;
+        }
         refreshSelectedPlantDetails();
         super.render(delta);
+    }
+
+    private String slotSnapshot(long now) {
+        StringBuilder snapshot = new StringBuilder();
+        for (GreenhouseSlot slot : user.getGreenhouse().getSlots()) {
+            snapshot.append(slot.getX()).append(':').append(slot.getY()).append('=')
+                .append(slot.status(now)).append(';');
+        }
+        return snapshot.toString();
     }
 
     private void refreshSelectedPlantDetails() {

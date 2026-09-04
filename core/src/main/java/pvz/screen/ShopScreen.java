@@ -111,7 +111,8 @@ public final class ShopScreen extends AuthenticatedUiScreen {
         strip.add(theme.settingsLabel("Pots " + user.getInventory().getPots()))
             .padRight(18f);
         strip.add(theme.settingsLabel(
-            "Greenhouse " + user.getGreenhouse().getUnlockedSlotCount() + " / 20"
+            "Greenhouse " + user.getGreenhouse().getUnlockedSlotCount()
+                + " / " + Greenhouse.MAX_SLOTS
         ));
         return strip;
     }
@@ -294,10 +295,10 @@ public final class ShopScreen extends AuthenticatedUiScreen {
             default -> "this item";
         };
         String price = switch (itemId) {
-            case 1 -> "2000 Coins";
-            case 2 -> "3 Gems";
-            case 3 -> "1000 Coins";
-            case 4, 5 -> "5 Gems";
+            case 1 -> (2000 * count) + " Coins";
+            case 2 -> (3 * count) + " Gems";
+            case 3 -> (1000 * count) + " Coins";
+            case 4, 5 -> (5 * count) + " Gems";
             case 6 -> "1600 Coins";
             default -> "the listed price";
         };

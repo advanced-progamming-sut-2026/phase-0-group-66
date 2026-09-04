@@ -10,7 +10,7 @@ public final class ZombieArtResolver {
         Map.entry("basic-zombie", "IMAGE_UI_ALMANAC_PACKETS_ZOMBIES_MUMMY"),
         Map.entry("conehead-zombie", "IMAGE_UI_ALMANAC_PACKETS_ZOMBIES_MUMMY_ARMOR1"),
         Map.entry("buckethead-zombie", "IMAGE_UI_ALMANAC_PACKETS_ZOMBIES_MUMMY_ARMOR2"),
-        Map.entry("brickhead-zombie", "IMAGE_UI_ALMANAC_PACKETS_ZOMBIES_MUMMY_ARMOR4"),
+        Map.entry("brickhead-zombie", "IMAGE_UI_ALMANAC_PACKETS_ZOMBIES_DARK_ARMOR4"),
         Map.entry("knight-zombie", "IMAGE_UI_ALMANAC_PACKETS_ZOMBIES_DARK_ARMOR3"),
         Map.entry("gargantuar", "IMAGE_UI_ALMANAC_PACKETS_ZOMBIES_EGYPT_GARGANTUAR"),
         Map.entry("imp", "IMAGE_UI_ALMANAC_PACKETS_ZOMBIES_EGYPT_IMP"),

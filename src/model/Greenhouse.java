@@ -15,7 +15,7 @@ public class Greenhouse implements Serializable {
     public static final long MARIGOLD_GROWTH_MILLIS = 2L * 60L * 60L * 1000L;
     public static final long PLANT_GROWTH_MILLIS = 8L * 60L * 60L * 1000L;
 
-    private final ArrayList<GreenhouseSlot> slots = new ArrayList<>();
+    private ArrayList<GreenhouseSlot> slots = new ArrayList<>();
 
     public Greenhouse() {
         for (int y = 1; y <= ROWS; y++) {
@@ -68,20 +68,19 @@ public class Greenhouse implements Serializable {
 
     private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
         input.defaultReadObject();
-        if (slots.size() <= MAX_SLOTS) {
-            return;
-        }
-
-        ArrayList<GreenhouseSlot> legacySlots = new ArrayList<>(slots);
-        slots.clear();
+        ArrayList<GreenhouseSlot> legacySlots = slots == null
+            ? new ArrayList<>() : new ArrayList<>(slots);
+        slots = new ArrayList<>(MAX_SLOTS);
         for (int y = 1; y <= ROWS; y++) {
             for (int x = 1; x <= COLUMNS; x++) {
+                GreenhouseSlot matching = null;
                 for (GreenhouseSlot slot : legacySlots) {
-                    if (slot.getX() == x && slot.getY() == y) {
-                        slots.add(slot);
+                    if (slot != null && slot.getX() == x && slot.getY() == y) {
+                        matching = slot;
                         break;
                     }
                 }
+                slots.add(matching == null ? new GreenhouseSlot(x, y, false) : matching);
             }
         }
     }

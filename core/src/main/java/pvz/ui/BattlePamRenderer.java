@@ -252,11 +252,6 @@ public final class BattlePamRenderer {
         return draw(batch, spec.path(), spec.primaryClip(), time, x, y, scale * 0.58f, false);
     }
 
-    public boolean drawWaterTile(Batch batch, float time, float x, float y, float scale) {
-        AnimationSpec spec = specFromEntry(catalog.background("WATER_SQUARE"), "Water", false);
-        return draw(batch, spec.path(), spec.primaryClip(), time, x, y, scale, false);
-    }
-
     public boolean drawMower(
         Batch batch,
         SeasonType season,

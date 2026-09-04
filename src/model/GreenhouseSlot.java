@@ -38,6 +38,15 @@ public class GreenhouseSlot implements Serializable {
     public void unlock() { unlocked = true; }
 
     public void plant(String name, boolean isMarigold, long nowMillis, long growthMillis) {
+        if (!unlocked) {
+            throw new IllegalStateException("Greenhouse slot is locked.");
+        }
+        if (!isEmpty()) {
+            throw new IllegalStateException("Greenhouse slot is occupied.");
+        }
+        if (name == null || name.isBlank() || growthMillis <= 0) {
+            throw new IllegalArgumentException("Plant name and growth time are required.");
+        }
         plantName = name;
         marigold = isMarigold;
         plantedAtMillis = nowMillis;

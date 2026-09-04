@@ -67,11 +67,11 @@ public class GameProgress implements Serializable {
     }
 
     public boolean isChapterUnlocked(String chapterName) {
-        return chapterName != null && unlockedChapters.contains(chapterName);
+        return containsNormalized(unlockedChapters, chapterName);
     }
 
     public boolean isLevelUnlocked(String levelId) {
-        return levelId != null && unlockedLevels.contains(levelId);
+        return containsNormalized(unlockedLevels, levelId);
     }
 
     public boolean unlockMiniGameLevel(MiniGameType type, int level) {
@@ -190,6 +190,12 @@ public class GameProgress implements Serializable {
         if (completedMiniGameLevels == null) {
             completedMiniGameLevels = new LinkedHashSet<>();
         }
+    }
+
+    private boolean containsNormalized(Set<String> values, String expected) {
+        String normalized = PlantDefinition.normalizeKey(expected);
+        return !normalized.isEmpty() && values.stream()
+            .anyMatch(value -> normalized.equals(PlantDefinition.normalizeKey(value)));
     }
 
     private void validateMiniGameLevel(MiniGameType type, int level) {
