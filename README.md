@@ -16,13 +16,11 @@ A university recreation of **Plants vs. Zombies 2**, developed for the
 
 ---
 
-## 👥 Team Members — Group 66
+## 👥 Group 66
 
 | Name | Student ID |
 | :--- | :---: |
 | **Mohammad Parsa Hosseini** | 404071005 |
-| **Ilia Hedayati** | 404171314 |
-| **Mohammad Reza Mokhtarzadeh** | 404106333 |
 
 ---
 
