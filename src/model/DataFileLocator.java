@@ -31,9 +31,13 @@ public final class DataFileLocator {
         ArrayList<Path> directories = new ArrayList<>();
         addConfiguredPath(directories, System.getProperty(DATA_DIRECTORY_PROPERTY));
         addConfiguredPath(directories, System.getenv(DATA_DIRECTORY_ENVIRONMENT));
+        addConfiguredPath(directories, System.getProperty(RuntimeSupport.RESOLVED_ASSETS_PROPERTY)
+            == null ? null : Paths.get(System.getProperty(RuntimeSupport.RESOLVED_ASSETS_PROPERTY), "data").toString());
+        directories.add(RuntimeSupport.applicationDirectory().resolve("assets").resolve("data"));
         directories.add(Paths.get("assets", "data"));
         directories.add(Paths.get("src", "assets", "data"));
         directories.add(Paths.get("src", "main", "resources", "assets", "data"));
+        directories.add(RuntimeSupport.applicationDirectory().resolve("data"));
         directories.add(Paths.get("data"));
 
         directories.add(Paths.get("assests", "data"));

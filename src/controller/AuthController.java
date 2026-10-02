@@ -4,6 +4,7 @@ import model.AuthenticationResult;
 import model.SecurityQuestion;
 import model.User;
 import model.UserRepository;
+import model.RuntimeSupport;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -83,17 +84,28 @@ public class AuthController {
     }
 
     public ActionResult login(String username, String password, boolean keepLoggedIn) {
-        AuthenticationResult authentication = userRepository.authenticate(username, password);
-        if (!authentication.isSuccessful()) {
-            return ActionResult.failure(authentication.getMessage());
-        }
-        User user = authentication.getUser();
-
-        currentUser = user;
-        stayLoggedIn = keepLoggedIn;
-        recoveryUser = null;
-        recoveryAnswerVerified = false;
         try {
+            AuthenticationResult authentication = userRepository.authenticate(
+                username == null ? "" : username,
+                password == null ? "" : password
+            );
+            if (authentication == null) {
+                return ActionResult.failure("Authentication returned no response.");
+            }
+            if (!authentication.isSuccessful()) {
+                String message = authentication.getMessage();
+                return ActionResult.failure(message == null || message.isBlank()
+                    ? "Login failed." : message);
+            }
+            User user = authentication.getUser();
+            if (user == null || user.getUsername() == null || user.getUsername().isBlank()) {
+                return ActionResult.failure("Authentication returned an invalid user.");
+            }
+
+            currentUser = user;
+            stayLoggedIn = keepLoggedIn;
+            recoveryUser = null;
+            recoveryAnswerVerified = false;
             if (keepLoggedIn) {
                 userRepository.saveSession(user.getUsername());
             } else {
@@ -103,6 +115,13 @@ public class AuthController {
             currentUser = null;
             stayLoggedIn = false;
             return ActionResult.failure("Login succeeded, but the session could not be saved.");
+        } catch (RuntimeException exception) {
+            currentUser = null;
+            stayLoggedIn = false;
+            RuntimeSupport.log("Login", "Login failed unexpectedly.", exception);
+            String message = exception.getMessage();
+            return ActionResult.failure(message == null || message.isBlank()
+                ? "Login failed unexpectedly. See the log file for details." : message);
         }
         return ActionResult.success("Logged in successfully.");
     }

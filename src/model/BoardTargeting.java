@@ -6,7 +6,11 @@ final class BoardTargeting {
 
     static Zombie findNearestZombieAhead(Board board, int row, double column) {
         Zombie nearest = null;
-        for (Zombie zombie : board.getZombiesInRow(row)) {
+        for (Zombie zombie : board.getZombies()) {
+            if (zombie.isDead() || zombie.getPosition() == null
+                || zombie.getPosition().getRow() != row) {
+                continue;
+            }
             double zombieColumn = zombie.getPosition().getColumn();
             if (zombieColumn + 0.001 < column || zombie.isHypnotized()
                 || zombie.isTrappedInIceTile()) {
@@ -21,7 +25,11 @@ final class BoardTargeting {
 
     static Zombie findNearestZombieBehind(Board board, int row, double column) {
         Zombie nearest = null;
-        for (Zombie zombie : board.getZombiesInRow(row)) {
+        for (Zombie zombie : board.getZombies()) {
+            if (zombie.isDead() || zombie.getPosition() == null
+                || zombie.getPosition().getRow() != row) {
+                continue;
+            }
             double zombieColumn = zombie.getPosition().getColumn();
             if (zombieColumn - 0.001 > column || zombie.isHypnotized()
                 || zombie.isTrappedInIceTile()) {

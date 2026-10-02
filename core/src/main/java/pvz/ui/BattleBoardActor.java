@@ -23,6 +23,7 @@ import model.TileType;
 import model.Zombie;
 import pvz.assets.PvzAssets;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -61,6 +62,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
     private final Map<LawnMower, Float> mowerActivatedAt = new IdentityHashMap<>();
     private final Set<LawnMower> completedMowerAnimations =
         Collections.newSetFromMap(new IdentityHashMap<>());
+    private final int[] previewLaneCount = new int[Board.DEFAULT_ROWS];
 
     private TextureRegion backgroundLeft;
     private TextureRegion backgroundMain;
@@ -202,7 +204,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
         if (game == null || game.getBoard() == null) {
             return;
         }
-        Color previous = new Color(batch.getColor());
+        float previous = batch.getPackedColor();
         boolean blendingEnabled = batch.isBlendingEnabled();
         batch.enableBlending();
         batch.setColor(1f, 1f, 1f, parentAlpha);
@@ -218,7 +220,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
         drawProjectiles(batch, game.getBoard());
         drawZombies(batch, game.getBoard(), parentAlpha);
         drawSuns(batch, game.getBoard());
-        batch.setColor(previous);
+        batch.setPackedColor(previous);
         if (!blendingEnabled) {
             batch.disableBlending();
         }
@@ -377,7 +379,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
                     drawTileTint(batch, left, bottom, width, height,
                         0.16f, 0.12f, 0.08f, parentAlpha * 0.18f);
                     if (tombIcon != null) {
-                        Color previous = new Color(batch.getColor());
+                        float previous = batch.getPackedColor();
                         batch.setColor(1f, 1f, 1f, parentAlpha);
                         float tombHeight = height * 0.90f;
                         float tombWidth = tombHeight
@@ -391,7 +393,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
                         }
                         batch.draw(tombIcon, centerX - tombWidth / 2f,
                             bottom + height * 0.05f, tombWidth, tombHeight);
-                        batch.setColor(previous);
+                        batch.setPackedColor(previous);
                     }
                     model.Tomb tomb = controller.getGame().getTombAt(row, col);
                     if (tomb != null) {
@@ -522,7 +524,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
         if (hoveredCol < 0 || hoveredRow < 0) {
             return;
         }
-        Color previous = new Color(batch.getColor());
+        float previous = batch.getPackedColor();
         float x = gridLeft() + hoveredCol * cellWidth();
         float y = cellBottom(hoveredRow);
         float width = cellWidth();
@@ -539,7 +541,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
             1f, 1f, 1f, parentAlpha * 0.72f);
         drawTileTint(batch, x + width - thickness, y, thickness, height,
             1f, 1f, 1f, parentAlpha * 0.72f);
-        batch.setColor(previous);
+        batch.setPackedColor(previous);
     }
 
     private void drawPlantPreview(Batch batch, Board board) {
@@ -550,13 +552,14 @@ public final class BattleBoardActor extends Actor implements Disposable {
         }
         float x = cellCenterX(hoveredCol);
         float y = cellBottom(hoveredRow) + cellHeight() * 0.38f;
-        Color original = new Color(batch.getColor());
-        batch.setColor(1f, 1f, 1f, original.a * 0.58f);
+        float original = batch.getPackedColor();
+        float originalAlpha = batch.getColor().a;
+        batch.setColor(1f, 1f, 1f, originalAlpha * 0.58f);
         if (!pamRenderer.drawPlant(batch, previewPlant, animationTime, x, y,
             cellHeight() / 235f * 0.96f, false, false)) {
             drawFallbackPlant(batch, x, y, previewPlant);
         }
-        batch.setColor(original);
+        batch.setPackedColor(original);
     }
 
     private void drawPlantIceStatus(Batch batch, float centerX, float y, Plant plant, float width) {
@@ -649,7 +652,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
         previousZombieColumns.keySet().removeIf(zombie -> !zombies.contains(zombie));
         zombieMotionStarts.keySet().removeIf(zombie -> !zombies.contains(zombie));
         zombieMotionOrigins.keySet().removeIf(zombie -> !zombies.contains(zombie));
-        int[] previewLaneCount = new int[Board.DEFAULT_ROWS];
+        Arrays.fill(previewLaneCount, 0);
         for (Zombie zombie : zombies) {
             if (zombie == null || zombie.isDead() || zombie.getPosition() == null
                 || zombie.isTrappedInIceTile()) {
@@ -669,9 +672,10 @@ public final class BattleBoardActor extends Actor implements Disposable {
                 && controller.getGame().enteredViaTornado(zombie)) {
                 drawTornadoMarker(batch, x, y, parentAlpha);
             }
-            Color original = new Color(batch.getColor());
+            float original = batch.getPackedColor();
+            float originalAlpha = batch.getColor().a;
             if (zombie.isGlowing()) {
-                batch.setColor(0.95f, 0.90f, 0.20f, original.a);
+                batch.setColor(0.95f, 0.90f, 0.20f, originalAlpha);
             }
             boolean animated = pamRenderer.drawZombie(
                 batch, zombie, season, animationTime, x, y, scale
@@ -679,7 +683,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
             if (!animated) {
                 drawFallbackZombie(batch, x, y);
             }
-            batch.setColor(original);
+            batch.setPackedColor(original);
             float barWidth = Math.max(34f, cellWidth() * 0.52f);
             drawHealth(
                 batch,
@@ -766,7 +770,8 @@ public final class BattleBoardActor extends Actor implements Disposable {
     private void drawPlantFoodDeathGhosts(Batch batch, SeasonType season, float scale) {
         foodDeathUntil.entrySet().removeIf(entry -> animationTime > entry.getValue());
         foodDeathStartedAt.keySet().removeIf(zombie -> !foodDeathUntil.containsKey(zombie));
-        Color original = new Color(batch.getColor());
+        float original = batch.getPackedColor();
+        float originalAlpha = batch.getColor().a;
         for (Map.Entry<Zombie, Float> entry : foodDeathUntil.entrySet()) {
             Zombie zombie = entry.getKey();
             if (zombie == null || zombie.getPosition() == null) {
@@ -780,10 +785,10 @@ public final class BattleBoardActor extends Actor implements Disposable {
             double column = zombie.getPosition().getColumn();
             float x = gridLeft() + (float) ((column + 0.5d) * cellWidth());
             float y = cellBottom(row) + cellHeight() * (0.34f - 0.08f * progress);
-            batch.setColor(1f, 1f, 1f, original.a * alpha);
+            batch.setColor(1f, 1f, 1f, originalAlpha * alpha);
             pamRenderer.drawZombieDeath(batch, zombie, season, animationTime, x, y, scale);
         }
-        batch.setColor(original);
+        batch.setPackedColor(original);
     }
 
     private List<Zombie> zombiesToDraw(Board board) {
@@ -813,15 +818,15 @@ public final class BattleBoardActor extends Actor implements Disposable {
             if (projectile.isLobbed()) {
                 size *= 1.12f;
             }
-            Color original = new Color(batch.getColor());
-            Color projectileColor = switch (projectile.getImpactType() == null
+            float original = batch.getPackedColor();
+            float originalAlpha = batch.getColor().a;
+            switch (projectile.getImpactType() == null
                 ? projectile.getType() : projectile.getImpactType()) {
-                case FIRE -> new Color(1f, 0.28f, 0.08f, original.a);
-                case ICE -> new Color(0.22f, 0.78f, 1f, original.a);
-                case POISON -> new Color(0.68f, 0.28f, 0.92f, original.a);
-                case NORMAL -> new Color(0.32f, 0.92f, 0.18f, original.a);
-            };
-            batch.setColor(projectileColor);
+                case FIRE -> batch.setColor(1f, 0.28f, 0.08f, originalAlpha);
+                case ICE -> batch.setColor(0.22f, 0.78f, 1f, originalAlpha);
+                case POISON -> batch.setColor(0.68f, 0.28f, 0.92f, originalAlpha);
+                case NORMAL -> batch.setColor(0.32f, 0.92f, 0.18f, originalAlpha);
+            }
             boolean animated = pamRenderer.drawProjectile(
                 batch, projectile, animationTime, x, y, size / 220f
             );
@@ -830,7 +835,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
             } else if (!animated) {
                 batch.draw(orbFallback, x - size / 2f, y - size / 2f, size, size);
             }
-            batch.setColor(original);
+            batch.setPackedColor(original);
         }
     }
 
@@ -872,9 +877,10 @@ public final class BattleBoardActor extends Actor implements Disposable {
                 Math.min(1f, fallProgress))) * 0.70f;
             float size = Math.min(cellWidth(), cellHeight())
                 * (sun.getType() == model.SunType.SPECIAL ? 0.94f : 0.82f);
-            Color original = new Color(batch.getColor());
+            float original = batch.getPackedColor();
+            float originalAlpha = batch.getColor().a;
             if (sun.getType() == model.SunType.RADIOACTIVE) {
-                batch.setColor(0.72f, 0.24f, 0.92f, original.a);
+                batch.setColor(0.72f, 0.24f, 0.92f, originalAlpha);
             }
             boolean animated = pamRenderer.drawSun(batch, sun, animationTime, x, y,
                 size / 135f);
@@ -885,7 +891,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
                 batch.draw(orbFallback, x - size / 2f, y - size / 2f, size, size);
                 batch.setColor(Color.WHITE);
             }
-            batch.setColor(original);
+            batch.setPackedColor(original);
         }
     }
 
@@ -992,7 +998,7 @@ public final class BattleBoardActor extends Actor implements Disposable {
         for (Armor armor : armors) {
             float ratio = Math.max(0f, Math.min(1f,
                 armor.getHealth() / (float) Math.max(1, armor.getDefinition().getBaseHealth())));
-            batch.setColor(armorColor(armor.getDefinition().getArmorType()));
+            setArmorColor(batch, armor.getDefinition().getArmorType());
             batch.draw(pixel, x, y, segment * ratio, 4f);
             x += segment + 2f;
         }
@@ -1003,35 +1009,31 @@ public final class BattleBoardActor extends Actor implements Disposable {
         batch.setColor(Color.WHITE);
     }
 
-    private Color armorColor(String armorType) {
+    private void setArmorColor(Batch batch, String armorType) {
         String type = armorType == null ? "" : armorType.toLowerCase();
         if (type.contains("cone")) {
-            return new Color(0.95f, 0.55f, 0.12f, 1f);
+            batch.setColor(0.95f, 0.55f, 0.12f, 1f);
+        } else if (type.contains("bucket") || type.contains("metal")) {
+            batch.setColor(0.72f, 0.78f, 0.86f, 1f);
+        } else if (type.contains("brick")) {
+            batch.setColor(0.70f, 0.25f, 0.15f, 1f);
+        } else {
+            batch.setColor(0.82f, 0.64f, 0.22f, 1f);
         }
-        if (type.contains("bucket") || type.contains("metal")) {
-            return new Color(0.72f, 0.78f, 0.86f, 1f);
-        }
-        if (type.contains("brick")) {
-            return new Color(0.70f, 0.25f, 0.15f, 1f);
-        }
-        return new Color(0.82f, 0.64f, 0.22f, 1f);
     }
 
     private void drawZombieStatus(Batch batch, float centerX, float y, Zombie zombie, float width) {
-        Color color = null;
         if (zombie.isSubmerged()) {
-            color = new Color(0.10f, 0.52f, 0.95f, 1f);
+            batch.setColor(0.10f, 0.52f, 0.95f, 1f);
         } else if (zombie.isTrappedInIceTile()) {
-            color = new Color(0.25f, 0.78f, 1f, 1f);
+            batch.setColor(0.25f, 0.78f, 1f, 1f);
         } else if (zombie.getStunnedTicks() > 0) {
-            color = new Color(1f, 0.85f, 0.15f, 1f);
+            batch.setColor(1f, 0.85f, 0.15f, 1f);
         } else if (zombie.getChilledTicks() > 0) {
-            color = new Color(0.48f, 0.86f, 1f, 1f);
-        }
-        if (color == null) {
+            batch.setColor(0.48f, 0.86f, 1f, 1f);
+        } else {
             return;
         }
-        batch.setColor(color);
         batch.draw(pixel, centerX - width * 0.22f, y, width * 0.44f, 3f);
         batch.setColor(Color.WHITE);
     }

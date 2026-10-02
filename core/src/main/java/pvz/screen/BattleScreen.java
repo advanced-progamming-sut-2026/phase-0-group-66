@@ -71,6 +71,12 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     private float plantFoodImpactHold;
     private float missionElapsed;
     private float notificationElapsed;
+    private int displayedSun = Integer.MIN_VALUE;
+    private int displayedPlantFood = Integer.MIN_VALUE;
+    private int displayedWave = Integer.MIN_VALUE;
+    private int displayedPreparationSeconds = Integer.MIN_VALUE;
+    private boolean displayingPreparation;
+    private boolean hudInitialized;
 
     public BattleScreen(PvzApplication app, Chapter chapter, Level level) {
         super(app);
@@ -675,20 +681,35 @@ public final class BattleScreen extends AuthenticatedUiScreen {
     }
 
     private void refreshHud() {
-        sunLabel.setText(Integer.toString(game.getSunAmount()));
-        plantFoodLabel.setText("x" + game.getPlantFoodCount());
-        missionLabel.setText("Mission: " + level.getSpecialRuleSummary());
+        int sun = game.getSunAmount();
+        if (sun != displayedSun) {
+            displayedSun = sun;
+            sunLabel.setText(Integer.toString(sun));
+        }
+        int plantFood = game.getPlantFoodCount();
+        if (plantFood != displayedPlantFood) {
+            displayedPlantFood = plantFood;
+            plantFoodLabel.setText("x" + plantFood);
+        }
         Wave wave = game.getCurrentWave();
         int current = wave == null ? 0 : wave.getWaveNumber();
-        if (game.areZombieWavesStarted() && wave == null
-            && game.getElapsedTicks() < Game.INITIAL_PREPARATION_TICKS) {
+        boolean preparing = game.areZombieWavesStarted() && wave == null
+            && game.getElapsedTicks() < Game.INITIAL_PREPARATION_TICKS;
+        if (preparing) {
             int remaining = (int) Math.ceil(
                 (Game.INITIAL_PREPARATION_TICKS - game.getElapsedTicks())
                     / (double) Game.TICKS_PER_SECOND);
-            waveLabel.setText("PREPARE " + remaining + "s");
-        } else {
+            if (!hudInitialized || !displayingPreparation
+                || remaining != displayedPreparationSeconds) {
+                displayedPreparationSeconds = remaining;
+                waveLabel.setText("PREPARE " + remaining + "s");
+            }
+        } else if (!hudInitialized || displayingPreparation || current != displayedWave) {
+            displayedWave = current;
             waveLabel.setText("Wave " + current + " / " + level.getWaves().size());
         }
+        displayingPreparation = preparing;
+        hudInitialized = true;
         startWavesButton.setVisible(!isIntroRunning() && !game.areZombieWavesStarted());
     }
 

@@ -17,12 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * UserRepository adapter backed by the Phase 3 server.
- *
- * Only the small local session file is inherited from UserRepository. Authoritative user data is
- * never written to the client users.dat file while this adapter is active.
- */
+
 public final class RemoteUserRepository extends UserRepository {
     private final PvzNetworkClient client;
     private final Map<String, User> cache = new LinkedHashMap<>();

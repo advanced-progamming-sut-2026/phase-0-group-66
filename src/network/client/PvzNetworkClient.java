@@ -18,10 +18,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.List;
 
-/**
- * Lightweight request/response TCP client. A fresh connection is used per request so account
- * persistence is independent from multiplayer session lifecycle added in later Phase 3 stages.
- */
+
 public final class PvzNetworkClient {
     private static final int DEFAULT_CONNECT_TIMEOUT_MS = 2500;
     private static final int DEFAULT_READ_TIMEOUT_MS = 5000;
@@ -64,6 +61,9 @@ public final class PvzNetworkClient {
         if (!(value instanceof AuthenticatedSession session)) {
             throw new IOException("Server returned an invalid authentication response.");
         }
+        if (session.token() == null || session.token().isBlank() || session.user() == null) {
+            throw new IOException("Server returned an incomplete authentication response.");
+        }
         authToken = session.token();
         return session;
     }
@@ -90,6 +90,9 @@ public final class PvzNetworkClient {
 
     private NetworkResponse requestWithToken(String token, NetworkOperation operation, Object... arguments)
         throws IOException {
+        if (operation == null) {
+            throw new IllegalArgumentException("Network operation cannot be null.");
+        }
         NetworkRequest request = new NetworkRequest(Phase3Protocol.VERSION, operation, token, arguments);
         try (Socket socket = new Socket()) {
             socket.connect(new InetSocketAddress(host, port), connectTimeoutMs);
@@ -193,8 +196,13 @@ public final class PvzNetworkClient {
     }
 
     private Object successfulPayload(NetworkResponse response) throws IOException {
+        if (response == null) {
+            throw new IOException("Server returned no response.");
+        }
         if (!response.isSuccessful()) {
-            throw new IOException(response.getMessage());
+            String message = response.getMessage();
+            throw new IOException(message == null || message.isBlank()
+                ? "Server rejected the request." : message);
         }
         return response.getPayload();
     }

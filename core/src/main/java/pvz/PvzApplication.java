@@ -9,6 +9,7 @@ import pvz.app.AudioSettings;
 import pvz.app.DisplaySettings;
 import pvz.app.PvzServices;
 import pvz.app.PvzAudio;
+import model.RuntimeSupport;
 import pvz.assets.PvzAssets;
 import pvz.screen.AdventureScreen;
 import pvz.screen.BattleScreen;
@@ -64,7 +65,11 @@ public final class PvzApplication extends Game {
             audio = new PvzAudio(assets, audioSettings);
             services = new PvzServices();
         } catch (IOException exception) {
+            RuntimeSupport.log("Startup", "Could not initialize PVZ data.", exception);
             throw new GdxRuntimeException("Could not initialize PVZ data.", exception);
+        } catch (RuntimeException exception) {
+            RuntimeSupport.log("Startup", "Could not initialize the application.", exception);
+            throw exception;
         }
 
         if (services.auth().restoreSession()) {
@@ -115,8 +120,16 @@ public final class PvzApplication extends Game {
             showLogin();
             return;
         }
-        audio.playMenuMusic();
-        changeScreen(new MainMenuScreen(this));
+        try {
+            audio.playMenuMusic();
+            changeScreen(new MainMenuScreen(this));
+        } catch (RuntimeException exception) {
+            RuntimeSupport.log("UI", "Could not open the main menu.", exception);
+            if (getScreen() instanceof LoginScreen) {
+                throw exception;
+            }
+            showLogin();
+        }
     }
 
     public void showPlayerList() {
@@ -202,10 +215,13 @@ public final class PvzApplication extends Game {
             showLogin();
             return;
         }
+        if (!services.network().isEnabled()) {
+            showMainMenu();
+            return;
+        }
         audio.playMenuMusic();
         changeScreen(new NetworkScreen(this));
     }
-
 
     public void showCollection() {
         if (!services.auth().isAuthenticated()) {
@@ -305,7 +321,7 @@ public final class PvzApplication extends Game {
     }
 
     public boolean startOnlineIZombie(MatchTicket ticket) {
-        if (ticket == null || !ticket.isMatched()) {
+        if (!services.network().isEnabled() || ticket == null || !ticket.isMatched()) {
             return false;
         }
         ActionResult result = services.miniGames().startOnlineIZombie(

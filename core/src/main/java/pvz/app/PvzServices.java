@@ -14,6 +14,7 @@ import controller.SettingsController;
 import controller.ShopController;
 import model.AdventureFactory;
 import model.GameData;
+import model.RuntimeSupport;
 import model.UserRepository;
 import network.client.PvzNetworkClient;
 import network.client.RemoteUserRepository;
@@ -28,6 +29,7 @@ import java.nio.file.StandardCopyOption;
 
 public final class PvzServices {
     private static final String USER_DATA_PROPERTY = "pvz.user.data";
+    private static final String USER_DATA_ENVIRONMENT = "PVZ_USER_DATA_DIR";
     private static final String NETWORK_ENABLED_PROPERTY = "pvz.network.enabled";
     private static final String SERVER_HOST_PROPERTY = "pvz.server.host";
     private static final String SERVER_PORT_PROPERTY = "pvz.server.port";
@@ -46,6 +48,7 @@ public final class PvzServices {
     private final NetworkMatchController networkMatchController;
     private final AdventureFactory adventureFactory;
     private final GameData gameData;
+
     public PvzServices() throws IOException {
         Path userDataDirectory = resolveUserDataDirectory();
         boolean networkEnabled = resolveNetworkEnabled();
@@ -149,7 +152,6 @@ public final class PvzServices {
         return gameData;
     }
 
-
     private boolean resolveNetworkEnabled() {
         return Boolean.parseBoolean(System.getProperty(NETWORK_ENABLED_PROPERTY, "true"));
     }
@@ -172,13 +174,20 @@ public final class PvzServices {
         if (configured != null && !configured.isBlank()) {
             return Paths.get(configured.trim()).toAbsolutePath().normalize();
         }
-        return Paths.get("data").toAbsolutePath().normalize();
+        configured = System.getenv(USER_DATA_ENVIRONMENT);
+        if (configured != null && !configured.isBlank()) {
+            return Paths.get(configured.trim()).toAbsolutePath().normalize();
+        }
+        return RuntimeSupport.defaultUserDataDirectory();
     }
 
     private void migrateLegacyUserData(Path targetDirectory) throws IOException {
         Path legacyDirectory = Paths.get("src", "data").toAbsolutePath().normalize();
         copyIfMissing(legacyDirectory.resolve("users.dat"), targetDirectory.resolve("users.dat"));
         copyIfMissing(legacyDirectory.resolve("session.txt"), targetDirectory.resolve("session.txt"));
+        Path applicationData = RuntimeSupport.applicationDirectory().resolve("data");
+        copyIfMissing(applicationData.resolve("users.dat"), targetDirectory.resolve("users.dat"));
+        copyIfMissing(applicationData.resolve("session.txt"), targetDirectory.resolve("session.txt"));
     }
 
     private void copyIfMissing(Path source, Path target) throws IOException {

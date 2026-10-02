@@ -2,14 +2,26 @@ package lwjgl3;
 
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
+import model.RuntimeSupport;
 import pvz.PvzApplication;
+
+import javax.swing.JOptionPane;
 
 public class Lwjgl3Launcher {
     public static void main(String[] args) {
-        if (StartupHelper.startNewJvmIfRequired()) {
-            return;
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+            RuntimeSupport.log("Crash", "Unhandled exception on " + thread.getName() + ".", throwable);
+            showError("The game stopped unexpectedly.\nSee the log file in the PVZ data folder.");
+        });
+        try {
+            if (StartupHelper.startNewJvmIfRequired()) {
+                return;
+            }
+            createApplication();
+        } catch (Throwable throwable) {
+            RuntimeSupport.log("Startup", "Could not start the game.", throwable);
+            showError("The game could not start.\nSee the log file in the PVZ data folder.");
         }
-        createApplication();
     }
 
     private static Lwjgl3Application createApplication() {
@@ -25,5 +37,13 @@ public class Lwjgl3Launcher {
         );
         configuration.setWindowedMode(1280, 720);
         return configuration;
+    }
+
+    private static void showError(String message) {
+        try {
+            JOptionPane.showMessageDialog(null, message, "Plants vs. Zombies 2", JOptionPane.ERROR_MESSAGE);
+        } catch (Throwable ignored) {
+            // A dialog is best effort; the persistent log remains available.
+        }
     }
 }

@@ -39,13 +39,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/** Phase 3 authoritative server for account data, matchmaking, and mini-games. */
 public final class PvzServer implements AutoCloseable {
     private final int port;
     private final UserRepository userRepository;
     private final ExecutorService clientExecutor;
     private final ScheduledExecutorService matchTicker;
-    // ponytail: one lock keeps the assignment-sized match registry correct; split locks if throughput matters.
     private final Object matchLock = new Object();
     private final Object accountLock = new Object();
     private final Map<String, Ticket> tickets = new LinkedHashMap<>();
@@ -54,9 +52,7 @@ public final class PvzServer implements AutoCloseable {
     private final Map<String, String> sessions = new ConcurrentHashMap<>();
     private final Map<String, Long> sessionLastSeen = new ConcurrentHashMap<>();
     private final Map<String, String> passwordResetTokens = new ConcurrentHashMap<>();
-    // A player can spend hours waiting for a greenhouse plant to grow. Expiring the
-    // session after 30 seconds made the next purchase/harvest fail with "Login is
-    // required" even though the game was still open.
+
     private static final long SESSION_TIMEOUT_MS = TimeUnit.HOURS.toMillis(12);
     private volatile boolean running;
     private ServerSocket serverSocket;

@@ -4,7 +4,6 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 
-/** A small extensible request envelope shared by the client and server. */
 public final class NetworkRequest implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

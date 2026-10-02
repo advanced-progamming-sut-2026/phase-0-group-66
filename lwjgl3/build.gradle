@@ -18,7 +18,6 @@ apply plugin: 'io.github.fourlastor.construo'
 
 import io.github.fourlastor.construo.Target
 
-sourceSets.main.resources.srcDirs += [ rootProject.file('assets').path ]
 application.mainClass = 'lwjgl3.Lwjgl3Launcher'
 application.applicationName = appName
 eclipse.project.name = appName + '-lwjgl3'
@@ -115,23 +114,28 @@ tasks.register("jarLinux") {
   }
 }
 
-// Builds a JAR that only includes the files needed to run on Windows, not Linux or macOS.
-// The file size for a Windows-only JAR is about 6MB smaller than a cross-platform JAR.
-tasks.register("jarWin") {
-  dependsOn("jar")
+// Builds a truly standalone Windows JAR. The normal jar remains lean so Construo
+// can package the external assets once in the portable Windows distribution.
+tasks.register("jarWin", Jar) {
   group("build")
-  jar.archiveFileName.set("${appName}-${projectVersion}-win.jar")
-  jar.exclude("macos/arm64/**", "macos/x64/**", "linux/arm32/**", "linux/arm64/**", "linux/x64/**", "**/*.dylib", "**/*.so",
-    'META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
-  dependencies {
-    jar.exclude("macos/arm64/**", "macos/x64/**", "linux/arm32/**", "linux/arm64/**", "linux/x64/**",
-      'META-INF/INDEX.LIST', 'META-INF/maven/**')
+  archiveFileName.set("${appName}-${projectVersion}-win.jar")
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+  dependsOn configurations.runtimeClasspath
+  from sourceSets.main.output
+  from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+  from(rootProject.file('assets')) {
+    into('assets')
+  }
+  exclude("macos/arm64/**", "macos/x64/**", "linux/arm32/**", "linux/arm64/**", "linux/x64/**",
+    "**/*.dylib", "**/*.so", 'META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+  manifest {
+    attributes 'Main-Class': application.mainClass, 'Enable-Native-Access': 'ALL-UNNAMED', 'Multi-Release': 'true'
   }
 }
 
 construo {
   // name of the executable
-  name.set(appName)
+  name.set('PvZ_MPH Edition')
   // human-readable name, used for example in the `.app` name for macOS
   humanName.set(appName)
   jlink {
@@ -164,13 +168,41 @@ construo {
     }
     register("winX64", Target.Windows) {
       architecture.set(Target.Architecture.X86_64)
-      // Optional: icon for Windows, as a PNG
-      icon.set(project.file("icons/logo.png"))
       jdkUrl.set("https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.10%2B7/OpenJDK21U-jdk_x64_windows_hotspot_21.0.10_7.zip")
       // Uncomment the next line to show a console when the game runs, to print messages.
       //useConsole.set(true)
     }
   }
+}
+
+tasks.register('copyAssetsWinX64', Copy) {
+  dependsOn 'roastWinX64'
+  from rootProject.file('assets')
+  into layout.buildDirectory.dir('construo/winX64/roast/assets')
+}
+
+tasks.register('copyWindowsGuideWinX64', Copy) {
+  dependsOn 'roastWinX64'
+  from rootProject.file('README-WINDOWS-FA.txt')
+  from rootProject.file('README.md')
+  into layout.buildDirectory.dir('construo/winX64/roast')
+}
+
+tasks.register('configureOfflineWinX64') {
+  dependsOn 'roastWinX64'
+  doLast {
+    def configFile = layout.buildDirectory.file('construo/winX64/roast/app/PvZ_MPH Edition.json').get().asFile
+    if (!configFile.isFile()) {
+      throw new GradleException("Missing Windows launcher config: ${configFile}")
+    }
+    def config = new groovy.json.JsonSlurper().parse(configFile)
+    config.vmArgs = ['-Dpvz.network.enabled=false']
+    configFile.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(config)) + System.lineSeparator(), 'UTF-8')
+  }
+}
+
+tasks.named('packageWinX64') {
+  dependsOn 'copyAssetsWinX64', 'copyWindowsGuideWinX64', 'configureOfflineWinX64'
 }
 
 // Equivalent to the jar task; here for compatibility with gdx-setup.

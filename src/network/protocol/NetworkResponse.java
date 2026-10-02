@@ -3,7 +3,6 @@ package network.protocol;
 import java.io.Serial;
 import java.io.Serializable;
 
-/** Response envelope for every Phase 3 request. */
 public final class NetworkResponse implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

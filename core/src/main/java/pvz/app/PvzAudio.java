@@ -5,6 +5,7 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Disposable;
 import model.Chapter;
+import model.RuntimeSupport;
 import pvz.assets.PvzAssets;
 
 import java.util.HashMap;
@@ -81,11 +82,20 @@ public final class PvzAudio implements Disposable {
             music.stop();
             music.dispose();
         }
-        music = com.badlogic.gdx.Gdx.audio.newMusic(file);
-        musicFileName = fileName;
-        music.setLooping(true);
-        music.setVolume(settings.getMusicVolume());
-        music.play();
+        try {
+            music = com.badlogic.gdx.Gdx.audio.newMusic(file);
+            musicFileName = fileName;
+            music.setLooping(true);
+            music.setVolume(settings.getMusicVolume());
+            music.play();
+        } catch (RuntimeException exception) {
+            RuntimeSupport.log("Audio", "Could not play music: " + fileName, exception);
+            if (music != null) {
+                music.dispose();
+                music = null;
+            }
+            musicFileName = null;
+        }
     }
 
     private Sound loadSound(String fileName) {
@@ -100,9 +110,14 @@ public final class PvzAudio implements Disposable {
         if (!file.exists() || file.isDirectory()) {
             return null;
         }
-        Sound sound = com.badlogic.gdx.Gdx.audio.newSound(file);
-        sounds.put(fileName, sound);
-        return sound;
+        try {
+            Sound sound = com.badlogic.gdx.Gdx.audio.newSound(file);
+            sounds.put(fileName, sound);
+            return sound;
+        } catch (RuntimeException exception) {
+            RuntimeSupport.log("Audio", "Could not load sound: " + fileName, exception);
+            return null;
+        }
     }
 
     @Override

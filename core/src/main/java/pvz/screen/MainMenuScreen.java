@@ -95,9 +95,11 @@ public final class MainMenuScreen extends BaseUiScreen {
         Table bottom = new Table();
 
         Table left = new Table();
-        left.add(iconButton(NETWORK_ICON, app::showNetwork, 0))
-            .size(ICON_BUTTON_SIZE)
-            .padRight(14f);
+        if (app.services().network().isEnabled()) {
+            left.add(iconButton(NETWORK_ICON, app::showNetwork, 0))
+                .size(ICON_BUTTON_SIZE)
+                .padRight(14f);
+        }
         left.add(iconButton(UiTheme.NEWS_ICON, app::showNews, unreadNewsCount()))
             .size(ICON_BUTTON_SIZE);
 

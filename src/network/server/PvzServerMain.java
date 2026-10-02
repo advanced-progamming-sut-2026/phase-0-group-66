@@ -10,7 +10,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
-/** Standalone entry point for the Phase 3 server. */
 public final class PvzServerMain {
     private PvzServerMain() {
     }

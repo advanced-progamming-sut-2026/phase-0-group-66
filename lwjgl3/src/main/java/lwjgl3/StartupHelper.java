@@ -22,9 +22,12 @@ import org.lwjgl.system.JNI;
 import org.lwjgl.system.linux.UNISTD;
 import org.lwjgl.system.macosx.LibC;
 import org.lwjgl.system.macosx.ObjCRuntime;
+import model.RuntimeSupport;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -111,19 +114,30 @@ public class StartupHelper {
 			// By extracting to the relevant "ProgramData" folder, which is usually "C:\ProgramData", we avoid this.
 			// We also temporarily change the "user.name" property to one without any chars that would be invalid.
 			// We revert our changes immediately after loading LWJGL3 natives.
-			String programData = System.getenv("ProgramData");
-			if (programData == null) programData = "C:\\Temp"; // if ProgramData isn't set, try some fallback.
-			String prevTmpDir = System.getProperty("java.io.tmpdir", programData);
-			String prevUser = System.getProperty("user.name", "libGDX_User");
-			System.setProperty("java.io.tmpdir", programData + "\\libGDX-temp");
-			System.setProperty(
-				"user.name",
-				("User_" + prevUser.hashCode() + "_GDX" + Version.VERSION).replace('.', '_')
-			);
-			Lwjgl3NativesLoader.load();
-			System.setProperty("java.io.tmpdir", prevTmpDir);
-			System.setProperty("user.name", prevUser);
-			return false;
+            String localAppData = System.getenv("LOCALAPPDATA");
+            if (localAppData == null || localAppData.isBlank()) {
+                localAppData = System.getProperty("java.io.tmpdir", "C:\\Temp");
+            }
+            String prevTmpDir = System.getProperty("java.io.tmpdir", localAppData);
+            String prevUser = System.getProperty("user.name", "libGDX_User");
+            Path nativeDirectory = Path.of(localAppData, "phase-0-group-66", "natives");
+            try {
+                Files.createDirectories(nativeDirectory);
+            } catch (Exception exception) {
+                RuntimeSupport.log("Startup", "Could not create the LWJGL native directory.", exception);
+            }
+            System.setProperty("java.io.tmpdir", nativeDirectory.toString());
+            System.setProperty(
+                "user.name",
+                ("User_" + prevUser.hashCode() + "_GDX" + Version.VERSION).replace('.', '_')
+            );
+            try {
+                Lwjgl3NativesLoader.load();
+            } finally {
+                System.setProperty("java.io.tmpdir", prevTmpDir);
+                System.setProperty("user.name", prevUser);
+            }
+            return false;
 		}
 		return startNewJvm0(/*isMac =*/ false, inheritIO);
 	}

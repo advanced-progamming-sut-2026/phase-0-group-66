@@ -96,14 +96,6 @@ public final class NetworkScreen extends AuthenticatedUiScreen {
         });
         direct.add(challengeButton).width(190f).height(48f);
         panel.add(direct);
-        panel.row().padTop(10f);
-        TextButton couch = theme.tertiaryButton("COUCH PLAY - ONE DEVICE");
-        UiActions.onClick(couch, () -> {
-            if (!app.startCouchIZombie(selectedLevel())) {
-                theme.showError(status, "Could not start Couch Play.");
-            }
-        });
-        panel.add(couch).width(360f).height(48f);
         panel.row().padTop(12f);
         panel.add(theme.heading("MATCH REQUESTS")).growX().height(36f);
         panel.row().padTop(6f);

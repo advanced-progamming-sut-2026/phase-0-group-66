@@ -1,5 +1,6 @@
 package pvz.screen;
 
+import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
@@ -59,7 +60,7 @@ public final class MiniGameHubScreen extends AuthenticatedUiScreen {
             "I, Zombie",
             "Spend sun on zombies and eat all five brains.",
             BRAIN_ICON
-        )).width(350f).height(310f);
+        )).width(350f).height(390f);
         cards.row();
         cards.add(gameCard(
             MiniGameType.BEGHOULD,
@@ -121,7 +122,31 @@ public final class MiniGameHubScreen extends AuthenticatedUiScreen {
         card.row().padTop(12f);
 
         card.add(levelButtons(type)).growX().height(58f);
+        if (type == MiniGameType.I_ZOMBIE) {
+            card.row().padTop(6f);
+            TextButton couchPlay = theme.secondaryButton("COUCH PLAY");
+            UiActions.onClick(couchPlay, this::showCouchLevelDialog);
+            card.add(couchPlay).width(220f).height(42f);
+        }
         return card;
+    }
+
+    private void showCouchLevelDialog() {
+        Dialog dialog = new Dialog("COUCH PLAY", theme.skin()) {
+            @Override
+            protected void result(Object value) {
+                super.result(value);
+                if (value instanceof Integer level && !app.startCouchIZombie(level)) {
+                    theme.showError(status, "Could not start Couch Play level " + level + ".");
+                }
+            }
+        };
+        dialog.text("Choose a level for two players on one device.");
+        for (int level = 1; level <= 3; level++) {
+            dialog.button("Level " + level, level);
+        }
+        dialog.button("Cancel", null);
+        dialog.show(stage);
     }
 
     private Table levelButtons(MiniGameType type) {
